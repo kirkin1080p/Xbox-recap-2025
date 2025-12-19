@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Xbox Recap 2025</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="container">
+    <h1>🎮 Xbox Recap 2025</h1>
+    <p>Enter a Gamertag to see their year in gaming</p>
+
+    <input id="gamertagInput" placeholder="Enter Gamertag" />
+    <button onclick="generateRecap()">Generate Recap</button>
+
+    <div id="recap" class="hidden">
+      <h2 id="playerName"></h2>
+
+      <div class="card">
+        <h3>🔥 Top Game</h3>
+        <p id="topGame"></p>
+      </div>
+
+      <div class="card">
+        <h3>🏆 Achievements Earned</h3>
+        <p id="achievements"></p>
+      </div>
+
+      <div class="card">
+        <h3>⭐ Gamerscore Gained</h3>
+        <p id="gamerscore"></p>
+      </div>
+
+      <div class="card">
+        <h3>⏱️ Estimated Playtime</h3>
+        <p id="playtime"></p>
+      </div>
+
+      <p class="disclaimer">
+        *Stats are estimated using public profile data.
+      </p>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
