@@ -33,6 +33,22 @@ function presenceDisplay(profile) {
   return "Offline / Private / Unknown";
 }
 
+function lastObservedDisplay(recap) {
+  if (recap?.lastObservedGame) {
+    const when = recap.lastObservedAt ? ` (${fmtDateTime(recap.lastObservedAt)})` : "";
+    return `${recap.lastObservedGame}${when}`;
+  }
+  return "Not observed yet";
+}
+
+function topTrackedDisplay(recap) {
+  if (recap?.topGame) {
+    const d = Number(recap.topGameDays || 0);
+    return `${recap.topGame} • ${d} day${d === 1 ? "" : "s"}`;
+  }
+  return "Not enough tracking yet";
+}
+
 async function generateCard() {
   const gamertag = document.getElementById("gamertagInput").value.trim();
   if (!gamertag) return alert("Please enter a Gamertag");
@@ -53,7 +69,7 @@ async function generateCard() {
     const profile = data.profile || {};
     const recap = data.recap || {};
 
-    // Avatar: never stretch; show fallback icon when missing
+    // Avatar (never stretch)
     const pic = profile.displayPicRaw ? String(profile.displayPicRaw) : "";
     const picEl = document.getElementById("gamerPic");
     const fallbackEl = document.getElementById("avatarFallback");
@@ -70,7 +86,13 @@ async function generateCard() {
 
     document.getElementById("gtName").innerText = safeText(data.gamertag, gamertag);
     document.getElementById("gtGamerscore").innerText = fmtGamerscore(profile.gamerscore);
+
+    // Live presence if available, else show offline/private.
     document.getElementById("gtPresence").innerText = presenceDisplay(profile);
+
+    // Tracked fields
+    document.getElementById("gtLastObserved").innerText = lastObservedDisplay(recap);
+    document.getElementById("gtTopTracked").innerText = topTrackedDisplay(recap);
 
     document.getElementById("gtFirstSeen").innerText = fmtDateTime(recap.firstSeen);
     document.getElementById("gtLastSeen").innerText = fmtDateTime(recap.lastSeen);
