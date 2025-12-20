@@ -1,108 +1,265 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Xbox Recap 2026</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="./style.css?v=10" />
-</head>
-<body>
-  <div class="page">
-    <div class="container">
-      <h1 class="title">🎮 Xbox Recap 2026</h1>
-      <p class="subtitle">Generate a GamerCard. Sign in to unlock gamerscore, gamerpic, and tracking.</p>
+:root {
+  --bg: #0e0e10;
+  --card: #1b1b1f;
+  --card2: #141418;
+  --text: #ffffff;
+  --muted: rgba(255,255,255,0.7);
+  --accent: #107c10;
+  --banner: #c9ad15;
+  --border: rgba(255,255,255,0.10);
+}
 
-      <div class="actions">
-        <a
-          class="signin-btn"
-          href="https://xbl.io/app/auth/4f6e9e47-98c9-0501-ae8a-4c078183a6dc"
-        >
-          Sign in with Xbox
-        </a>
-      </div>
+* { box-sizing: border-box; }
 
-      <div class="search">
-        <input id="gamertagInput" placeholder="Enter Gamertag" autocomplete="off" />
-        <button id="generateBtn" type="button">Generate GamerCard</button>
-      </div>
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
 
-      <section id="gamerCard" class="gamer-card hidden" aria-live="polite">
-        <div class="gamer-card__banner">
-          <div class="gamer-card__bannerText">XBOX RECAP 2026</div>
-        </div>
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 24px 12px 60px;
+}
 
-        <div class="gamer-card__body">
-          <div class="gamer-card__avatarWrap">
-            <img id="gamerPic" class="gamer-card__avatar" alt="Gamerpic" />
-            <div id="avatarFallback" class="gamer-card__avatarFallback">🎮</div>
-          </div>
+.container {
+  width: 100%;
+  max-width: 720px;
+}
 
-          <div class="gamer-card__info">
-            <div class="row row--header">
-              <div class="row__label">Gamertag</div>
-              <div id="gtName" class="row__value">—</div>
-            </div>
+.title {
+  margin: 0 0 8px;
+  color: var(--accent);
+  text-align: center;
+}
 
-            <div class="row">
-              <div class="row__label">Gamerscore (current)</div>
-              <div id="gtGamerscore" class="row__value">—</div>
-            </div>
+.subtitle {
+  margin: 0 0 14px;
+  text-align: center;
+  color: var(--muted);
+}
 
-            <div class="row">
-              <div class="row__label">Now Playing / Status</div>
-              <div id="gtPresence" class="row__value">—</div>
-            </div>
+.actions {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
 
-            <div class="row">
-              <div class="row__label">Last Observed Game</div>
-              <div id="gtLastObserved" class="row__value">—</div>
-            </div>
+.signin-btn {
+  display: inline-block;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(16,124,16,0.5);
+  background: rgba(16,124,16,0.16);
+  color: rgba(255,255,255,0.92);
+  text-decoration: none;
+  font-weight: 700;
+}
 
-            <div class="row">
-              <div class="row__label">Top Tracked Game (Unique Days)</div>
-              <div id="gtTopTracked" class="row__value">—</div>
-            </div>
+.signin-btn:hover {
+  filter: brightness(1.05);
+}
 
-            <div class="row">
-              <div class="row__label">Tracking Started</div>
-              <div id="gtFirstSeen" class="row__value">—</div>
-            </div>
+.search {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-bottom: 18px;
+}
 
-            <div class="row">
-              <div class="row__label">Last Seen (Recap)</div>
-              <div id="gtLastSeen" class="row__value">—</div>
-            </div>
+input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #0b0b0d;
+  color: var(--text);
+  font-size: 16px;
+  outline: none;
+}
 
-            <div class="row">
-              <div class="row__label">Recap Checks</div>
-              <div id="gtChecks" class="row__value">—</div>
-            </div>
-          </div>
-        </div>
+input:focus {
+  border-color: rgba(16,124,16,0.6);
+  box-shadow: 0 0 0 3px rgba(16,124,16,0.2);
+}
 
-        <div class="gamer-card__footer">
-          <div class="footer__left">
-            <span class="pill" id="gtSource">source: —</span>
-          </div>
-          <div class="footer__right">
-            <span class="disclaimer" id="gtNote">
-              Sign in to unlock profile signals + tracking.
-            </span>
-          </div>
-        </div>
-      </section>
+button {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--accent);
+  color: white;
+  font-size: 16px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
 
-      <div class="donate">
-        <p class="donate__text">Want better tracking coverage?</p>
-        <a class="donate__btn" href="#" aria-disabled="true">Donate (coming soon)</a>
-      </div>
+button:hover { filter: brightness(1.05); }
 
-      <p class="small-note">
-        Tip: Share links like <span class="mono">?gamertag=KirkIn1080p</span>
-      </p>
-    </div>
-  </div>
+.hidden { display: none; }
 
-  <script src="./script.js?v=10"></script>
-</body>
-</html>
+/* Gamer Card */
+.gamer-card {
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 0 18px 60px rgba(0,0,0,0.45);
+}
+
+.gamer-card__banner {
+  background: var(--banner);
+  height: 120px;
+  display: flex;
+  align-items: center;
+  padding: 18px 18px;
+}
+
+.gamer-card__bannerText {
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: rgba(0,0,0,0.75);
+  text-transform: uppercase;
+}
+
+.gamer-card__body {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 14px;
+  padding: 16px;
+  background: var(--card2);
+  align-items: start;
+}
+
+/* Avatar: fixed square, never stretch */
+.gamer-card__avatarWrap {
+  width: 160px;
+  height: 160px;
+  background: linear-gradient(135deg, rgba(16,124,16,0.20), rgba(255,255,255,0.06));
+  border-radius: 12px;
+  overflow: hidden;
+  border: 8px solid rgba(0,0,0,0.55);
+  position: relative;
+}
+
+.gamer-card__avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.gamer-card__avatarFallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 42px;
+  color: rgba(255,255,255,0.85);
+}
+
+.gamer-card__info {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.row {
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.04);
+  padding: 12px 12px;
+}
+
+.row--header {
+  background: rgba(16,124,16,0.10);
+  border-color: rgba(16,124,16,0.35);
+}
+
+.row__label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.row__value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  word-break: break-word;
+}
+
+.gamer-card__footer {
+  padding: 12px 16px 16px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  background: #101014;
+  border-top: 1px solid var(--border);
+}
+
+.pill {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.disclaimer {
+  font-size: 12px;
+  color: rgba(255,255,255,0.55);
+  text-align: right;
+}
+
+/* Donate block */
+.donate {
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.donate__text {
+  margin: 0;
+  color: rgba(255,255,255,0.75);
+  font-size: 13px;
+}
+
+.donate__btn {
+  display: inline-block;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.9);
+  text-decoration: none;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.small-note {
+  margin-top: 14px;
+  color: rgba(255,255,255,0.55);
+  text-align: center;
+  font-size: 12px;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
