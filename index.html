@@ -48,12 +48,15 @@
       <div class="ctaBox" id="signinPrompt">
         <div class="ctaTop">
           <div class="ctaIcon">🔐</div>
-          <div>
+          <div class="ctaCopy">
             <p class="ctaTitle">Want the best version?</p>
             <p class="ctaText">Connect Xbox to unlock richer stats, achievements & images.</p>
           </div>
         </div>
-        <a id="signinBtn" class="btn ghost" href="#" target="_blank" rel="noreferrer">Sign in with Xbox</a>
+
+        <!-- IMPORTANT: this opens a modal (doesn't navigate) -->
+        <a id="signinBtn" class="btn ghost ctaBtn" href="#">Connect Xbox</a>
+
         <p class="tiny">By generating a recap you agree to tracking from today onward. We don’t sell data.</p>
       </div>
     </section>
@@ -179,7 +182,6 @@
           </div>
         </div>
 
-        <!-- Footer line -->
         <div class="cardFooter">
           <div class="footerLeft">
             <div class="tiny muted" id="trackingInfo">—</div>
@@ -201,7 +203,7 @@
               <input id="liveLink" readonly />
               <button id="copyLiveLinkBtn" class="btn small ghost">Copy</button>
             </div>
-            <div class="tiny muted">This is a responsive “signature card” page.</div>
+            <div class="tiny muted">Responsive “signature card” page.</div>
           </div>
 
           <div class="shareItem">
@@ -210,7 +212,7 @@
               <input id="bbcode" readonly />
               <button id="copyBbBtn" class="btn small ghost">Copy</button>
             </div>
-            <div class="tiny muted">Paste into forum signature settings.</div>
+            <div class="tiny muted">Paste into signature settings.</div>
           </div>
         </div>
       </div>
@@ -260,9 +262,40 @@
     </footer>
   </main>
 
-  <!-- html2canvas for export-to-PNG (free CDN) -->
+  <!-- Link modal -->
+  <div id="linkModal" class="modal hidden" aria-hidden="true">
+    <div class="modalCard">
+      <div class="modalHead">
+        <div>
+          <div class="modalTitle">Connect Xbox</div>
+          <div class="modalSub muted">Sign in on OpenXBL, then paste the code here.</div>
+        </div>
+        <button id="closeModalBtn" class="btn small ghost" aria-label="Close">✕</button>
+      </div>
+
+      <ol class="modalSteps">
+        <li>Click <strong>Open sign-in</strong> and complete login.</li>
+        <li>Copy the code shown by OpenXBL.</li>
+        <li>Paste it below and hit <strong>Link</strong>.</li>
+      </ol>
+
+      <div class="modalRow">
+        <input id="claimCodeInput" placeholder="Paste code here…" autocomplete="off" />
+        <button id="linkBtn" class="btn primary">Link</button>
+      </div>
+
+      <div class="tiny muted">We never see your Microsoft password — OpenXBL handles login.</div>
+
+      <div class="modalActions">
+        <a id="openSigninWindow" class="btn" href="#" target="_blank" rel="noreferrer">Open sign-in</a>
+        <button id="copySigninUrlBtn" class="btn ghost">Copy sign-in URL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- html2canvas for export-to-PNG -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
 
-  <script src="./script.js?v=2026"></script>
+  <script src="./script.js?v=2026.2"></script>
 </body>
 </html>
