@@ -425,9 +425,12 @@ copyBbBtn.addEventListener("click", () => copyToClipboard(bbcode.value));
 signinBtn.addEventListener("click", (e) => {
   e.preventDefault();
   const url = getOpenXblSigninUrl();
-  openSigninWindow.href = url;
-  openModal();
+  // Open sign-in directly (no modal)
+  window.open(url, "_blank", "noopener,noreferrer");
+  setStatus("Opened Xbox sign-in in a new tab ✅");
+  setTimeout(clearStatus, 1400);
 });
+
 
 closeModalBtn.addEventListener("click", closeModal);
 linkModal.addEventListener("click", (e) => {
