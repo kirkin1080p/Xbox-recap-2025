@@ -59,14 +59,6 @@ const bbcode = document.getElementById("bbcode");
 const copyLiveLinkBtn = document.getElementById("copyLiveLinkBtn");
 const copyBbBtn = document.getElementById("copyBbBtn");
 
-// Modal DOM
-const linkModal = document.getElementById("linkModal");
-const closeModalBtn = document.getElementById("closeModalBtn");
-const claimCodeInput = document.getElementById("claimCodeInput");
-const linkBtn = document.getElementById("linkBtn");
-const openSigninWindow = document.getElementById("openSigninWindow");
-const copySigninUrlBtn = document.getElementById("copySigninUrlBtn");
-
 // === HELPERS ===
 function setStatus(msg) {
   statusEl.classList.remove("hidden");
@@ -151,20 +143,7 @@ function hideCard() {
   gamerCardWrap.classList.add("hidden");
 }
 
-// === MODAL ===
-function openModal() {
-  linkModal.classList.remove("hidden");
-  linkModal.setAttribute("aria-hidden", "false");
-  claimCodeInput.value = "";
-  claimCodeInput.focus();
-}
-function closeModal() {
-  linkModal.classList.add("hidden");
-  linkModal.setAttribute("aria-hidden", "true");
-}
-
 function getOpenXblSigninUrl() {
-  // This is the OpenXBL auth entry point for your app
   return `https://xbl.io/app/auth/${PUBLIC_KEY}`;
 }
 
@@ -188,17 +167,6 @@ async function fetchDonateStats() {
   const res = await fetch(url);
   if (!res.ok) return null;
   return res.json();
-}
-
-async function claimLink(code) {
-  const res = await fetch(`${WORKER_BASE}/claim`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ code }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.error || "Claim failed");
-  return data;
 }
 
 // === RENDER ===
@@ -317,7 +285,6 @@ function renderRecap(data) {
   setPillQuality(recap, linked);
   setLastUpdated(recap);
 
-  // Share links
   const urls = buildShareUrls(gamertag);
   liveLink.value = urls.embed;
   bbcode.value = `[url=${urls.embed}]Xbox Recap Card[/url]`;
@@ -380,7 +347,6 @@ async function run(gamertag) {
     return;
   }
 
-  // Update URL for sharing
   const u = new URL(window.location.href);
   u.searchParams.set("gamertag", gt);
   window.history.replaceState({}, "", u);
@@ -421,57 +387,19 @@ copyLinkBtn.addEventListener("click", () => {
 copyLiveLinkBtn.addEventListener("click", () => copyToClipboard(liveLink.value));
 copyBbBtn.addEventListener("click", () => copyToClipboard(bbcode.value));
 
-// Connect Xbox modal open
+// OPTION 1: Connect opens sign-in directly (no modal, no claim)
 signinBtn.addEventListener("click", (e) => {
   e.preventDefault();
   const url = getOpenXblSigninUrl();
-  // Open sign-in directly (no modal)
   window.open(url, "_blank", "noopener,noreferrer");
   setStatus("Opened Xbox sign-in in a new tab ✅");
   setTimeout(clearStatus, 1400);
-});
-
-
-closeModalBtn.addEventListener("click", closeModal);
-linkModal.addEventListener("click", (e) => {
-  if (e.target === linkModal) closeModal();
-});
-
-copySigninUrlBtn.addEventListener("click", () => copyToClipboard(getOpenXblSigninUrl()));
-
-linkBtn.addEventListener("click", async () => {
-  const code = claimCodeInput.value.trim();
-  if (!code) {
-    setStatus("Paste the code first.");
-    return;
-  }
-
-  setStatus("Linking Xbox…");
-
-  try {
-    await claimLink(code);
-    closeModal();
-    setStatus("Linked ✅ Refreshing recap…");
-
-    const gt =
-      gamertagInput.value.trim() || new URLSearchParams(window.location.search).get("gamertag");
-    if (gt) await run(gt);
-    else clearStatus();
-  } catch (err) {
-    console.error(err);
-    setStatus(`Link failed: ${err.message}`);
-  }
-});
-
-claimCodeInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") linkBtn.click();
 });
 
 // === INIT ===
 (function init() {
   setEmbedModeIfNeeded();
 
-  // If gamertag in URL, auto-run
   const params = new URLSearchParams(window.location.search);
   const gt = params.get("gamertag");
 
