@@ -135,7 +135,6 @@ button:hover { filter: brightness(1.05); }
   align-items: start;
 }
 
-/* Avatar: fixed square, never stretch */
 .gamer-card__avatarWrap {
   width: 160px;
   height: 160px;
@@ -222,7 +221,6 @@ button:hover { filter: brightness(1.05); }
   text-align: right;
 }
 
-/* Donate block */
 .donate {
   margin-top: 14px;
   padding: 14px;
