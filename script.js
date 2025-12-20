@@ -1,265 +1,125 @@
-:root {
-  --bg: #0e0e10;
-  --card: #1b1b1f;
-  --card2: #141418;
-  --text: #ffffff;
-  --muted: rgba(255,255,255,0.7);
-  --accent: #107c10;
-  --banner: #c9ad15;
-  --border: rgba(255,255,255,0.10);
+const WORKER_URL = "https://falling-cake-f670.kirkjlemon.workers.dev/";
+
+function safeText(v, fallback = "—") {
+  if (v === null || v === undefined) return fallback;
+  const s = String(v).trim();
+  return s.length ? s : fallback;
 }
 
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  font-family: Arial, Helvetica, sans-serif;
-  background: var(--bg);
-  color: var(--text);
+function fmtDateTime(iso) {
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "—";
+    return d.toLocaleString();
+  } catch {
+    return "—";
+  }
 }
 
-.page {
-  min-height: 100vh;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 24px 12px 60px;
+function fmtGamerscore(gs) {
+  if (gs === null || gs === undefined) return "Not linked";
+  const n = Number(String(gs).replace(/,/g, ""));
+  if (Number.isNaN(n)) return safeText(gs, "Not linked");
+  return n.toLocaleString();
 }
 
-.container {
-  width: 100%;
-  max-width: 720px;
+function presenceDisplay(profile, linked) {
+  if (!linked) return "Not linked";
+
+  const lastGame = profile?.lastGame ? String(profile.lastGame).trim() : "";
+  const presenceText = profile?.presenceText ? String(profile.presenceText).trim() : "";
+  if (lastGame) return `Playing: ${lastGame}`;
+  if (presenceText) return presenceText;
+  return "Offline / Private / Unknown";
 }
 
-.title {
-  margin: 0 0 8px;
-  color: var(--accent);
-  text-align: center;
+function lastObservedDisplay(recap) {
+  if (recap?.lastObservedGame) {
+    const when = recap.lastObservedAt ? ` (${fmtDateTime(recap.lastObservedAt)})` : "";
+    return `${recap.lastObservedGame}${when}`;
+  }
+  return "Not observed yet";
 }
 
-.subtitle {
-  margin: 0 0 14px;
-  text-align: center;
-  color: var(--muted);
+function topTrackedDisplay(recap) {
+  if (recap?.topGame) {
+    const d = Number(recap.topGameDays || 0);
+    return `${recap.topGame} • ${d} day${d === 1 ? "" : "s"}`;
+  }
+  return "Not enough tracking yet";
 }
 
-.actions {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 12px;
+async function generateCard() {
+  const gamertag = document.getElementById("gamertagInput").value.trim();
+  if (!gamertag) return alert("Please enter a Gamertag");
+
+  const card = document.getElementById("gamerCard");
+  card.classList.add("hidden");
+
+  try {
+    const res = await fetch(`${WORKER_URL}?gamertag=${encodeURIComponent(gamertag)}`);
+    if (!res.ok) throw new Error(`Worker error ${res.status}`);
+
+    const data = await res.json();
+    const profile = data.profile || {};
+    const recap = data.recap || {};
+    const linked = Boolean(data.linked);
+
+    // Avatar: only show if linked + has URL
+    const pic = linked && profile.displayPicRaw ? String(profile.displayPicRaw) : "";
+    const picEl = document.getElementById("gamerPic");
+    const fallbackEl = document.getElementById("avatarFallback");
+
+    if (pic) {
+      picEl.src = pic;
+      picEl.style.display = "block";
+      fallbackEl.style.display = "none";
+    } else {
+      picEl.removeAttribute("src");
+      picEl.style.display = "none";
+      fallbackEl.style.display = "grid";
+    }
+
+    document.getElementById("gtName").innerText = safeText(data.gamertag, gamertag);
+    document.getElementById("gtGamerscore").innerText = fmtGamerscore(profile.gamerscore);
+    document.getElementById("gtPresence").innerText = presenceDisplay(profile, linked);
+
+    document.getElementById("gtLastObserved").innerText = lastObservedDisplay(recap);
+    document.getElementById("gtTopTracked").innerText = topTrackedDisplay(recap);
+
+    document.getElementById("gtFirstSeen").innerText = fmtDateTime(recap.firstSeen);
+    document.getElementById("gtLastSeen").innerText = fmtDateTime(recap.lastSeen);
+    document.getElementById("gtChecks").innerText = safeText(recap.lookupCount, "0");
+
+    document.getElementById("gtSource").innerText = `source: ${safeText(data.source, "kv-only")}`;
+
+    const note = document.getElementById("gtNote");
+    note.innerText = linked
+      ? "Tracking builds over time. Presence may be private/offline."
+      : "Not linked yet — you can still generate a card and start tracking.";
+
+    card.classList.remove("hidden");
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("gamertag", gamertag);
+    window.history.replaceState({}, "", url);
+
+  } catch (err) {
+    console.error(err);
+    alert("Failed to load Xbox Recap");
+  }
 }
 
-.signin-btn {
-  display: inline-block;
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid rgba(16,124,16,0.5);
-  background: rgba(16,124,16,0.16);
-  color: rgba(255,255,255,0.92);
-  text-decoration: none;
-  font-weight: 700;
-}
+window.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("generateBtn").addEventListener("click", generateCard);
+  document.getElementById("gamertagInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") generateCard();
+  });
 
-.signin-btn:hover {
-  filter: brightness(1.05);
-}
-
-.search {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
-  margin-bottom: 18px;
-}
-
-input {
-  width: 100%;
-  padding: 12px 14px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: #0b0b0d;
-  color: var(--text);
-  font-size: 16px;
-  outline: none;
-}
-
-input:focus {
-  border-color: rgba(16,124,16,0.6);
-  box-shadow: 0 0 0 3px rgba(16,124,16,0.2);
-}
-
-button {
-  width: 100%;
-  padding: 12px 14px;
-  background: var(--accent);
-  color: white;
-  font-size: 16px;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-}
-
-button:hover { filter: brightness(1.05); }
-
-.hidden { display: none; }
-
-/* Gamer Card */
-.gamer-card {
-  overflow: hidden;
-  border-radius: 16px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  box-shadow: 0 18px 60px rgba(0,0,0,0.45);
-}
-
-.gamer-card__banner {
-  background: var(--banner);
-  height: 120px;
-  display: flex;
-  align-items: center;
-  padding: 18px 18px;
-}
-
-.gamer-card__bannerText {
-  font-weight: 900;
-  letter-spacing: 2px;
-  color: rgba(0,0,0,0.75);
-  text-transform: uppercase;
-}
-
-.gamer-card__body {
-  display: grid;
-  grid-template-columns: 160px 1fr;
-  gap: 14px;
-  padding: 16px;
-  background: var(--card2);
-  align-items: start;
-}
-
-/* Avatar: fixed square, never stretch */
-.gamer-card__avatarWrap {
-  width: 160px;
-  height: 160px;
-  background: linear-gradient(135deg, rgba(16,124,16,0.20), rgba(255,255,255,0.06));
-  border-radius: 12px;
-  overflow: hidden;
-  border: 8px solid rgba(0,0,0,0.55);
-  position: relative;
-}
-
-.gamer-card__avatar {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  display: block;
-}
-
-.gamer-card__avatarFallback {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-size: 42px;
-  color: rgba(255,255,255,0.85);
-}
-
-.gamer-card__info {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.row {
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: rgba(255,255,255,0.04);
-  padding: 12px 12px;
-}
-
-.row--header {
-  background: rgba(16,124,16,0.10);
-  border-color: rgba(16,124,16,0.35);
-}
-
-.row__label {
-  font-size: 12px;
-  color: var(--muted);
-  margin-bottom: 4px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.row__value {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text);
-  word-break: break-word;
-}
-
-.gamer-card__footer {
-  padding: 12px 16px 16px;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  justify-content: space-between;
-  background: #101014;
-  border-top: 1px solid var(--border);
-}
-
-.pill {
-  display: inline-block;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid var(--border);
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.disclaimer {
-  font-size: 12px;
-  color: rgba(255,255,255,0.55);
-  text-align: right;
-}
-
-/* Donate block */
-.donate {
-  margin-top: 14px;
-  padding: 14px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.04);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.donate__text {
-  margin: 0;
-  color: rgba(255,255,255,0.75);
-  font-size: 13px;
-}
-
-.donate__btn {
-  display: inline-block;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.15);
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.9);
-  text-decoration: none;
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-.small-note {
-  margin-top: 14px;
-  color: rgba(255,255,255,0.55);
-  text-align: center;
-  font-size: 12px;
-}
-
-.mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-}
+  const params = new URLSearchParams(window.location.search);
+  const gamertag = params.get("gamertag");
+  if (gamertag) {
+    document.getElementById("gamertagInput").value = gamertag;
+    generateCard();
+  }
+});
