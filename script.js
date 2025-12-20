@@ -2,33 +2,38 @@ const WORKER_URL =
   "https://falling-cake-f670.kirkjlemon.workers.dev/";
 
 async function generateRecap() {
-  const gamertagInput = document.getElementById("gamertagInput");
-  const gamertag = gamertagInput.value.trim();
+  const gamertag = document
+    .getElementById("gamertagInput")
+    .value.trim();
 
   if (!gamertag) {
     alert("Please enter a Gamertag");
     return;
   }
 
+  console.log("Generating recap for:", gamertag);
+
   document.getElementById("recap").classList.add("hidden");
 
   try {
-    const response = await fetch(
-      `${WORKER_URL}?gamertag=${encodeURIComponent(gamertag)}`
-    );
+    const url =
+      `${WORKER_URL}?gamertag=${encodeURIComponent(gamertag)}`;
 
-    if (!response.ok) {
-      throw new Error("Worker request failed");
-    }
+    console.log("Fetching:", url);
+
+    const response = await fetch(url);
+
+    console.log("Response status:", response.status);
 
     const data = await response.json();
+
+    console.log("Worker data:", data);
 
     if (!data.exists) {
       alert("Gamertag not found");
       return;
     }
 
-    // ---- Always safe ----
     document.getElementById("playerName").innerText =
       `🎮 ${data.gamertag}'s 2025 Recap`;
 
@@ -36,27 +41,23 @@ async function generateRecap() {
       "FPS-Focused Player";
 
     document.getElementById("achievements").innerText =
-      data.availableData.achievements
-        ? "Available"
-        : "Private / Not Public";
+      "Private / Not Public";
 
     document.getElementById("gamerscore").innerText =
-      data.availableData.gamerscore && data.gamerscore !== null
-        ? data.gamerscore.toLocaleString()
-        : "Private / Not Public";
+      "Private / Not Public";
 
     document.getElementById("playtime").innerText =
       "Estimated";
 
     document.getElementById("recap").classList.remove("hidden");
 
-    const url = new URL(window.location.href);
-    url.searchParams.set("gamertag", gamertag);
-    window.history.replaceState({}, "", url);
+    const pageUrl = new URL(window.location.href);
+    pageUrl.searchParams.set("gamertag", gamertag);
+    window.history.replaceState({}, "", pageUrl);
 
-  } catch (error) {
-    console.error("Recap error:", error);
-    alert("Failed to load recap");
+  } catch (err) {
+    console.error("Recap failed:", err);
+    alert("Failed to load Xbox Recap");
   }
 }
 
