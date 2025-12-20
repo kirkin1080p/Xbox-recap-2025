@@ -2,61 +2,54 @@ const WORKER_URL =
   "https://falling-cake-f670.kirkjlemon.workers.dev/";
 
 async function generateRecap() {
-  const gamertag = document
-    .getElementById("gamertagInput")
-    .value.trim();
-
+  const gamertag = document.getElementById("gamertagInput").value.trim();
   if (!gamertag) {
     alert("Please enter a Gamertag");
     return;
   }
 
-  console.log("Generating recap for:", gamertag);
-
   document.getElementById("recap").classList.add("hidden");
 
   try {
-    const url =
-      `${WORKER_URL}?gamertag=${encodeURIComponent(gamertag)}`;
+    const res = await fetch(
+      `${WORKER_URL}?gamertag=${encodeURIComponent(gamertag)}`
+    );
 
-    console.log("Fetching:", url);
-
-    const response = await fetch(url);
-
-    console.log("Response status:", response.status);
-
-    const data = await response.json();
-
-    console.log("Worker data:", data);
+    const data = await res.json();
 
     if (!data.exists) {
       alert("Gamertag not found");
       return;
     }
 
+    const stats = data.stats;
+
     document.getElementById("playerName").innerText =
       `🎮 ${data.gamertag}'s 2025 Recap`;
 
+    // ---- REAL DATA ----
     document.getElementById("topGame").innerText =
-      "FPS-Focused Player";
+      stats.engagementLevel;
 
     document.getElementById("achievements").innerText =
-      "Private / Not Public";
+      `${stats.daysActive} day${stats.daysActive > 1 ? "s" : ""} active`;
 
     document.getElementById("gamerscore").innerText =
-      "Private / Not Public";
+      `${stats.lookupCount} recap check${stats.lookupCount > 1 ? "s" : ""}`;
 
     document.getElementById("playtime").innerText =
-      "Estimated";
+      stats.earlyAdopter
+        ? "Early 2025 Recap user"
+        : "Joined Recap later in 2025";
 
     document.getElementById("recap").classList.remove("hidden");
 
-    const pageUrl = new URL(window.location.href);
-    pageUrl.searchParams.set("gamertag", gamertag);
-    window.history.replaceState({}, "", pageUrl);
+    const url = new URL(window.location.href);
+    url.searchParams.set("gamertag", gamertag);
+    window.history.replaceState({}, "", url);
 
   } catch (err) {
-    console.error("Recap failed:", err);
+    console.error(err);
     alert("Failed to load Xbox Recap");
   }
 }
@@ -64,7 +57,6 @@ async function generateRecap() {
 window.addEventListener("DOMContentLoaded", () => {
   const params = new URLSearchParams(window.location.search);
   const gamertag = params.get("gamertag");
-
   if (gamertag) {
     document.getElementById("gamertagInput").value = gamertag;
     generateRecap();
