@@ -1,150 +1,99 @@
-:root {
-  --bg: #0e0e10;
-  --card: #1b1b1f;
-  --card2: #141418;
-  --text: #ffffff;
-  --muted: rgba(255,255,255,0.7);
-  --accent: #107c10;     /* Xbox green */
-  --banner: #c9ad15;     /* template yellow */
-  --border: rgba(255,255,255,0.10);
+/* Secondary button */
+.btn-secondary {
+  margin-top: 10px;
+  width: auto;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.9);
+  cursor: pointer;
 }
+.btn-secondary:hover { filter: brightness(1.05); }
 
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  font-family: Arial, Helvetica, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-}
-
-.page {
-  min-height: 100vh;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 24px 12px 60px;
-}
-
-.container {
+.btn-primary {
   width: 100%;
-  max-width: 720px;
-}
-
-.title {
-  margin: 0 0 8px;
-  color: var(--accent);
-  text-align: center;
-}
-
-.subtitle {
-  margin: 0 0 16px;
-  text-align: center;
-  color: var(--muted);
-}
-
-.search {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
-  margin-bottom: 18px;
-}
-
-input {
-  width: 100%;
+  margin-top: 10px;
   padding: 12px 14px;
   border-radius: 10px;
-  border: 1px solid var(--border);
-  background: #0b0b0d;
-  color: var(--text);
-  font-size: 16px;
-  outline: none;
-}
-
-input:focus {
-  border-color: rgba(16,124,16,0.6);
-  box-shadow: 0 0 0 3px rgba(16,124,16,0.2);
-}
-
-button {
-  width: 100%;
-  padding: 12px 14px;
-  background: var(--accent);
-  color: white;
-  font-size: 16px;
   border: none;
+  background: #107c10;
+  color: white;
+  cursor: pointer;
+}
+.btn-primary:hover { filter: brightness(1.05); }
+
+.row__actions { margin-top: 8px; }
+
+/* Modal */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  z-index: 50;
+}
+
+.modal__card {
+  width: 100%;
+  max-width: 520px;
+  border-radius: 16px;
+  background: #121216;
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  overflow: hidden;
+}
+
+.modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+.modal__header h2 { margin: 0; font-size: 16px; }
+
+.modal__close {
+  width: auto;
+  padding: 8px 10px;
   border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: white;
   cursor: pointer;
 }
 
-button:hover { filter: brightness(1.05); }
+.modal__body { padding: 14px 16px 16px; }
 
-.hidden { display: none; }
-
-/* Gamer Card */
-.gamer-card {
-  overflow: hidden;
-  border-radius: 16px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  box-shadow: 0 18px 60px rgba(0,0,0,0.45);
-}
-
-.gamer-card__banner {
-  background: var(--banner);
-  height: 120px;
-  display: flex;
-  align-items: center;
-  padding: 18px 18px;
-}
-
-.gamer-card__bannerText {
-  font-weight: 900;
-  letter-spacing: 2px;
-  color: rgba(0,0,0,0.75);
-  text-transform: uppercase;
-}
-
-.gamer-card__body {
-  display: grid;
-  grid-template-columns: 160px 1fr;
-  gap: 14px;
-  padding: 16px;
-  background: var(--card2);
-}
-
-.gamer-card__avatarWrap {
-  background: #ffffff;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 8px solid rgba(0,0,0,0.55);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 160px;
-  height: 160px;
-}
-
-.gamer-card__avatar {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
+.field {
   display: block;
+  margin-bottom: 12px;
+}
+.field span {
+  display: block;
+  font-size: 12px;
+  color: rgba(255,255,255,0.7);
+  margin-bottom: 6px;
+}
+.field input {
+  width: 100%;
 }
 
-
-.gamer-card__info {
+.check {
   display: flex;
-  flex-direction: column;
   gap: 10px;
+  align-items: center;
+  margin-top: 8px;
+  margin-bottom: 6px;
+  color: rgba(255,255,255,0.8);
+  font-size: 13px;
 }
 
-.row {
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: rgba(255,255,255,0.04);
-  padding: 12px 12px;
+.status {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: rgba(255,255,255,0.7);
 }
-
-.row--hea
