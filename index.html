@@ -3,164 +3,266 @@
 <head>
   <meta charset="UTF-8" />
   <title>Xbox Recap 2026</title>
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Your Xbox year, tracked properly. Xbox Recap 2026." />
+  <meta name="description" content="Xbox Recap 2026 — tracked, not guessed." />
 
   <link rel="stylesheet" href="./style.css" />
 
-  <!-- Inter font -->
+  <!-- Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 
 <body>
+  <div class="bg">
+    <div class="bgGlow"></div>
+  </div>
 
-  <!-- Header -->
-  <header class="site-header">
-    <h1>🎮 Xbox Recap 2026</h1>
-    <p class="tagline">Your Xbox year — tracked, not guessed.</p>
+  <header class="siteHeader" id="siteHeader">
+    <div class="brand">
+      <div class="logo">X</div>
+      <div>
+        <h1>Xbox Recap <span class="year">2026</span></h1>
+        <p class="tagline">Tracked properly. No guesswork.</p>
+      </div>
+    </div>
+
+    <div class="headerActions">
+      <a class="chip" href="https://buymeacoffee.com/KeepXboxFree" target="_blank" rel="noreferrer">🍪 Support</a>
+      <a class="chip" id="openEmbedLink" href="#" title="Live signature card">🪪 Live Card</a>
+    </div>
   </header>
 
-  <!-- Search -->
-  <section class="search-section">
-    <input
-      id="gamertagInput"
-      type="text"
-      placeholder="Enter Xbox Gamertag"
-      autocomplete="off"
-    />
-    <button id="generateBtn">Generate GamerCard</button>
-  </section>
-
-  <!-- Sign-in prompt -->
-  <section id="signinPrompt" class="signin-prompt hidden">
-    <p>
-      🔐 Want richer stats, achievements, and images?
-      <strong>Sign in with Xbox</strong> for the best experience.
-    </p>
-    <a id="signinBtn" class="signin-btn" href="#" target="_blank">
-      Sign in with Xbox
-    </a>
-  </section>
-
-  <!-- Status -->
-  <section id="status" class="status hidden"></section>
-
-  <!-- GamerCard -->
-  <main id="gamerCard" class="gamer-card hidden">
-
-    <!-- Top -->
-    <div class="card-header">
-      <img id="profilePic" class="profile-pic" src="" alt="Xbox Gamerpic" />
-      <div class="header-text">
-        <h2 id="gtName">Gamertag</h2>
-        <p id="presence">Last seen…</p>
-      </div>
-    </div>
-
-    <!-- Core stats -->
-    <div class="card-grid">
-
-      <div class="stat">
-        <span class="label">Gamerscore</span>
-        <span class="value" id="gamerscore">—</span>
-        <span class="sub" id="gamerscoreDelta"></span>
+  <main class="wrap">
+    <section class="searchRow" id="searchRow">
+      <div class="searchBox">
+        <label class="label" for="gamertagInput">Gamertag</label>
+        <div class="searchInputRow">
+          <input id="gamertagInput" type="text" placeholder="e.g. KirkIn1080p" autocomplete="off" />
+          <button id="generateBtn" class="btn primary">Generate</button>
+        </div>
+        <p class="hint">Tip: share the link after you generate. It will keep the gamertag in the URL.</p>
       </div>
 
-      <div class="stat">
-        <span class="label">Days Played</span>
-        <span class="value" id="daysPlayed">—</span>
-        <span class="sub" id="playRange"></span>
+      <div class="ctaBox" id="signinPrompt">
+        <div class="ctaTop">
+          <div class="ctaIcon">🔐</div>
+          <div>
+            <p class="ctaTitle">Want the best version?</p>
+            <p class="ctaText">Connect Xbox to unlock richer stats, achievements & images.</p>
+          </div>
+        </div>
+        <a id="signinBtn" class="btn ghost" href="#" target="_blank" rel="noreferrer">Sign in with Xbox</a>
+        <p class="tiny">By generating a recap you agree to tracking from today onward. We don’t sell data.</p>
+      </div>
+    </section>
+
+    <section id="status" class="status hidden"></section>
+
+    <!-- GamerCard -->
+    <section id="gamerCardWrap" class="cardShell hidden">
+      <div class="cardTopBar">
+        <div class="cardTopLeft">
+          <span class="pill" id="dataQualityPill">Tracking</span>
+          <span class="pill subtle" id="lastUpdatedPill">Updated —</span>
+        </div>
+
+        <div class="cardTopRight">
+          <button id="exportBtn" class="btn small">Export PNG</button>
+          <button id="copyLinkBtn" class="btn small ghost">Copy link</button>
+        </div>
       </div>
 
-      <div class="stat">
-        <span class="label">Favourite Game</span>
-        <span class="value" id="favGame">—</span>
-        <span class="sub" id="favGameSessions"></span>
+      <div id="gamerCard" class="gamerCard">
+        <div class="gamerHeader">
+          <div class="pfpWrap">
+            <img id="profilePic" class="pfp" alt="Xbox gamerpic" />
+            <div class="pfpRing"></div>
+          </div>
+
+          <div class="who">
+            <h2 id="gtName" class="gtName">—</h2>
+            <p id="presence" class="presence muted">—</p>
+
+            <div class="miniRow">
+              <div class="mini">
+                <span class="miniLabel">Gamerscore</span>
+                <span class="miniValue" id="gamerscore">—</span>
+                <span class="miniSub" id="gamerscoreDelta"></span>
+              </div>
+
+              <div class="mini">
+                <span class="miniLabel">Days played</span>
+                <span class="miniValue" id="daysPlayed">—</span>
+                <span class="miniSub" id="playRange"></span>
+              </div>
+
+              <div class="mini">
+                <span class="miniLabel">Favourite</span>
+                <span class="miniValue" id="favGame">—</span>
+                <span class="miniSub" id="favGameSessions"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats grid -->
+        <div class="grid">
+          <div class="stat">
+            <div class="statLabel">Current streak</div>
+            <div class="statValue" id="currentStreak">—</div>
+            <div class="statSub" id="longestStreak">—</div>
+          </div>
+
+          <div class="stat">
+            <div class="statLabel">Longest break</div>
+            <div class="statValue" id="longestBreak">—</div>
+            <div class="statSub">days away</div>
+          </div>
+
+          <div class="stat">
+            <div class="statLabel">Unique games</div>
+            <div class="statValue" id="uniqueGames">—</div>
+            <div class="statSub" id="oneHit">—</div>
+          </div>
+
+          <div class="stat">
+            <div class="statLabel">Peak day</div>
+            <div class="statValue" id="peakDay">—</div>
+            <div class="statSub" id="peakDaySub">—</div>
+          </div>
+
+          <div class="stat">
+            <div class="statLabel">Most active weekday</div>
+            <div class="statValue" id="activeWeekday">—</div>
+            <div class="statSub" id="activeWeekdaySub">—</div>
+          </div>
+
+          <div class="stat">
+            <div class="statLabel">Most active month</div>
+            <div class="statValue" id="activeMonth">—</div>
+            <div class="statSub" id="activeMonthSub">—</div>
+          </div>
+        </div>
+
+        <!-- Achievement highlight -->
+        <div id="achievementBlock" class="feature hidden">
+          <div class="featureHead">
+            <div class="featureIcon">🏆</div>
+            <div>
+              <div class="featureTitle">Rarest achievement</div>
+              <div class="featureSub" id="achievementContext">—</div>
+            </div>
+          </div>
+
+          <div class="achievementRow">
+            <img id="achievementIcon" class="achIcon" alt="Achievement icon" />
+            <div>
+              <div id="achievementName" class="achName">—</div>
+              <div id="achievementPercent" class="achMeta muted">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Journal preview -->
+        <div class="feature">
+          <div class="featureHead">
+            <div class="featureIcon">📓</div>
+            <div>
+              <div class="featureTitle">Xbox Journal</div>
+              <div class="featureSub">Auto-written daily. Because your console has opinions.</div>
+            </div>
+          </div>
+          <div id="blogEntries" class="blogEntries">
+            <div class="blogLine muted">Loading entries…</div>
+          </div>
+        </div>
+
+        <!-- Footer line -->
+        <div class="cardFooter">
+          <div class="footerLeft">
+            <div class="tiny muted" id="trackingInfo">—</div>
+          </div>
+
+          <div class="footerRight">
+            <div class="signature muted">xboxrecap • live card</div>
+          </div>
+        </div>
       </div>
 
-      <div class="stat">
-        <span class="label">Current Streak</span>
-        <span class="value" id="currentStreak">—</span>
-        <span class="sub" id="longestStreak"></span>
-      </div>
+      <!-- Share/Embed -->
+      <div class="shareBox">
+        <div class="shareTitle">Signature / Embed</div>
+        <div class="shareGrid">
+          <div class="shareItem">
+            <div class="shareLabel">Live card link</div>
+            <div class="shareRow">
+              <input id="liveLink" readonly />
+              <button id="copyLiveLinkBtn" class="btn small ghost">Copy</button>
+            </div>
+            <div class="tiny muted">This is a responsive “signature card” page.</div>
+          </div>
 
-      <div class="stat">
-        <span class="label">Unique Games</span>
-        <span class="value" id="uniqueGames">—</span>
-      </div>
-
-      <div class="stat">
-        <span class="label">One-Hit Wonders</span>
-        <span class="value" id="oneHit">—</span>
-      </div>
-
-    </div>
-
-    <!-- Achievement highlight -->
-    <section id="achievementBlock" class="achievement hidden">
-      <h3>🏆 Rarest Achievement</h3>
-      <div class="achievement-inner">
-        <img id="achievementIcon" src="" alt="Achievement icon" />
-        <div>
-          <p id="achievementName"></p>
-          <small id="achievementPercent"></small>
+          <div class="shareItem">
+            <div class="shareLabel">BBCode (forums)</div>
+            <div class="shareRow">
+              <input id="bbcode" readonly />
+              <button id="copyBbBtn" class="btn small ghost">Copy</button>
+            </div>
+            <div class="tiny muted">Paste into forum signature settings.</div>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- Blog preview -->
-    <section id="blogBlock" class="blog">
-      <h3>📓 Xbox Journal</h3>
-      <div id="blogEntries">
-        <p class="muted">Loading latest entry…</p>
+    <!-- Donate section -->
+    <section class="donate" id="donate">
+      <div class="donateLeft">
+        <h3>Keep it free</h3>
+        <p class="muted">
+          Donations help keep Xbox Recap online and fund improvements (better stats, better visuals, better everything).
+        </p>
+        <div class="donateStats">
+          <div class="donateStat">
+            <div class="donateNum" id="donateTotal">—</div>
+            <div class="donateLab muted">Raised</div>
+          </div>
+          <div class="donateStat">
+            <div class="donateNum" id="donateSupporters">—</div>
+            <div class="donateLab muted">Support events</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="donateRight">
+        <!-- Buy Me a Coffee button -->
+        <script
+          type="text/javascript"
+          src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js"
+          data-name="bmc-button"
+          data-slug="KeepXboxFree"
+          data-color="#0ecd11"
+          data-emoji="🍪"
+          data-font="Inter"
+          data-text="Buy me a cookie"
+          data-outline-color="#000000"
+          data-font-color="#000000"
+          data-coffee-color="#FFDD00">
+        </script>
       </div>
     </section>
 
-    <!-- Metadata -->
-    <footer class="card-footer">
-      <p id="trackingInfo"></p>
-      <p id="dataQuality"></p>
+    <footer class="siteFooter" id="siteFooter">
+      <p class="muted">
+        Xbox Recap tracks activity from the moment you use it. Some Xbox data depends on account privacy and sign-in.
+      </p>
     </footer>
-
   </main>
 
-  <!-- Donate -->
-  <section class="donate-section">
-    <h3>☕ Support Xbox Recap</h3>
-    <p class="muted">
-      This project is free, community-run, and privacy-respecting.
-      Donations help keep it online and improving.
-    </p>
+  <!-- html2canvas for export-to-PNG (free CDN) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
 
-    <!-- Buy Me a Coffee button -->
-    <script
-      type="text/javascript"
-      src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js"
-      data-name="bmc-button"
-      data-slug="KeepXboxFree"
-      data-color="#0ecd11"
-      data-emoji="🍪"
-      data-font="Inter"
-      data-text="Buy me a cookie"
-      data-outline-color="#000000"
-      data-font-color="#000000"
-      data-coffee-color="#FFDD00">
-    </script>
-  </section>
-
-  <!-- Footer -->
-  <footer class="site-footer">
-    <p>
-      Xbox Recap tracks activity <strong>from the moment you join</strong>.
-      No guesswork. No scraping. No selling data.
-    </p>
-  </footer>
-
-  <!-- App JS -->
-  <script src="./script.js?v=26"></script>
-
+  <script src="./script.js?v=2026"></script>
 </body>
 </html>
