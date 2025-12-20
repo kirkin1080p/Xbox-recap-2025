@@ -43,7 +43,7 @@ async function generateRecap() {
 
     const topGames = [
       "Call of Duty",
-      "Halo Infinite",
+      "Halo 6",
       "Battlefield 2042",
       "Rainbow Six Siege",
       "Warzone"
