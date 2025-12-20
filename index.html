@@ -4,35 +4,32 @@
   <meta charset="UTF-8" />
   <title>Xbox Recap 2026</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="./style.css?v=7" />
 </head>
 <body>
   <div class="page">
     <div class="container">
       <h1 class="title">🎮 Xbox Recap 2026</h1>
-      <p class="subtitle">
-        Enter a Gamertag — we’ll generate a GamerCard and start tracking 2026 stats.
-      </p>
+      <p class="subtitle">Enter a Gamertag — generate a GamerCard and start tracking.</p>
 
       <div class="search">
         <input id="gamertagInput" placeholder="Enter Gamertag" autocomplete="off" />
         <button id="generateBtn" type="button">Generate GamerCard</button>
       </div>
 
-      <!-- GamerCard -->
       <section id="gamerCard" class="gamer-card hidden" aria-live="polite">
         <div class="gamer-card__banner">
           <div class="gamer-card__bannerText">XBOX RECAP 2026</div>
         </div>
 
         <div class="gamer-card__body">
-          <!-- Left: avatar -->
+          <!-- Avatar -->
           <div class="gamer-card__avatarWrap">
             <img id="gamerPic" class="gamer-card__avatar" alt="Gamerpic" />
             <div id="avatarFallback" class="gamer-card__avatarFallback">🎮</div>
           </div>
 
-          <!-- Right: rows -->
+          <!-- Info -->
           <div class="gamer-card__info">
             <div class="row row--header">
               <div class="row__label">Gamertag</div>
@@ -47,6 +44,16 @@
             <div class="row">
               <div class="row__label">Now Playing / Status</div>
               <div id="gtPresence" class="row__value">—</div>
+            </div>
+
+            <div class="row">
+              <div class="row__label">Last Observed Game</div>
+              <div id="gtLastObserved" class="row__value">—</div>
+            </div>
+
+            <div class="row">
+              <div class="row__label">Top Tracked Game (Unique Days)</div>
+              <div id="gtTopTracked" class="row__value">—</div>
             </div>
 
             <div class="row">
@@ -72,21 +79,23 @@
           </div>
           <div class="footer__right">
             <span class="disclaimer">
-              2026 stats build over time as we track. Public presence may be private/offline.
+              Tracked stats build over time. “Last observed” requires public presence.
             </span>
           </div>
         </div>
       </section>
 
-      <!-- Donate (placeholder link target for now) -->
       <div class="donate">
-        <p class="donate__text">
-          Want better recaps (and more tracking coverage)?
-        </p>
-        <a class="donate__btn" href="#" aria-disabled="true" title="Hook this to your donate page later">
-          Donate (coming soon)
-        </a>
+        <p class="donate__text">Want better tracking coverage?</p>
+        <a class="donate__btn" href="#" aria-disabled="true">Donate (coming soon)</a>
       </div>
 
       <p class="small-note">
         Tip: Share links like <span class="mono">?gamertag=KirkIn1080p</span>
+      </p>
+    </div>
+  </div>
+
+  <script src="./script.js?v=7"></script>
+</body>
+</html>
