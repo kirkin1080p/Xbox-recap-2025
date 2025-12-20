@@ -8,38 +8,74 @@
 </head>
 <body>
 
-  <div class="container">
-    <h1>🎮 Xbox Recap 2025</h1>
-    <p>Enter a Gamertag to see their year in gaming</p>
+  <div class="page">
+    <div class="container">
+      <h1 class="title">🎮 Xbox Recap 2025</h1>
+      <p class="subtitle">Enter a Gamertag to generate a gamer card + recap stats</p>
 
-    <input id="gamertagInput" placeholder="Enter Gamertag" />
-    <button onclick="generateRecap()">Generate Recap</button>
-
-    <div id="recap" class="hidden">
-      <h2 id="playerName"></h2>
-
-      <div class="card">
-        <h3>🔥 Top Game</h3>
-        <p id="topGame"></p>
+      <div class="search">
+        <input id="gamertagInput" placeholder="Enter Gamertag" />
+        <button id="generateBtn">Generate Recap</button>
       </div>
 
-      <div class="card">
-        <h3>🏆 Achievements Earned</h3>
-        <p id="achievements"></p>
-      </div>
+      <!-- GamerCard -->
+      <section id="gamerCard" class="gamer-card hidden" aria-live="polite">
+        <div class="gamer-card__banner">
+          <div class="gamer-card__bannerText">XBOX RECAP 2025</div>
+        </div>
 
-      <div class="card">
-        <h3>⭐ Gamerscore Gained</h3>
-        <p id="gamerscore"></p>
-      </div>
+        <div class="gamer-card__body">
+          <!-- Left: avatar -->
+          <div class="gamer-card__avatarWrap">
+            <img id="gamerPic" class="gamer-card__avatar" alt="Gamerpic" />
+          </div>
 
-      <div class="card">
-        <h3>⏱️ Estimated Playtime</h3>
-        <p id="playtime"></p>
-      </div>
+          <!-- Right: info rows -->
+          <div class="gamer-card__info">
+            <div class="row row--header">
+              <div class="row__label">Gamertag</div>
+              <div id="gtName" class="row__value">—</div>
+            </div>
 
-      <p class="disclaimer">
-        *Stats are estimated using public profile data.
+            <div class="row">
+              <div class="row__label">Gamerscore</div>
+              <div id="gtGamerscore" class="row__value">—</div>
+            </div>
+
+            <div class="row">
+              <div class="row__label">Now Playing / Status</div>
+              <div id="gtPresence" class="row__value">—</div>
+            </div>
+
+            <div class="row">
+              <div class="row__label">First Seen (Recap)</div>
+              <div id="gtFirstSeen" class="row__value">—</div>
+            </div>
+
+            <div class="row">
+              <div class="row__label">Last Seen (Recap)</div>
+              <div id="gtLastSeen" class="row__value">—</div>
+            </div>
+
+            <div class="row">
+              <div class="row__label">Recap Checks</div>
+              <div id="gtChecks" class="row__value">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="gamer-card__footer">
+          <div class="footer__left">
+            <span class="pill" id="gtSource">source: —</span>
+          </div>
+          <div class="footer__right">
+            <span class="disclaimer">Gameplay stats require opt-in. This card shows public/profile signals + recap tracking.</span>
+          </div>
+        </div>
+      </section>
+
+      <p class="small-note">
+        Tip: Share links like <span class="mono">?gamertag=KirkIn1080p</span>
       </p>
     </div>
   </div>
