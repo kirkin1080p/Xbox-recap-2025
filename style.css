@@ -121,15 +121,18 @@ button:hover { filter: brightness(1.05); }
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 160px;
+  width: 160px;
+  height: 160px;
 }
 
 .gamer-card__avatar {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
   display: block;
 }
+
 
 .gamer-card__info {
   display: flex;
