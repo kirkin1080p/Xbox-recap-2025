@@ -4,20 +4,21 @@
   <meta charset="UTF-8" />
   <title>Xbox Recap 2026</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="./style.css?v=11" />
+  <link rel="stylesheet" href="./style.css?v=20" />
 </head>
 <body>
   <div class="page">
     <div class="container">
       <h1 class="title">🎮 Xbox Recap 2026</h1>
-      <p class="subtitle">Generate a GamerCard. Sign in to unlock gamerscore, gamerpic, and tracking.</p>
+      <p class="subtitle">Generate a GamerCard. Tracking begins from the first time we see you.</p>
 
       <div class="actions">
         <a
           class="signin-btn"
           href="https://xbl.io/app/auth/4f6e9e47-98c9-0501-ae8a-4c078183a6dc"
+          title="Optional — will unlock gamerscore/gamerpic later"
         >
-          Sign in with Xbox
+          Sign in with Xbox (optional)
         </a>
       </div>
 
@@ -44,23 +45,23 @@
             </div>
 
             <div class="row">
-              <div class="row__label">Gamerscore (current)</div>
-              <div id="gtGamerscore" class="row__value">—</div>
+              <div class="row__label">Gamerscore</div>
+              <div id="gtGamerscore" class="row__value">Not linked</div>
             </div>
 
             <div class="row">
-              <div class="row__label">Now Playing / Status</div>
-              <div id="gtPresence" class="row__value">—</div>
+              <div class="row__label">Status</div>
+              <div id="gtPresence" class="row__value">Not linked</div>
             </div>
 
             <div class="row">
               <div class="row__label">Last Observed Game</div>
-              <div id="gtLastObserved" class="row__value">—</div>
+              <div id="gtLastObserved" class="row__value">Not observed yet</div>
             </div>
 
             <div class="row">
               <div class="row__label">Top Tracked Game (Unique Days)</div>
-              <div id="gtTopTracked" class="row__value">—</div>
+              <div id="gtTopTracked" class="row__value">Not enough tracking yet</div>
             </div>
 
             <div class="row">
@@ -86,7 +87,7 @@
           </div>
           <div class="footer__right">
             <span class="disclaimer" id="gtNote">
-              Sign in to unlock profile signals + tracking.
+              Profile signals require sign-in. Tracking stats work without it.
             </span>
           </div>
         </div>
@@ -103,6 +104,6 @@
     </div>
   </div>
 
-  <script src="./script.js?v=10"></script>
+  <script src="./script.js?v=20"></script>
 </body>
 </html>
