@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Linking Xbox…</title>
+  <style>
+    body { margin:0; font-family: Arial, Helvetica, sans-serif; background:#0e0e10; color:#fff; }
+    .wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
+    .card {
+      width:100%; max-width:520px; background:#141418; border:1px solid rgba(255,255,255,0.12);
+      border-radius:16px; padding:18px; box-shadow:0 18px 60px rgba(0,0,0,0.45);
+    }
+    h1 { margin:0 0 10px; font-size:18px; }
+    p { margin:0 0 10px; color:rgba(255,255,255,0.75); }
+    .status { margin-top:12px; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,0.06); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Linking your Xbox profile…</h1>
+      <p>Please don’t close this tab.</p>
+      <div id="status" class="status">Waiting for code…</div>
+    </div>
+  </div>
+
+  <script>
+    // ✅ Your Cloudflare Worker base URL
+    const WORKER_URL = "https://falling-cake-f670.kirkjlemon.workers.dev";
+
+    // Optional: where to return after linking
+    const HOME_URL = "https://kirkin1080p.github.io/Xbox-recap-2025/";
+
+    const statusEl = document.getElementById("status");
+
+    function setStatus(msg) {
+      statusEl.textContent = msg;
+    }
+
+    function getParam(name) {
+      return new URLSearchParams(window.location.search).get(name);
+    }
+
+    async function run() {
+      const code = getParam("code");
+      const state = getParam("state"); // optional; depends on how you start auth
+
+      if (!code) {
+        setStatus("No code found in URL. (Did the login redirect correctly?)");
+        return;
+      }
+
+      setStatus("Got code. Claiming session…");
+
+      try {
+        const res = await fetch(`${WORKER_URL}/claim`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code, state })
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          const err = data && data.error ? data.error : `HTTP ${res.status}`;
+          setStatus(`Claim failed: ${err}`);
+          return;
+        }
+
+        // Expecting worker to return { gamertag: "..." }
+        const gamertag = (data && data.gamertag) ? String(data.gamertag) : "";
+
+        if (!gamertag) {
+          setStatus("Claimed, but no gamertag returned. Worker needs to return gamertag.");
+          return;
+        }
+
+        setStatus(`Linked! Redirecting as ${gamertag}…`);
+
+        // Redirect back to home, auto-load the recap
+        const url = new URL(HOME_URL);
+        url.searchParams.set("gamertag", gamertag);
+
+        // Optional: keep some state for later (e.g., linked flag)
+        localStorage.setItem("xboxrecap_linked_gamertag", gamertag);
+
+        window.location.replace(url.toString());
+      } catch (e) {
+        console.error(e);
+        setStatus("Network error while claiming. Check Worker URL / CORS.");
+      }
+    }
+
+    run();
+  </script>
+</body>
+</html>
