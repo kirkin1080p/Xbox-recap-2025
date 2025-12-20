@@ -14,7 +14,6 @@
     h1 { margin:0 0 10px; font-size:18px; }
     p { margin:0 0 10px; color:rgba(255,255,255,0.75); }
     .status { margin-top:12px; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,0.06); }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace; }
   </style>
 </head>
 <body>
@@ -27,65 +26,45 @@
   </div>
 
   <script>
-    // ✅ Your Cloudflare Worker base URL
     const WORKER_URL = "https://falling-cake-f670.kirkjlemon.workers.dev";
-
-    // Optional: where to return after linking
     const HOME_URL = "https://kirkin1080p.github.io/Xbox-recap-2025/";
-
     const statusEl = document.getElementById("status");
 
-    function setStatus(msg) {
-      statusEl.textContent = msg;
-    }
-
-    function getParam(name) {
-      return new URLSearchParams(window.location.search).get(name);
-    }
+    function setStatus(msg) { statusEl.textContent = msg; }
 
     async function run() {
-      const code = getParam("code");
-      const state = getParam("state"); // optional; depends on how you start auth
-
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("code");
       if (!code) {
-        setStatus("No code found in URL. (Did the login redirect correctly?)");
+        setStatus("No code found in URL. Check your OpenXBL Redirect URI.");
         return;
       }
 
-      setStatus("Got code. Claiming session…");
+      setStatus("Got code. Claiming…");
 
       try {
         const res = await fetch(`${WORKER_URL}/claim`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code, state })
+          body: JSON.stringify({ code })
         });
 
         const data = await res.json().catch(() => ({}));
-
         if (!res.ok) {
-          const err = data && data.error ? data.error : `HTTP ${res.status}`;
-          setStatus(`Claim failed: ${err}`);
+          setStatus(`Claim failed: ${data.error || ("HTTP " + res.status)}`);
           return;
         }
 
-        // Expecting worker to return { gamertag: "..." }
-        const gamertag = (data && data.gamertag) ? String(data.gamertag) : "";
-
+        const gamertag = data.gamertag ? String(data.gamertag) : "";
         if (!gamertag) {
-          setStatus("Claimed, but no gamertag returned. Worker needs to return gamertag.");
+          setStatus("Claimed, but worker did not return a gamertag.");
           return;
         }
 
-        setStatus(`Linked! Redirecting as ${gamertag}…`);
+        setStatus(`Linked as ${gamertag}. Redirecting…`);
 
-        // Redirect back to home, auto-load the recap
         const url = new URL(HOME_URL);
         url.searchParams.set("gamertag", gamertag);
-
-        // Optional: keep some state for later (e.g., linked flag)
-        localStorage.setItem("xboxrecap_linked_gamertag", gamertag);
-
         window.location.replace(url.toString());
       } catch (e) {
         console.error(e);
