@@ -2,31 +2,37 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Xbox Recap 2025</title>
+  <title>Xbox Recap 2026</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="./style.css?v=6" />
 </head>
 <body>
   <div class="page">
     <div class="container">
-      <h1 class="title">🎮 Xbox Recap 2025</h1>
-      <p class="subtitle">Public profile signals + your 2025 gameplay recap (opt-in) + recap tracking</p>
+      <h1 class="title">🎮 Xbox Recap 2026</h1>
+      <p class="subtitle">
+        Enter a Gamertag — we’ll generate a GamerCard and start tracking 2026 stats.
+      </p>
 
       <div class="search">
-        <input id="gamertagInput" placeholder="Enter Gamertag" />
-        <button id="generateBtn">Generate Recap</button>
+        <input id="gamertagInput" placeholder="Enter Gamertag" autocomplete="off" />
+        <button id="generateBtn" type="button">Generate GamerCard</button>
       </div>
 
+      <!-- GamerCard -->
       <section id="gamerCard" class="gamer-card hidden" aria-live="polite">
         <div class="gamer-card__banner">
-          <div class="gamer-card__bannerText">XBOX RECAP 2025</div>
+          <div class="gamer-card__bannerText">XBOX RECAP 2026</div>
         </div>
 
         <div class="gamer-card__body">
+          <!-- Left: avatar -->
           <div class="gamer-card__avatarWrap">
             <img id="gamerPic" class="gamer-card__avatar" alt="Gamerpic" />
+            <div id="avatarFallback" class="gamer-card__avatarFallback">🎮</div>
           </div>
 
+          <!-- Right: rows -->
           <div class="gamer-card__info">
             <div class="row row--header">
               <div class="row__label">Gamertag</div>
@@ -44,17 +50,18 @@
             </div>
 
             <div class="row">
-              <div class="row__label">Recap Tracking</div>
-              <div id="gtTracking" class="row__value">—</div>
+              <div class="row__label">Tracking Started</div>
+              <div id="gtFirstSeen" class="row__value">—</div>
             </div>
 
-            <!-- Gameplay Recap (Opt-in) -->
-            <div class="row row--gameplay">
-              <div class="row__label">Gameplay Recap 2025 (Opt-in)</div>
-              <div id="gtGameplay" class="row__value">Locked — add your stats to unlock</div>
-              <div class="row__actions">
-                <button id="optinBtn" class="btn-secondary" type="button">Unlock Gameplay Recap</button>
-              </div>
+            <div class="row">
+              <div class="row__label">Last Seen (Recap)</div>
+              <div id="gtLastSeen" class="row__value">—</div>
+            </div>
+
+            <div class="row">
+              <div class="row__label">Recap Checks</div>
+              <div id="gtChecks" class="row__value">—</div>
             </div>
           </div>
         </div>
@@ -64,57 +71,22 @@
             <span class="pill" id="gtSource">source: —</span>
           </div>
           <div class="footer__right">
-            <span class="disclaimer">We can’t fetch historical playtime/achievements without opt-in.</span>
+            <span class="disclaimer">
+              2026 stats build over time as we track. Public presence may be private/offline.
+            </span>
           </div>
         </div>
       </section>
 
+      <!-- Donate (placeholder link target for now) -->
+      <div class="donate">
+        <p class="donate__text">
+          Want better recaps (and more tracking coverage)?
+        </p>
+        <a class="donate__btn" href="#" aria-disabled="true" title="Hook this to your donate page later">
+          Donate (coming soon)
+        </a>
+      </div>
+
       <p class="small-note">
         Tip: Share links like <span class="mono">?gamertag=KirkIn1080p</span>
-      </p>
-    </div>
-  </div>
-
-  <!-- Opt-in Modal -->
-  <div id="optinModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="optinTitle">
-    <div class="modal__card">
-      <div class="modal__header">
-        <h2 id="optinTitle">Unlock Gameplay Recap 2025</h2>
-        <button id="closeModalBtn" class="modal__close" type="button">✕</button>
-      </div>
-
-      <div class="modal__body">
-        <label class="field">
-          <span>Top games (comma separated, max 5)</span>
-          <input id="optTopGames" placeholder="e.g. Halo Infinite, MW3, Battlefield 2042" />
-        </label>
-
-        <label class="field">
-          <span>Total playtime hours in 2025</span>
-          <input id="optPlaytime" type="number" min="0" max="20000" placeholder="e.g. 420" />
-        </label>
-
-        <label class="field">
-          <span>Rarest achievement name</span>
-          <input id="optRareAch" placeholder="e.g. The One Percent" />
-        </label>
-
-        <label class="field">
-          <span>Rarest achievement game</span>
-          <input id="optRareGame" placeholder="e.g. Halo Infinite" />
-        </label>
-
-        <label class="check">
-          <input id="optConsent" type="checkbox" />
-          <span>I confirm these are my stats and I’m choosing to share them.</span>
-        </label>
-
-        <button id="submitOptinBtn" class="btn-primary" type="button">Save Gameplay Recap</button>
-        <p id="optinStatus" class="status"></p>
-      </div>
-    </div>
-  </div>
-
-  <script src="script.js"></script>
-</body>
-</html>
