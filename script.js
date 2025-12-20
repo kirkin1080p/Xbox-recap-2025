@@ -1,5 +1,18 @@
-const WORKER_URL =
-  "https://falling-cake-f670.kirkjlemon.workers.dev/";
+const WORKER_URL = "https://falling-cake-f670.kirkjlemon.workers.dev/";
+
+function safeText(v, fallback = "Unknown") {
+  if (v === null || v === undefined) return fallback;
+  const s = String(v).trim();
+  return s.length ? s : fallback;
+}
+
+function fmtDate(iso) {
+  try {
+    return new Date(iso).toLocaleString();
+  } catch {
+    return safeText(iso, "Unknown");
+  }
+}
 
 async function generateRecap() {
   const input = document.getElementById("gamertagInput");
@@ -13,63 +26,61 @@ async function generateRecap() {
   document.getElementById("recap").classList.add("hidden");
 
   try {
-    const response = await fetch(
-      `${WORKER_URL}?gamertag=${encodeURIComponent(gamertag)}`
-    );
+    const res = await fetch(`${WORKER_URL}?gamertag=${encodeURIComponent(gamertag)}`);
+    if (!res.ok) throw new Error(`Worker error: ${res.status}`);
 
-    if (!response.ok) {
-      throw new Error("Worker request failed");
-    }
-
-    const data = await response.json();
-
-    if (!data.exists || !data.recap) {
+    const data = await res.json();
+    if (!data.exists) {
       alert("Gamertag not found");
       return;
     }
 
-    const recap = data.recap;
+    const profile = data.profile || {};
+    const recap = data.recap || {};
 
-    // ---- Header ----
-    document.getElementById("playerName").innerText =
-      `🎮 ${data.gamertag}'s 2025 Recap`;
+    // Header with profile pic (if available)
+    const pic = profile.displayPicRaw ? String(profile.displayPicRaw) : "";
+    const headerEl = document.getElementById("playerName");
 
-    // ---- Card 1: Recap Status (was Top Game) ----
+    headerEl.innerHTML = pic
+      ? `🎮 <img src="${pic}" alt="Gamerpic" style="width:28px;height:28px;border-radius:50%;vertical-align:middle;margin:0 8px;"> ${data.gamertag}'s 2025 Recap`
+      : `🎮 ${data.gamertag}'s 2025 Recap`;
+
+    // Card mapping (tight + truthful):
+    // "Top Game" -> last known activity (presenceText / playing)
     document.getElementById("topGame").innerText =
-      recap.recapStatus;
+      safeText(profile.lastGame || profile.presenceText, "Offline / Private / Unknown");
 
-    // ---- Card 2: Days Active (was Achievements) ----
+    // "Achievements Earned" -> first seen (your stat)
     document.getElementById("achievements").innerText =
-      `${recap.daysActive} day${recap.daysActive > 1 ? "s" : ""} active in 2025`;
+      `First seen: ${fmtDate(recap.firstSeen)}`;
 
-    // ---- Card 3: Engagement Count (was Gamerscore) ----
+    // "Gamerscore Gained" -> current gamerscore (real) + lookup count (your stat)
+    const gs = safeText(profile.gamerscore, "Private / Unavailable");
+    const lc = safeText(recap.lookupCount, "0");
     document.getElementById("gamerscore").innerText =
-      `${recap.lookupCount} recap check${recap.lookupCount > 1 ? "s" : ""}`;
+      `Gamerscore: ${gs} • Recap checks: ${lc}`;
 
-    // ---- Card 4: Early Adopter Status (was Playtime) ----
+    // "Estimated Playtime" -> last seen (your stat)
     document.getElementById("playtime").innerText =
-      recap.earlyAdopter
-        ? "Early 2025 Recap user"
-        : "Joined Recap later in 2025";
+      `Last seen: ${fmtDate(recap.lastSeen)}`;
 
     document.getElementById("recap").classList.remove("hidden");
 
-    // ---- Shareable URL ----
+    // Shareable URL
     const url = new URL(window.location.href);
     url.searchParams.set("gamertag", gamertag);
     window.history.replaceState({}, "", url);
 
-  } catch (error) {
-    console.error("Failed to load recap:", error);
+  } catch (err) {
+    console.error(err);
     alert("Failed to load Xbox Recap");
   }
 }
 
-// ---- Auto-load from URL ----
 window.addEventListener("DOMContentLoaded", () => {
   const params = new URLSearchParams(window.location.search);
   const gamertag = params.get("gamertag");
-
   if (gamertag) {
     document.getElementById("gamertagInput").value = gamertag;
     generateRecap();
