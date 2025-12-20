@@ -4,13 +4,22 @@
   <meta charset="UTF-8" />
   <title>Xbox Recap 2026</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="./style.css?v=7" />
+  <link rel="stylesheet" href="./style.css?v=10" />
 </head>
 <body>
   <div class="page">
     <div class="container">
       <h1 class="title">🎮 Xbox Recap 2026</h1>
-      <p class="subtitle">Enter a Gamertag — generate a GamerCard and start tracking.</p>
+      <p class="subtitle">Generate a GamerCard. Sign in to unlock gamerscore, gamerpic, and tracking.</p>
+
+      <div class="actions">
+        <a
+          class="signin-btn"
+          href="https://xbl.io/app/auth/4f6e9e47-98c9-0501-ae8a-4c078183a6dc"
+        >
+          Sign in with Xbox
+        </a>
+      </div>
 
       <div class="search">
         <input id="gamertagInput" placeholder="Enter Gamertag" autocomplete="off" />
@@ -23,13 +32,11 @@
         </div>
 
         <div class="gamer-card__body">
-          <!-- Avatar -->
           <div class="gamer-card__avatarWrap">
             <img id="gamerPic" class="gamer-card__avatar" alt="Gamerpic" />
             <div id="avatarFallback" class="gamer-card__avatarFallback">🎮</div>
           </div>
 
-          <!-- Info -->
           <div class="gamer-card__info">
             <div class="row row--header">
               <div class="row__label">Gamertag</div>
@@ -78,8 +85,8 @@
             <span class="pill" id="gtSource">source: —</span>
           </div>
           <div class="footer__right">
-            <span class="disclaimer">
-              Tracked stats build over time. “Last observed” requires public presence.
+            <span class="disclaimer" id="gtNote">
+              Sign in to unlock profile signals + tracking.
             </span>
           </div>
         </div>
@@ -96,6 +103,6 @@
     </div>
   </div>
 
-  <script src="./script.js?v=7"></script>
+  <script src="./script.js?v=10"></script>
 </body>
 </html>
