@@ -1,36 +1,52 @@
 const WORKER_URL = "https://falling-cake-f670.kirkjlemon.workers.dev/";
 
-function safeText(v, fallback = "Unknown") {
+function safeText(v, fallback = "—") {
   if (v === null || v === undefined) return fallback;
   const s = String(v).trim();
   return s.length ? s : fallback;
 }
 
-function fmtDate(iso) {
+function fmtDateTime(iso) {
   try {
-    return new Date(iso).toLocaleString();
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "—";
+    return d.toLocaleString();
   } catch {
-    return safeText(iso, "Unknown");
+    return "—";
   }
 }
 
+function fmtGamerscore(gs) {
+  if (gs === null || gs === undefined) return "—";
+  const n = Number(String(gs).replace(/,/g, ""));
+  if (Number.isNaN(n)) return safeText(gs, "—");
+  return n.toLocaleString();
+}
+
+function presenceDisplay(profile) {
+  // Prefer "Playing X" extraction if available; else show presenceText; else fallback.
+  const lastGame = profile?.lastGame ? String(profile.lastGame).trim() : "";
+  const presenceText = profile?.presenceText ? String(profile.presenceText).trim() : "";
+
+  if (lastGame) return `Playing: ${lastGame}`;
+  if (presenceText) return presenceText;
+
+  return "Offline / Private / Unknown";
+}
+
 async function generateRecap() {
-  const input = document.getElementById("gamertagInput");
-  const gamertag = input.value.trim();
+  const gamertag = document.getElementById("gamertagInput").value.trim();
+  if (!gamertag) return alert("Please enter a Gamertag");
 
-  if (!gamertag) {
-    alert("Please enter a Gamertag");
-    return;
-  }
-
-  document.getElementById("recap").classList.add("hidden");
+  const card = document.getElementById("gamerCard");
+  card.classList.add("hidden");
 
   try {
     const res = await fetch(`${WORKER_URL}?gamertag=${encodeURIComponent(gamertag)}`);
-    if (!res.ok) throw new Error(`Worker error: ${res.status}`);
+    if (!res.ok) throw new Error(`Worker error ${res.status}`);
 
     const data = await res.json();
-    if (!data.exists) {
+    if (!data || data.exists === false) {
       alert("Gamertag not found");
       return;
     }
@@ -38,34 +54,31 @@ async function generateRecap() {
     const profile = data.profile || {};
     const recap = data.recap || {};
 
-    // Header with profile pic (if available)
+    // Gamerpic
     const pic = profile.displayPicRaw ? String(profile.displayPicRaw) : "";
-    const headerEl = document.getElementById("playerName");
+    const picEl = document.getElementById("gamerPic");
+    if (pic) {
+      picEl.src = pic;
+      picEl.style.visibility = "visible";
+    } else {
+      // keep layout clean if missing
+      picEl.removeAttribute("src");
+      picEl.style.visibility = "hidden";
+    }
 
-    headerEl.innerHTML = pic
-      ? `🎮 <img src="${pic}" alt="Gamerpic" style="width:28px;height:28px;border-radius:50%;vertical-align:middle;margin:0 8px;"> ${data.gamertag}'s 2025 Recap`
-      : `🎮 ${data.gamertag}'s 2025 Recap`;
+    // Fill rows
+    document.getElementById("gtName").innerText = safeText(data.gamertag, gamertag);
+    document.getElementById("gtGamerscore").innerText = fmtGamerscore(profile.gamerscore);
+    document.getElementById("gtPresence").innerText = presenceDisplay(profile);
 
-    // Card mapping (tight + truthful):
-    // "Top Game" -> last known activity (presenceText / playing)
-    document.getElementById("topGame").innerText =
-      safeText(profile.lastGame || profile.presenceText, "Offline / Private / Unknown");
+    document.getElementById("gtFirstSeen").innerText = fmtDateTime(recap.firstSeen);
+    document.getElementById("gtLastSeen").innerText = fmtDateTime(recap.lastSeen);
+    document.getElementById("gtChecks").innerText = safeText(recap.lookupCount, "0");
 
-    // "Achievements Earned" -> first seen (your stat)
-    document.getElementById("achievements").innerText =
-      `First seen: ${fmtDate(recap.firstSeen)}`;
+    document.getElementById("gtSource").innerText = `source: ${safeText(data.source, "—")}`;
 
-    // "Gamerscore Gained" -> current gamerscore (real) + lookup count (your stat)
-    const gs = safeText(profile.gamerscore, "Private / Unavailable");
-    const lc = safeText(recap.lookupCount, "0");
-    document.getElementById("gamerscore").innerText =
-      `Gamerscore: ${gs} • Recap checks: ${lc}`;
-
-    // "Estimated Playtime" -> last seen (your stat)
-    document.getElementById("playtime").innerText =
-      `Last seen: ${fmtDate(recap.lastSeen)}`;
-
-    document.getElementById("recap").classList.remove("hidden");
+    // Show card
+    card.classList.remove("hidden");
 
     // Shareable URL
     const url = new URL(window.location.href);
@@ -78,7 +91,15 @@ async function generateRecap() {
   }
 }
 
+// Button + Enter key
 window.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("generateBtn").addEventListener("click", generateRecap);
+
+  document.getElementById("gamertagInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") generateRecap();
+  });
+
+  // Auto-load from URL
   const params = new URLSearchParams(window.location.search);
   const gamertag = params.get("gamertag");
   if (gamertag) {
