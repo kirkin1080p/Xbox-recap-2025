@@ -3,107 +3,164 @@
 <head>
   <meta charset="UTF-8" />
   <title>Xbox Recap 2026</title>
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="./style.css?v=20" />
+  <meta name="description" content="Your Xbox year, tracked properly. Xbox Recap 2026." />
+
+  <link rel="stylesheet" href="./style.css" />
+
+  <!-- Inter font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
+
 <body>
-  <div class="page">
-    <div class="container">
-      <h1 class="title">🎮 Xbox Recap 2026</h1>
-      <p class="subtitle">Generate a GamerCard. Tracking begins from the first time we see you.</p>
 
-      <div class="actions">
-        <a
-          class="signin-btn"
-          href="https://xbl.io/app/auth/4f6e9e47-98c9-0501-ae8a-4c078183a6dc"
-          title="Optional — will unlock gamerscore/gamerpic later"
-        >
-          Sign in with Xbox (optional)
-        </a>
+  <!-- Header -->
+  <header class="site-header">
+    <h1>🎮 Xbox Recap 2026</h1>
+    <p class="tagline">Your Xbox year — tracked, not guessed.</p>
+  </header>
+
+  <!-- Search -->
+  <section class="search-section">
+    <input
+      id="gamertagInput"
+      type="text"
+      placeholder="Enter Xbox Gamertag"
+      autocomplete="off"
+    />
+    <button id="generateBtn">Generate GamerCard</button>
+  </section>
+
+  <!-- Sign-in prompt -->
+  <section id="signinPrompt" class="signin-prompt hidden">
+    <p>
+      🔐 Want richer stats, achievements, and images?
+      <strong>Sign in with Xbox</strong> for the best experience.
+    </p>
+    <a id="signinBtn" class="signin-btn" href="#" target="_blank">
+      Sign in with Xbox
+    </a>
+  </section>
+
+  <!-- Status -->
+  <section id="status" class="status hidden"></section>
+
+  <!-- GamerCard -->
+  <main id="gamerCard" class="gamer-card hidden">
+
+    <!-- Top -->
+    <div class="card-header">
+      <img id="profilePic" class="profile-pic" src="" alt="Xbox Gamerpic" />
+      <div class="header-text">
+        <h2 id="gtName">Gamertag</h2>
+        <p id="presence">Last seen…</p>
       </div>
-
-      <div class="search">
-        <input id="gamertagInput" placeholder="Enter Gamertag" autocomplete="off" />
-        <button id="generateBtn" type="button">Generate GamerCard</button>
-      </div>
-
-      <section id="gamerCard" class="gamer-card hidden" aria-live="polite">
-        <div class="gamer-card__banner">
-          <div class="gamer-card__bannerText">XBOX RECAP 2026</div>
-        </div>
-
-        <div class="gamer-card__body">
-          <div class="gamer-card__avatarWrap">
-            <img id="gamerPic" class="gamer-card__avatar" alt="Gamerpic" />
-            <div id="avatarFallback" class="gamer-card__avatarFallback">🎮</div>
-          </div>
-
-          <div class="gamer-card__info">
-            <div class="row row--header">
-              <div class="row__label">Gamertag</div>
-              <div id="gtName" class="row__value">—</div>
-            </div>
-
-            <div class="row">
-              <div class="row__label">Gamerscore</div>
-              <div id="gtGamerscore" class="row__value">Not linked</div>
-            </div>
-
-            <div class="row">
-              <div class="row__label">Status</div>
-              <div id="gtPresence" class="row__value">Not linked</div>
-            </div>
-
-            <div class="row">
-              <div class="row__label">Last Observed Game</div>
-              <div id="gtLastObserved" class="row__value">Not observed yet</div>
-            </div>
-
-            <div class="row">
-              <div class="row__label">Top Tracked Game (Unique Days)</div>
-              <div id="gtTopTracked" class="row__value">Not enough tracking yet</div>
-            </div>
-
-            <div class="row">
-              <div class="row__label">Tracking Started</div>
-              <div id="gtFirstSeen" class="row__value">—</div>
-            </div>
-
-            <div class="row">
-              <div class="row__label">Last Seen (Recap)</div>
-              <div id="gtLastSeen" class="row__value">—</div>
-            </div>
-
-            <div class="row">
-              <div class="row__label">Recap Checks</div>
-              <div id="gtChecks" class="row__value">—</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="gamer-card__footer">
-          <div class="footer__left">
-            <span class="pill" id="gtSource">source: —</span>
-          </div>
-          <div class="footer__right">
-            <span class="disclaimer" id="gtNote">
-              Profile signals require sign-in. Tracking stats work without it.
-            </span>
-          </div>
-        </div>
-      </section>
-
-      <div class="donate">
-        <p class="donate__text">Want better tracking coverage?</p>
-        <a class="donate__btn" href="#" aria-disabled="true">Donate (coming soon)</a>
-      </div>
-
-      <p class="small-note">
-        Tip: Share links like <span class="mono">?gamertag=KirkIn1080p</span>
-      </p>
     </div>
-  </div>
 
-  <script src="./script.js?v=20"></script>
+    <!-- Core stats -->
+    <div class="card-grid">
+
+      <div class="stat">
+        <span class="label">Gamerscore</span>
+        <span class="value" id="gamerscore">—</span>
+        <span class="sub" id="gamerscoreDelta"></span>
+      </div>
+
+      <div class="stat">
+        <span class="label">Days Played</span>
+        <span class="value" id="daysPlayed">—</span>
+        <span class="sub" id="playRange"></span>
+      </div>
+
+      <div class="stat">
+        <span class="label">Favourite Game</span>
+        <span class="value" id="favGame">—</span>
+        <span class="sub" id="favGameSessions"></span>
+      </div>
+
+      <div class="stat">
+        <span class="label">Current Streak</span>
+        <span class="value" id="currentStreak">—</span>
+        <span class="sub" id="longestStreak"></span>
+      </div>
+
+      <div class="stat">
+        <span class="label">Unique Games</span>
+        <span class="value" id="uniqueGames">—</span>
+      </div>
+
+      <div class="stat">
+        <span class="label">One-Hit Wonders</span>
+        <span class="value" id="oneHit">—</span>
+      </div>
+
+    </div>
+
+    <!-- Achievement highlight -->
+    <section id="achievementBlock" class="achievement hidden">
+      <h3>🏆 Rarest Achievement</h3>
+      <div class="achievement-inner">
+        <img id="achievementIcon" src="" alt="Achievement icon" />
+        <div>
+          <p id="achievementName"></p>
+          <small id="achievementPercent"></small>
+        </div>
+      </div>
+    </section>
+
+    <!-- Blog preview -->
+    <section id="blogBlock" class="blog">
+      <h3>📓 Xbox Journal</h3>
+      <div id="blogEntries">
+        <p class="muted">Loading latest entry…</p>
+      </div>
+    </section>
+
+    <!-- Metadata -->
+    <footer class="card-footer">
+      <p id="trackingInfo"></p>
+      <p id="dataQuality"></p>
+    </footer>
+
+  </main>
+
+  <!-- Donate -->
+  <section class="donate-section">
+    <h3>☕ Support Xbox Recap</h3>
+    <p class="muted">
+      This project is free, community-run, and privacy-respecting.
+      Donations help keep it online and improving.
+    </p>
+
+    <!-- Buy Me a Coffee button -->
+    <script
+      type="text/javascript"
+      src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js"
+      data-name="bmc-button"
+      data-slug="KeepXboxFree"
+      data-color="#0ecd11"
+      data-emoji="🍪"
+      data-font="Inter"
+      data-text="Buy me a cookie"
+      data-outline-color="#000000"
+      data-font-color="#000000"
+      data-coffee-color="#FFDD00">
+    </script>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <p>
+      Xbox Recap tracks activity <strong>from the moment you join</strong>.
+      No guesswork. No scraping. No selling data.
+    </p>
+  </footer>
+
+  <!-- App JS -->
+  <script src="./script.js?v=26"></script>
+
 </body>
 </html>
