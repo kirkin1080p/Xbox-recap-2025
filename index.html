@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Xbox Recap</title>
-  <link rel="stylesheet" href="./style.css?v=2026.4" />
+  <link rel="stylesheet" href="./style.css?v=2026.5" />
 </head>
 <body>
   <div class="bg" aria-hidden="true">
@@ -70,8 +70,13 @@
               <img id="profilePic" class="pfp" alt="No gamerpic" />
               <div id="profilePicFallback" class="avatarFallback avatarFallback--card" aria-hidden="true">?</div>
             </div>
+
             <div class="profileCopy">
               <div id="gtName" class="gtName">—</div>
+
+              <!-- ✅ NEW: script expects this -->
+              <div id="nowPlaying" class="nowPlaying muted">Now playing: —</div>
+
               <div id="presence" class="presence">—</div>
             </div>
           </div>
@@ -209,6 +214,6 @@
   </main>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
-  <script src="./script.js?v=2026.4"></script>
+  <script src="./script.js?v=2026.5"></script>
 </body>
 </html>
