@@ -1,8 +1,8 @@
 // === CONFIG ===
 // These are injected at deploy time (e.g. GitHub Secrets -> string replace).
 // The browser CANNOT read GitHub secrets directly.
-const WORKER_BASE = "__WORKER_BASE__";
-const PUBLIC_KEY = "__PUBLIC_KEY__";
+const WORKER_BASE = "https://falling-cake-f670.kirkjlemon.workers.dev";
+const PUBLIC_KEY = "4f6e9e47-98c9-0501-ae8a-4c078183a6dc";
 
 // === DOM ===
 const gamertagInput = document.getElementById("gamertagInput");
