@@ -110,7 +110,7 @@ const signoutBtn = el("signoutBtn");
 
 // === STATUS ===
 function setStatus(msg) {
-  if (!statusEl) return; // do not crash if status element is missing
+  if (!statusEl) return;
   show(statusEl);
   statusEl.textContent = msg;
 }
@@ -118,6 +118,53 @@ function clearStatus() {
   if (!statusEl) return;
   hide(statusEl);
   statusEl.textContent = "";
+}
+
+// === PRE-FLIGHT (THIS IS WHAT YOU NEEDED) ===
+// If any of these are missing in index.html, Generate can’t fully render the card.
+const CARD_IDS_THAT_SHOULD_EXIST = [
+  // wrapper + base card
+  "gamerCardWrap", "gamerCard",
+
+  // header
+  "profilePic", "gtName", "presence",
+
+  // mini stats / key stats
+  "gamerscore", "gamerscoreDelta", "daysPlayed", "playRange",
+  "favGame", "favGameSessions",
+
+  // streaks + counts
+  "currentStreak", "longestStreak", "longestBreak", "uniqueGames", "oneHit",
+
+  // peak/activity
+  "peakDay", "peakDaySub",
+  "activeWeekday", "activeWeekdaySub",
+  "activeMonth", "activeMonthSub",
+
+  // pills / tracking
+  "trackingInfo", "dataQualityPill", "lastUpdatedPill",
+
+  // blog + donate + share
+  "blogEntries",
+  "donateTotal", "donateSupporters",
+  "liveLink", "bbcode",
+
+  // buttons (optional but should exist if your UI has them)
+  "exportBtn", "copyLinkBtn", "copyLiveLinkBtn", "copyBbBtn"
+];
+
+function preflightReportMissingIds() {
+  // Only warn after you try to generate (so you can still use embed pages etc.)
+  const missing = CARD_IDS_THAT_SHOULD_EXIST.filter((id) => !document.getElementById(id));
+  if (missing.length) {
+    setStatus(
+      `Your index.html is missing ${missing.length} element(s) that the script expects:\n` +
+      missing.map((m) => `• #${m}`).join("\n") +
+      `\n\nFix: restore the gamer card markup (the section inside #gamerCardWrap).`
+    );
+    return false;
+  }
+  return true;
 }
 
 // === GENERAL HELPERS ===
@@ -228,7 +275,6 @@ function setSignedInUiState({ gamertag, avatarUrl, qualityLabel }) {
 }
 
 function setSignedOutUiState() {
-  // Always visible user area for consistent layout
   show(userArea);
 
   if (userAvatar) {
@@ -524,25 +570,30 @@ async function exportCardAsPng() {
 
 // === MAIN FLOW ===
 async function run(gamertag) {
-  clearStatus();
-  hideCard();
-
-  const gt = (gamertag || "").trim();
-  if (!gt) {
-    setStatus("Enter a gamertag first.");
-    return;
-  }
-
-  // keep URL shareable
+  // HARD SAFETY NET: never silently die with "null textContent"
   try {
-    const u = new URL(window.location.href);
-    u.searchParams.set("gamertag", gt);
-    window.history.replaceState({}, "", u);
-  } catch {}
+    clearStatus();
+    hideCard();
 
-  setStatus("Loading recap…");
+    // First: tell you if your HTML is missing the stuff your JS expects
+    // (This is usually why you get null textContent errors.)
+    if (!preflightReportMissingIds()) return;
 
-  try {
+    const gt = (gamertag || "").trim();
+    if (!gt) {
+      setStatus("Enter a gamertag first.");
+      return;
+    }
+
+    // keep URL shareable
+    try {
+      const u = new URL(window.location.href);
+      u.searchParams.set("gamertag", gt);
+      window.history.replaceState({}, "", u);
+    } catch {}
+
+    setStatus("Loading recap…");
+
     const [recapData, blogData, donateData] = await Promise.all([
       fetchRecap(gt),
       fetchBlog(gt),
@@ -556,7 +607,7 @@ async function run(gamertag) {
     clearStatus();
   } catch (err) {
     console.error(err);
-    setStatus(String(err?.message || "Failed to load recap."));
+    setStatus(`JS crashed: ${String(err?.message || err)}\nOpen DevTools Console for the stack trace.`);
   }
 }
 
@@ -580,17 +631,15 @@ if (copyLinkBtn) {
 if (copyLiveLinkBtn && liveLink) copyLiveLinkBtn.addEventListener("click", () => copyToClipboard(liveLink.value || ""));
 if (copyBbBtn && bbcode) copyBbBtn.addEventListener("click", () => copyToClipboard(bbcode.value || ""));
 
-// ✅ CONNECT (popup-safe + href fallback)
+// ✅ CONNECT (ABSOLUTELY RELIABLE)
 if (signinBtn) {
+  // Always set a real URL (so even if JS fails later, it still works)
+  signinBtn.href = getOpenXblSigninUrl();
+
+  // Also handle click to navigate (no popup logic; no "nothing happens")
   signinBtn.addEventListener("click", (e) => {
-    const url = getOpenXblSigninUrl();
-    const w = window.open(url, "_blank", "noopener,noreferrer");
-    if (w) {
-      e.preventDefault();
-      setStatus("Opened Xbox sign-in in a new tab ✅");
-      setTimeout(clearStatus, 1400);
-    }
-    // If popup blocked, we DO NOT prevent default, and the anchor href will navigate.
+    e.preventDefault();
+    window.location.href = getOpenXblSigninUrl();
   });
 }
 
@@ -636,9 +685,6 @@ if (signoutBtn) {
 (function init() {
   setEmbedModeIfNeeded();
   setSignedOutUiState();
-
-  // ✅ Make connect bulletproof even if popup is blocked
-  if (signinBtn) signinBtn.href = getOpenXblSigninUrl();
 
   const params = new URLSearchParams(window.location.search);
   const gt = params.get("gamertag");
