@@ -2,7 +2,7 @@
 const WORKER_BASE = "https://falling-cake-f670.kirkjlemon.workers.dev";
 const PUBLIC_KEY  = "4f6e9e47-98c9-0501-ae8a-4c078183a6dc";
 
-// === DOM HELPERS (NULL SAFE) ===
+// === DOM HELPERS ===
 function el(id) { return document.getElementById(id); }
 
 function setText(node, value, fallback = "—") {
@@ -78,7 +78,7 @@ const bbcode   = el("bbcode");
 const copyLiveLinkBtn = el("copyLiveLinkBtn");
 const copyBbBtn       = el("copyBbBtn");
 
-// User area (always visible)
+// User area
 const userArea   = el("userArea");
 const userAvatar = el("userAvatar");
 const userAvatarFallback = el("userAvatarFallback");
@@ -96,35 +96,6 @@ function clearStatus() {
   if (!statusEl) return;
   hide(statusEl);
   statusEl.textContent = "";
-}
-
-// === PRE-FLIGHT ===
-const CARD_IDS_THAT_SHOULD_EXIST = [
-  "gamerCardWrap", "gamerCard",
-  "profilePic", "gtName", "presence",
-  "gamerscore", "gamerscoreDelta", "daysPlayed", "playRange",
-  "favGame", "favGameSessions",
-  "currentStreak", "longestStreak", "longestBreak", "uniqueGames", "oneHit",
-  "peakDay", "peakDaySub",
-  "activeWeekday", "activeWeekdaySub",
-  "activeMonth", "activeMonthSub",
-  "trackingInfo", "dataQualityPill", "lastUpdatedPill",
-  "blogEntries",
-  "donateTotal", "donateSupporters",
-  "liveLink", "bbcode",
-  "exportBtn", "copyLinkBtn", "copyLiveLinkBtn", "copyBbBtn"
-];
-
-function preflightReportMissingIds() {
-  const missing = CARD_IDS_THAT_SHOULD_EXIST.filter((id) => !document.getElementById(id));
-  if (missing.length) {
-    setStatus(
-      `Your index.html is missing ${missing.length} element(s) that the script expects:\n` +
-      missing.map((m) => `• #${m}`).join("\n")
-    );
-    return false;
-  }
-  return true;
 }
 
 // === GENERAL HELPERS ===
@@ -182,41 +153,24 @@ function getOpenXblSigninUrl() {
   return `https://xbl.io/app/auth/${PUBLIC_KEY}`;
 }
 
-function setPillQuality(recap, linked) {
-  if (!dataQualityPill) return;
-  const q = recap?.dataQuality || (linked ? "good" : "tracking-only");
-  let label = "Tracking";
-  if (q === "good") label = "Full";
-  if (q === "limited") label = "Limited";
-  if (q === "tracking-only") label = "Tracking";
-  dataQualityPill.textContent = label;
-}
-
-function setLastUpdated(recap) {
-  if (!lastUpdatedPill) return;
-  const observed = recap?.lastObservedAt || null;
-  const refreshed = recap?.lastSeen || null;
-
-  if (observed) lastUpdatedPill.textContent = `Last observed ${fmtDateTime(observed)}`;
-  else lastUpdatedPill.textContent = `Last refreshed ${fmtDateTime(refreshed)}`;
-}
-
 function showCard() { show(gamerCardWrap); }
 function hideCard() { hide(gamerCardWrap); }
 
-// === AVATAR FALLBACK (THIS IS THE FIX) ===
 function firstLetter(name) {
   const s = String(name || "").trim();
   return s ? s[0].toUpperCase() : "?";
 }
 
+/**
+ * ✅ Avatar loader that never leaves you with “blank”
+ * - If it loads: show <img>
+ * - If it errors: show fallback letter
+ */
 function setAvatar({ imgEl, fallbackEl, url, labelText }) {
   if (!imgEl || !fallbackEl) return;
 
-  const letter = firstLetter(labelText);
-  fallbackEl.textContent = letter;
+  fallbackEl.textContent = firstLetter(labelText);
 
-  // Reset handlers (avoid stacking multiple onerror handlers per run)
   imgEl.onerror = null;
   imgEl.onload = null;
 
@@ -227,7 +181,7 @@ function setAvatar({ imgEl, fallbackEl, url, labelText }) {
     return;
   }
 
-  // Optimistic: try to load
+  // Default to showing the image
   fallbackEl.style.display = "none";
   imgEl.style.display = "block";
   imgEl.alt = `${labelText || "Player"} gamerpic`;
@@ -238,13 +192,14 @@ function setAvatar({ imgEl, fallbackEl, url, labelText }) {
   };
 
   imgEl.onerror = () => {
-    // This is what fixes “360 era pic = blank nothing”
     imgEl.removeAttribute("src");
     imgEl.style.display = "none";
     fallbackEl.style.display = "grid";
   };
 
-  imgEl.src = url;
+  // Bust edge-cache for the image itself too (helps when Xbox edge gets weird)
+  const bust = url.includes("?") ? `${url}&_=${Date.now()}` : `${url}?_=${Date.now()}`;
+  imgEl.src = bust;
 }
 
 // === USER AREA STATES ===
@@ -270,8 +225,10 @@ function setSignedInUiState({ gamertag, avatarUrl, qualityLabel }) {
     );
   }
 
-  show(signoutBtn);
-  if (signoutBtn) signoutBtn.disabled = false;
+  if (signoutBtn) {
+    signoutBtn.disabled = false;
+    show(signoutBtn);
+  }
 }
 
 function setSignedOutUiState() {
@@ -292,23 +249,30 @@ function setSignedOutUiState() {
     userBadge.textContent = "Not connected";
   }
 
-  hide(signoutBtn);
-  if (signoutBtn) signoutBtn.disabled = true;
+  if (signoutBtn) {
+    signoutBtn.disabled = true;
+    hide(signoutBtn);
+  }
 
   show(signinPrompt);
 }
 
 // === NETWORK ===
 async function fetchJsonOrText(url, init) {
-  const res = await fetch(url, init);
+  const res = await fetch(url, { cache: "no-store", ...init });
   const text = await res.text();
   let data = null;
-  try { data = JSON.parse(text); } catch { /* not json */ }
+  try { data = JSON.parse(text); } catch {}
   return { res, text, data };
 }
 
+function withNoCache(url) {
+  const join = url.includes("?") ? "&" : "?";
+  return `${url}${join}_=${Date.now()}`;
+}
+
 async function fetchRecap(gamertag) {
-  const url = `${WORKER_BASE}/?gamertag=${encodeURIComponent(gamertag)}`;
+  const url = withNoCache(`${WORKER_BASE}/?gamertag=${encodeURIComponent(gamertag)}`);
   const { res, text, data } = await fetchJsonOrText(url);
 
   if (!res.ok) {
@@ -319,21 +283,21 @@ async function fetchRecap(gamertag) {
 }
 
 async function fetchBlog(gamertag) {
-  const url = `${WORKER_BASE}/blog?gamertag=${encodeURIComponent(gamertag)}&limit=7`;
+  const url = withNoCache(`${WORKER_BASE}/blog?gamertag=${encodeURIComponent(gamertag)}&limit=7`);
   const { res, data } = await fetchJsonOrText(url);
   if (!res.ok) return null;
   return data;
 }
 
 async function fetchDonateStats() {
-  const url = `${WORKER_BASE}/donate-stats`;
+  const url = withNoCache(`${WORKER_BASE}/donate-stats`);
   const { res, data } = await fetchJsonOrText(url);
   if (!res.ok) return null;
   return data;
 }
 
 async function signOutWorker(gamertag) {
-  const { res, data, text } = await fetchJsonOrText(`${WORKER_BASE}/signout`, {
+  const { res, data, text } = await fetchJsonOrText(withNoCache(`${WORKER_BASE}/signout`), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ gamertag }),
@@ -347,6 +311,25 @@ async function signOutWorker(gamertag) {
 }
 
 // === RENDERERS ===
+function setPillQuality(recap, linked) {
+  if (!dataQualityPill) return;
+  const q = recap?.dataQuality || (linked ? "good" : "tracking-only");
+  let label = "Tracking";
+  if (q === "good") label = "Full";
+  if (q === "limited") label = "Limited";
+  if (q === "tracking-only") label = "Tracking";
+  dataQualityPill.textContent = label;
+}
+
+function setLastUpdated(recap) {
+  if (!lastUpdatedPill) return;
+  const observed = recap?.lastObservedAt || null;
+  const refreshed = recap?.lastSeen || null;
+
+  if (observed) lastUpdatedPill.textContent = `Last observed ${fmtDateTime(observed)}`;
+  else lastUpdatedPill.textContent = `Last refreshed ${fmtDateTime(refreshed)}`;
+}
+
 function renderAchievement(recap) {
   if (!achievementBlock) return;
 
@@ -381,7 +364,6 @@ function renderAchievement(recap) {
 
 function renderBlog(blog, recap) {
   if (!blogEntries) return;
-
   blogEntries.innerHTML = "";
 
   if (!blog?.entries?.length) {
@@ -405,8 +387,7 @@ function renderBlog(blog, recap) {
 }
 
 function renderDonate(ds) {
-  if (!ds) return;
-  if (!donateTotal || !donateSupporters) return;
+  if (!ds || !donateTotal || !donateSupporters) return;
 
   const cur = ds.currency || "GBP";
   const symbol = cur === "GBP" ? "£" : cur === "USD" ? "$" : cur === "EUR" ? "€" : "";
@@ -437,7 +418,7 @@ function renderRecap(data) {
 
   setText(presence, profile?.presenceText || fallbackPresence);
 
-  // ✅ MAIN CARD AVATAR (with fallback)
+  // ✅ FIXED: avatar always shows either image OR initial
   setAvatar({
     imgEl: profilePic,
     fallbackEl: profilePicFallback,
@@ -537,6 +518,7 @@ async function exportCardAsPng() {
 
   setStatus("Rendering PNG…");
 
+  // Wait for images to resolve (or fail)
   const imgs = gamerCard.querySelectorAll("img");
   await Promise.all(
     [...imgs].map((img) => {
@@ -575,13 +557,8 @@ async function run(gamertag) {
     clearStatus();
     hideCard();
 
-    if (!preflightReportMissingIds()) return;
-
     const gt = (gamertag || "").trim();
-    if (!gt) {
-      setStatus("Enter a gamertag first.");
-      return;
-    }
+    if (!gt) { setStatus("Enter a gamertag first."); return; }
 
     try {
       const u = new URL(window.location.href);
@@ -624,9 +601,9 @@ if (copyLinkBtn) {
   });
 }
 if (copyLiveLinkBtn && liveLink) copyLiveLinkBtn.addEventListener("click", () => copyToClipboard(liveLink.value || ""));
-if (copyBbBtn && bbcode) bbcode.addEventListener && copyBbBtn.addEventListener("click", () => copyToClipboard(bbcode.value || ""));
+if (copyBbBtn && bbcode) copyBbBtn.addEventListener("click", () => copyToClipboard(bbcode.value || ""));
 
-// ✅ CONNECT (reliable)
+// ✅ CONNECT
 if (signinBtn) {
   signinBtn.href = getOpenXblSigninUrl();
   signinBtn.addEventListener("click", (e) => {
