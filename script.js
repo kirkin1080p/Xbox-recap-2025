@@ -237,13 +237,30 @@ function setPillQuality(recap, linked) {
   dataQualityPill.textContent = label;
 }
 
+/**
+ * IMPORTANT:
+ * - "Last played" is the Xbox lastTimePlayed (can be hours/days ago).
+ * - "Refreshed" is when we fetched OpenXBL (should be "now" when you load the page).
+ */
 function setLastUpdated(recap) {
   if (!lastUpdatedPill) return;
-  const observed = recap?.lastObservedAt || null;
-  const refreshed = recap?.lastSeen || null;
 
-  if (observed) lastUpdatedPill.textContent = `Last observed ${fmtDateTime(observed)}`;
-  else lastUpdatedPill.textContent = `Last refreshed ${fmtDateTime(refreshed)}`;
+  const refreshed =
+    recap?.lastOpenXblOkAt ||
+    recap?.titleHistory?.sampledAt ||
+    recap?.lastSeen ||
+    null;
+
+  const lastPlayed =
+    recap?.lastPlayedAt ||
+    recap?.titleHistory?.lastTimePlayed ||
+    recap?.lastObservedAt ||
+    null;
+
+  const refreshedText = refreshed ? `Refreshed ${fmtDateTime(refreshed)}` : "Refreshed —";
+  const playedText = lastPlayed ? `Last played ${fmtDateTime(lastPlayed)}` : "Last played —";
+
+  lastUpdatedPill.textContent = `${refreshedText} • ${playedText}`;
 }
 
 function showCard() { show(gamerCardWrap); }
@@ -358,7 +375,7 @@ async function refreshUserAreaOnLoad() {
   const signedIn = getSignedInGamertag();
   if (!signedIn) {
     setSignedOutUiState();
-    return;
+    return null;
   }
 
   try {
@@ -374,10 +391,12 @@ async function refreshUserAreaOnLoad() {
       avatarUrl,
       qualityLabel: label,
     });
+
+    return data; // return the signed-in recap data for optional auto-render
   } catch (e) {
     console.warn("User area refresh failed:", e);
-    // If it fails, don't lie—show signed-out UI.
     setSignedOutUiState();
+    return null;
   }
 }
 
@@ -523,11 +542,25 @@ function renderRecap(data) {
   setText(activeMonth, recap?.mostActiveMonthName ?? "—");
   setText(activeMonthSub, recap?.mostActiveMonthDays != null ? `${recap.mostActiveMonthDays} days` : "—");
 
+  // ✅ Tracking info now shows BOTH refreshed + last played
   if (trackingInfo) {
-    const observedLine = recap?.lastObservedAt
-      ? `Observed play: ${fmtDateTime(recap.lastObservedAt)}`
-      : `No play observed yet`;
-    trackingInfo.textContent = `First seen: ${fmtDateTime(recap?.firstSeen)} • ${observedLine} • Lookups: ${recap?.lookupCount ?? 0}`;
+    const refreshed =
+      recap?.lastOpenXblOkAt ||
+      recap?.titleHistory?.sampledAt ||
+      recap?.lastSeen ||
+      null;
+
+    const lastPlayed =
+      recap?.lastPlayedAt ||
+      recap?.titleHistory?.lastTimePlayed ||
+      recap?.lastObservedAt ||
+      null;
+
+    const refreshedLine = refreshed ? `Refreshed: ${fmtDateTime(refreshed)}` : "Refreshed: —";
+    const playedLine = lastPlayed ? `Last played: ${fmtDateTime(lastPlayed)}` : "Last played: —";
+
+    trackingInfo.textContent =
+      `First seen: ${fmtDateTime(recap?.firstSeen)} • ${refreshedLine} • ${playedLine} • Lookups: ${recap?.lookupCount ?? 0}`;
   }
 
   setPillQuality(recap, linked);
@@ -542,8 +575,8 @@ function renderRecap(data) {
   showCard();
 
   // IMPORTANT:
-  // We DO NOT touch the header user area here anymore.
-  // The header is ONLY refreshed on page load using localStorage signed-in gamertag.
+  // We DO NOT touch the header user area here.
+  // The header is ONLY refreshed from localStorage on page load.
 
   return recap;
 }
@@ -659,7 +692,6 @@ if (copyBbBtn && bbcode) copyBbBtn.addEventListener("click", () => copyToClipboa
 if (signinBtn) {
   signinBtn.href = getOpenXblSigninUrl();
   signinBtn.addEventListener("click", (e) => {
-    // keep it simple: navigate
     e.preventDefault();
     window.location.href = getOpenXblSigninUrl();
   });
@@ -682,8 +714,6 @@ if (signoutBtn) {
       await signOutWorker(signedIn);
       clearSignedInGamertag();
 
-      // keep the current recap link visible if they’re viewing someone else.
-      // (We only remove gamertag param if it equals the signed-in one.)
       try {
         const u = new URL(window.location.href);
         const currentGt = (u.searchParams.get("gamertag") || "").trim();
@@ -708,23 +738,58 @@ if (signoutBtn) {
 }
 
 // === INIT ===
-(function init() {
+(async function init() {
   setEmbedModeIfNeeded();
 
-  // OPTION A refresh: user pill refreshes ON PAGE LOAD (signed-in gamertag only)
-  refreshUserAreaOnLoad();
+  // Refresh signed-in header (Option A)
+  const signedInData = await refreshUserAreaOnLoad();
 
-  // Normal recap load (whatever gamertag is in the URL)
+  // Normal recap load:
   const params = new URLSearchParams(window.location.search);
-  const gt = params.get("gamertag");
+  const gt = (params.get("gamertag") || "").trim();
 
-  if (gt && gamertagInput) {
-    gamertagInput.value = gt;
+  if (gt) {
+    if (gamertagInput) gamertagInput.value = gt;
     run(gt);
-  } else {
-    fetchDonateStats().then(renderDonate).catch(() => {});
-    if (openEmbedLink) {
-      openEmbedLink.href = `${window.location.origin}${window.location.pathname}?embed=1`;
+    return;
+  }
+
+  // ✅ FIX: if no gamertag in URL but user is signed in, auto-load their recap
+  const signedIn = getSignedInGamertag();
+  if (signedIn) {
+    if (gamertagInput) gamertagInput.value = signedIn;
+
+    // If we already fetched it for the header refresh, reuse it to render instantly
+    // (still fetch blog/donate in parallel)
+    if (signedInData && signedInData?.gamertag) {
+      try {
+        hideCard();
+        setStatus("Loading your recap…");
+
+        const [blogData, donateData] = await Promise.all([
+          fetchBlog(signedIn),
+          fetchDonateStats(),
+        ]);
+
+        const recap = renderRecap(signedInData);
+        renderBlog(blogData, recap);
+        renderDonate(donateData);
+
+        clearStatus();
+      } catch (e) {
+        // fallback: just run normally
+        run(signedIn);
+      }
+    } else {
+      run(signedIn);
     }
+
+    return;
+  }
+
+  // Signed out landing
+  fetchDonateStats().then(renderDonate).catch(() => {});
+  if (openEmbedLink) {
+    openEmbedLink.href = `${window.location.origin}${window.location.pathname}?embed=1`;
   }
 })();
