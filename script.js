@@ -1,6 +1,6 @@
 // === CONFIG ===
 const WORKER_BASE = "https://falling-cake-f670.kirkjlemon.workers.dev";
-const PUBLIC_KEY  = "4f6e9e47-98c9-0501-ae8a-4c078183a6dc";
+const PUBLIC_KEY = "4f6e9e47-98c9-0501-ae8a-4c078183a6dc";
 
 // === DOM ===
 const gamertagInput = document.getElementById("gamertagInput");
@@ -60,7 +60,7 @@ const bbcode = document.getElementById("bbcode");
 const copyLiveLinkBtn = document.getElementById("copyLiveLinkBtn");
 const copyBbBtn = document.getElementById("copyBbBtn");
 
-// User area (always visible)
+// NEW: user area
 const userArea = document.getElementById("userArea");
 const userAvatar = document.getElementById("userAvatar");
 const userName = document.getElementById("userName");
@@ -131,26 +131,17 @@ function buildShareUrls(gamertag) {
   return { normal: url.toString(), embed: embed.toString() };
 }
 
-function qualityLabelFromRecap(recap, linked) {
-  const q = recap?.dataQuality || (linked ? "good" : "tracking-only");
-  if (q === "good") return "Full";
-  if (q === "limited") return "Limited";
-  return linked ? "Connected" : "Tracking";
-}
-
 function setPillQuality(recap, linked) {
-  dataQualityPill.textContent = qualityLabelFromRecap(recap, linked);
+  const q = recap?.dataQuality || (linked ? "good" : "tracking-only");
+  let label = "Tracking";
+  if (q === "good") label = "Full";
+  if (q === "limited") label = "Limited";
+  if (q === "tracking-only") label = "Tracking";
+  dataQualityPill.textContent = label;
 }
 
 function setLastUpdated(recap) {
-  const observed = recap?.lastObservedAt || null;
-  const refreshed = recap?.lastSeen || null;
-
-  if (observed) {
-    lastUpdatedPill.textContent = `Last observed ${fmtDateTime(observed)}`;
-  } else {
-    lastUpdatedPill.textContent = `Last refreshed ${fmtDateTime(refreshed)}`;
-  }
+  lastUpdatedPill.textContent = `Updated ${fmtDateTime(recap?.lastSeen)}`;
 }
 
 function showCard() {
@@ -164,9 +155,16 @@ function getOpenXblSigninUrl() {
   return `https://xbl.io/app/auth/${PUBLIC_KEY}`;
 }
 
-// ---- user area states ----
+/**
+ * User area states
+ * - Always visible
+ * - Sign out only visible when linked
+ */
 function setSignedInUiState({ gamertag, avatarUrl, qualityLabel }) {
+  // Always visible
   userArea.classList.remove("hidden");
+
+  // Hide CTA when linked
   signinPrompt.classList.add("hidden");
 
   safeText(userName, gamertag, "—");
@@ -185,13 +183,16 @@ function setSignedInUiState({ gamertag, avatarUrl, qualityLabel }) {
     qualityLabel === "Full" ? "good" : qualityLabel === "Limited" ? "limited" : "off"
   );
 
+  // Show signout only when linked
   signoutBtn.classList.remove("hidden");
   signoutBtn.disabled = false;
 }
 
 function setSignedOutUiState() {
+  // Always visible
   userArea.classList.remove("hidden");
 
+  // Default “logged out” user area look
   userAvatar.removeAttribute("src");
   userAvatar.alt = "Not connected";
   userName.textContent = "Not connected";
@@ -200,9 +201,11 @@ function setSignedOutUiState() {
   userBadge.classList.add("off");
   userBadge.textContent = "Not connected";
 
+  // Hide/disable signout
   signoutBtn.classList.add("hidden");
   signoutBtn.disabled = true;
 
+  // Keep CTA visible
   signinPrompt.classList.remove("hidden");
 }
 
@@ -228,6 +231,7 @@ async function fetchDonateStats() {
   return res.json();
 }
 
+// signout endpoint (must exist on worker)
 async function signOutWorker(gamertag) {
   const res = await fetch(`${WORKER_BASE}/signout`, {
     method: "POST",
@@ -272,25 +276,17 @@ function renderAchievement(recap) {
   safeText(achievementContext, title ? `From ${title}` : "From recent play");
 }
 
-function renderBlog(blog, recap) {
+function renderBlog(blog) {
   blogEntries.innerHTML = "";
-
   if (!blog?.entries?.length) {
     blogEntries.innerHTML = `<div class="blogLine muted">No journal entries yet — generate again tomorrow and it’ll start writing daily.</div>`;
-  } else {
-    for (const e of blog.entries.slice(0, 4)) {
-      const div = document.createElement("div");
-      div.className = "blogLine";
-      div.textContent = e?.text ? e.text : `📓 ${e?.date || ""} — (missing entry)`;
-      blogEntries.appendChild(div);
-    }
+    return;
   }
-
-  if (recap?.journal?.policy) {
-    const hint = document.createElement("div");
-    hint.className = "blogLine muted";
-    hint.textContent = recap.journal.policy;
-    blogEntries.appendChild(hint);
+  for (const e of blog.entries.slice(0, 4)) {
+    const div = document.createElement("div");
+    div.className = "blogLine";
+    div.textContent = e?.text ? e.text : `📓 ${e?.date || ""} — (missing entry)`;
+    blogEntries.appendChild(div);
   }
 }
 
@@ -306,24 +302,11 @@ function renderRecap(data) {
   const { gamertag, profile, recap, linked } = data;
 
   safeText(gtName, gamertag);
-
-  const lastPlayedName =
-    recap?.lastPlayedGame ||
-    recap?.titleHistory?.lastTitleName ||
-    recap?.lastObservedGame ||
-    null;
-
-  const lastPlayedAt =
-    recap?.lastPlayedAt ||
-    recap?.titleHistory?.lastTimePlayed ||
-    null;
-
-  const fallbackPresence =
-    lastPlayedName
-      ? `Last played: ${lastPlayedName} • ${fmtDateTime(lastPlayedAt)}`
-      : "No recent activity observed yet.";
-
-  safeText(presence, profile?.presenceText || fallbackPresence);
+  safeText(
+    presence,
+    profile?.presenceText ||
+      (recap?.lastObservedGame ? `Last observed: ${recap.lastObservedGame}` : "No recent activity observed yet.")
+  );
 
   if (profile?.displayPicRaw) {
     profilePic.src = profile.displayPicRaw;
@@ -342,31 +325,24 @@ function renderRecap(data) {
   }
 
   safeText(daysPlayed, recap?.daysPlayedCount ?? "—");
-
   const range =
     recap?.firstPlayDay && recap?.lastPlayDay
       ? `${recap.firstPlayDay} → ${recap.lastPlayDay}`
       : recap?.firstSeen
       ? `Tracking since ${fmtDateTime(recap.firstSeen)}`
       : "—";
-
   safeText(playRange, range);
 
   safeText(favGame, recap?.favouriteGame ?? "—");
-  safeText(
-    favGameSessions,
-    recap?.favouriteGameSessions ? `${recap.favouriteGameSessions} sessions` : "—"
-  );
+  safeText(favGameSessions, recap?.favouriteGameSessions ? `${recap.favouriteGameSessions} sessions` : "—");
 
   safeText(currentStreak, recap?.currentStreak ?? "—");
   safeText(longestStreak, recap?.longestStreak ? `Best: ${recap.longestStreak} days` : "—");
 
   safeText(longestBreak, recap?.longestBreakDays ?? 0);
-  safeText(uniqueGames, recap?.uniqueGamesObserved ?? "—");
 
-  const oneHitEff = recap?.oneHitWondersEffective ?? recap?.oneHitWondersCount ?? 0;
-  const mature = recap?.oneHitWondersIsMature ?? false;
-  safeText(oneHit, mature ? `${oneHitEff} one-hit wonders` : "—");
+  safeText(uniqueGames, recap?.uniqueGamesObserved ?? "—");
+  safeText(oneHit, recap?.oneHitWondersCount != null ? `${recap.oneHitWondersCount} one-hit wonders` : "—");
 
   if (recap?.peakDay?.date) {
     peakDay.textContent = recap.peakDay.date;
@@ -377,22 +353,12 @@ function renderRecap(data) {
   }
 
   safeText(activeWeekday, recap?.mostActiveWeekdayName ?? "—");
-  safeText(
-    activeWeekdaySub,
-    recap?.mostActiveWeekdayDays != null ? `${recap.mostActiveWeekdayDays} days` : "—"
-  );
+  safeText(activeWeekdaySub, recap?.mostActiveWeekdayDays != null ? `${recap.mostActiveWeekdayDays} days` : "—");
 
   safeText(activeMonth, recap?.mostActiveMonthName ?? "—");
-  safeText(
-    activeMonthSub,
-    recap?.mostActiveMonthDays != null ? `${recap.mostActiveMonthDays} days` : "—"
-  );
+  safeText(activeMonthSub, recap?.mostActiveMonthDays != null ? `${recap.mostActiveMonthDays} days` : "—");
 
-  const observedLine = recap?.lastObservedAt
-    ? `Observed play: ${fmtDateTime(recap.lastObservedAt)}`
-    : `No play observed yet`;
-
-  trackingInfo.textContent = `First seen: ${fmtDateTime(recap?.firstSeen)} • ${observedLine} • Lookups: ${recap?.lookupCount ?? 0}`;
+  trackingInfo.textContent = `First seen: ${fmtDateTime(recap?.firstSeen)} • Lookups: ${recap?.lookupCount ?? 0}`;
 
   setPillQuality(recap, linked);
   setLastUpdated(recap);
@@ -405,19 +371,20 @@ function renderRecap(data) {
   renderAchievement(recap);
   showCard();
 
-  const qLabel = qualityLabelFromRecap(recap, linked);
+  const quality =
+    recap?.dataQuality === "good" ? "Full" :
+    recap?.dataQuality === "limited" ? "Limited" :
+    linked ? "Connected" : "Not connected";
 
   if (linked) {
     setSignedInUiState({
       gamertag,
       avatarUrl: profile?.displayPicRaw || null,
-      qualityLabel: qLabel,
+      qualityLabel: quality,
     });
   } else {
     setSignedOutUiState();
   }
-
-  return recap;
 }
 
 // === EXPORT PNG ===
@@ -486,8 +453,8 @@ async function run(gamertag) {
       fetchDonateStats(),
     ]);
 
-    const recap = renderRecap(recapData);
-    renderBlog(blogData, recap);
+    renderRecap(recapData);
+    renderBlog(blogData);
     renderDonate(donateData);
 
     clearStatus();
@@ -513,17 +480,13 @@ copyLinkBtn.addEventListener("click", () => {
 copyLiveLinkBtn.addEventListener("click", () => copyToClipboard(liveLink.value));
 copyBbBtn.addEventListener("click", () => copyToClipboard(bbcode.value));
 
-// Connect
-// - We set href in init() so it works even if JS/popup-blockers interfere.
-// - On click we *try* to open a new tab; if blocked, normal navigation happens.
+// Connect opens sign-in directly
 signinBtn.addEventListener("click", (e) => {
+  e.preventDefault();
   const url = getOpenXblSigninUrl();
-  const w = window.open(url, "_blank", "noopener,noreferrer");
-  if (w) {
-    e.preventDefault();
-    setStatus("Opened Xbox sign-in in a new tab ✅");
-    setTimeout(clearStatus, 1400);
-  }
+  window.open(url, "_blank", "noopener,noreferrer");
+  setStatus("Opened Xbox sign-in in a new tab ✅");
+  setTimeout(clearStatus, 1400);
 });
 
 // Sign out
@@ -540,6 +503,7 @@ signoutBtn.addEventListener("click", async () => {
   try {
     await signOutWorker(gt);
 
+    // Clear URL + UI
     const u = new URL(window.location.href);
     u.searchParams.delete("gamertag");
     u.searchParams.delete("embed");
@@ -560,11 +524,9 @@ signoutBtn.addEventListener("click", async () => {
 // === INIT ===
 (function init() {
   setEmbedModeIfNeeded();
-  setSignedOutUiState();
 
-  // ✅ Ensure Connect works even if popup open is blocked:
-  // The anchor will still navigate.
-  signinBtn.href = getOpenXblSigninUrl();
+  // Always show a consistent header user area immediately
+  setSignedOutUiState();
 
   const params = new URLSearchParams(window.location.search);
   const gt = params.get("gamertag");
