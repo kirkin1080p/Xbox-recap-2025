@@ -1,15 +1,15 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Xbox Recap 2025</title>
+  <title>Xbox Recap 2026</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Xbox Recap 2026 — tracked, not guessed." />
+  <link rel="stylesheet" href="./style.css" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-
-  <link rel="stylesheet" href="./style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 
 <body>
@@ -21,7 +21,7 @@
     <div class="brand">
       <div class="logo">X</div>
       <div>
-        <h1>Xbox Recap <span class="year">2025</span></h1>
+        <h1>Xbox Recap <span class="year">2026</span></h1>
         <p class="tagline">Tracked properly. No guesswork.</p>
       </div>
     </div>
@@ -32,11 +32,19 @@
 
       <!-- User area (always visible) -->
       <div id="userArea" class="userArea">
-        <img id="userAvatar" class="userAvatar" alt="Not connected" />
-        <div class="userMeta">
-          <div id="userName" class="userName">Not connected</div>
-          <div id="userBadge" class="userBadge off">Not connected</div>
+        <div class="avatarWrap" aria-hidden="true">
+          <img id="userAvatar" class="userAvatar" alt="Not connected" />
+          <div id="userAvatarFallback" class="avatarFallback hidden">?</div>
         </div>
+
+        <div class="userMeta">
+          <div class="userNameRow">
+            <div id="userName" class="userName">Not connected</div>
+            <div id="userBadge" class="userBadge off">Not connected</div>
+          </div>
+          <div class="userSub muted" id="userSub">Sign in to lock your profile</div>
+        </div>
+
         <button id="signoutBtn" class="chipBtn hidden" type="button" title="Sign out">Sign out</button>
       </div>
     </div>
@@ -48,7 +56,7 @@
         <label class="label" for="gamertagInput">Gamertag</label>
         <div class="searchInputRow">
           <input id="gamertagInput" type="text" placeholder="e.g. KirkIn1080p" autocomplete="off" />
-          <button id="generateBtn" class="btn primary" type="button">Generate</button>
+          <button id="generateBtn" class="btn primary">Generate</button>
         </div>
         <p class="hint">Tip: share the link after you generate. It will keep the gamertag in the URL.</p>
       </div>
@@ -70,8 +78,7 @@
     <section id="status" class="status hidden"></section>
 
     <section id="gamerCardWrap" class="cardShell hidden">
-      <!-- ✅ changed from class="card" to class="gamerCard" so your CSS applies -->
-      <section id="gamerCard" class="gamerCard">
+      <div id="gamerCard" class="gamerCard">
 
         <div class="cardTopBar">
           <div class="pillRow">
@@ -81,7 +88,11 @@
         </div>
 
         <div class="cardHeader">
-          <img id="profilePic" class="pfp" alt="Gamerpic" />
+          <div class="avatarWrap big" aria-hidden="true">
+            <img id="profilePic" class="pfp" alt="Gamerpic" />
+            <div id="profilePicFallback" class="avatarFallback big hidden">?</div>
+          </div>
+
           <div class="headText">
             <div id="gtName" class="gtName">—</div>
             <div id="presence" class="presence">—</div>
@@ -89,19 +100,17 @@
         </div>
 
         <div class="grid">
-          <div class="tile">
+          <div class="stat">
             <div class="k">Gamerscore</div>
             <div class="v" id="gamerscore">—</div>
             <div class="s" id="gamerscoreDelta">—</div>
           </div>
-
-          <div class="tile">
+          <div class="stat">
             <div class="k">Days played</div>
             <div class="v" id="daysPlayed">—</div>
             <div class="s" id="playRange">—</div>
           </div>
-
-          <div class="tile">
+          <div class="stat">
             <div class="k">Favourite</div>
             <div class="v" id="favGame">—</div>
             <div class="s" id="favGameSessions">—</div>
@@ -109,19 +118,17 @@
         </div>
 
         <div class="grid">
-          <div class="tile">
+          <div class="stat">
             <div class="k">Current streak</div>
             <div class="v" id="currentStreak">—</div>
             <div class="s" id="longestStreak">—</div>
           </div>
-
-          <div class="tile">
+          <div class="stat">
             <div class="k">Longest break</div>
             <div class="v" id="longestBreak">—</div>
             <div class="s">days</div>
           </div>
-
-          <div class="tile">
+          <div class="stat">
             <div class="k">Unique games</div>
             <div class="v" id="uniqueGames">—</div>
             <div class="s" id="oneHit">—</div>
@@ -129,19 +136,17 @@
         </div>
 
         <div class="grid">
-          <div class="tile">
+          <div class="stat">
             <div class="k">Peak day</div>
             <div class="v" id="peakDay">—</div>
             <div class="s" id="peakDaySub">—</div>
           </div>
-
-          <div class="tile">
+          <div class="stat">
             <div class="k">Most active weekday</div>
             <div class="v" id="activeWeekday">—</div>
             <div class="s" id="activeWeekdaySub">—</div>
           </div>
-
-          <div class="tile">
+          <div class="stat">
             <div class="k">Most active month</div>
             <div class="v" id="activeMonth">—</div>
             <div class="s" id="activeMonthSub">—</div>
@@ -149,8 +154,7 @@
         </div>
 
         <div id="achievementBlock" class="achievement hidden">
-          <!-- ✅ changed class from achievementIcon -> achIcon so it’s fixed size -->
-          <img id="achievementIcon" class="achIcon hidden" alt="Achievement icon" />
+          <img id="achievementIcon" class="achievementIcon hidden" alt="Achievement icon" />
           <div class="achievementCopy">
             <div id="achievementName" class="achievementName">—</div>
             <div id="achievementPercent" class="achievementPercent">—</div>
@@ -158,26 +162,27 @@
           </div>
         </div>
 
-        <div id="trackingInfo" class="trackingInfo">—</div>
+        <div class="trackingLine" id="trackingInfo">—</div>
 
-        <div class="shareBox">
+        <div class="share">
           <div class="shareRow">
-            <button id="exportBtn" class="btn ghost" type="button">Export PNG</button>
-            <button id="copyLinkBtn" class="btn ghost" type="button">Copy Link</button>
+            <button id="exportBtn" class="btn" type="button">Export PNG</button>
+            <button id="copyLinkBtn" class="btn ghost" type="button">Copy link</button>
+            <a id="openEmbedLink2" class="btn ghost" href="#" target="_blank" rel="noopener noreferrer">Open embed</a>
           </div>
 
-          <div class="shareFields">
-            <div class="field">
-              <div class="k">Live card link (embed)</div>
-              <div class="fieldRow">
+          <div class="embedRow">
+            <div class="embedCol">
+              <label class="label" for="liveLink">Embed link</label>
+              <div class="embedInputRow">
                 <input id="liveLink" type="text" readonly />
                 <button id="copyLiveLinkBtn" class="btn ghost" type="button">Copy</button>
               </div>
             </div>
 
-            <div class="field">
-              <div class="k">Forum BBCode</div>
-              <div class="fieldRow">
+            <div class="embedCol">
+              <label class="label" for="bbcode">BBCode</label>
+              <div class="embedInputRow">
                 <input id="bbcode" type="text" readonly />
                 <button id="copyBbBtn" class="btn ghost" type="button">Copy</button>
               </div>
@@ -186,34 +191,32 @@
         </div>
 
         <div class="journal">
-          <div class="sectionTitle">Xbox Journal</div>
-          <div id="blogEntries" class="blogEntries">
-            <div class="blogLine muted">Generate a recap to load entries…</div>
+          <div class="journalHeader">
+            <div class="journalTitle">Xbox Journal</div>
+            <button id="tweetLatestBtn" class="btn ghost small hidden" type="button">Tweet latest</button>
           </div>
+
+          <div id="blogEntries" class="blogEntries"></div>
         </div>
-      </section>
+
+      </div>
     </section>
 
     <section class="donate" id="donate">
       <div class="donateCard">
-        <div class="donateTitle">Keep it free</div>
-        <div class="donateText muted">
-          Hosting + API calls cost money. If this made you smile, chuck a cookie in the jar.
+        <div class="donateLeft">
+          <div class="donateTitle">Support the project</div>
+          <div class="donateSub muted">Keeps the worker running and the recap improving.</div>
         </div>
-
-        <div class="donateStats">
+        <div class="donateRight">
           <div class="donateStat">
-            <div class="donateLabel">Raised</div>
-            <div id="donateTotal" class="donateValue">—</div>
+            <div class="k">Raised</div>
+            <div class="v" id="donateTotal">£0</div>
           </div>
           <div class="donateStat">
-            <div class="donateLabel">Supporters</div>
-            <div id="donateSupporters" class="donateValue">—</div>
+            <div class="k">Supporters</div>
+            <div class="v" id="donateSupporters">0</div>
           </div>
-        </div>
-
-        <div class="donateActions">
-          <a class="btn primary" href="https://buymeacoffee.com/KeepXboxFree" target="_blank" rel="noreferrer">Support</a>
         </div>
       </div>
     </section>
@@ -226,6 +229,6 @@
   </main>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
-  <script src="./script.js?v=2025.12.21"></script>
+  <script src="./script.js?v=2026.7"></script>
 </body>
 </html>
