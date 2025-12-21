@@ -1,29 +1,69 @@
-🧙‍♂️ Hear Ye, Hear Ye (Yes… From Your Console)
+# Xbox Recap
+*Because your console remembers everything.*
 
-Did you hear that?
-That wasn’t the wind — that was your console.
-Tired. Unappreciated. Absolutely carrying your bad decisions.
+---
 
-At [X], we translate its cries into something useful.
+## Hear Ye, Hear Ye (Yes… From Your Console)
 
-Your console keeps a journal. We just help it speak.
+Did you hear that?  
+That wasn’t the wind — **that was your console**.
 
-🎮 What This Does (No Sorcery Required)
+Tired.  
+Unappreciated.  
+Absolutely **carrying your bad gaming decisions**.
 
-📓 Daily console-written journal entries
-Auto-written blogs based on what you actually play — not what you swear you’ll finish.
+At **Xbox Recap**, we translate its cries into something useful.
 
-📊 Year-round stats & recaps
-No guessing. No vibes. Just cold, hard tracking.
+> Your console keeps a journal.  
+> We just help it speak.
 
-🆚 Compare yourself to friends (and strangers)
-Flex responsibly. Or don’t. We’re not your party leader.
+---
 
-🗡️ Why You’ll Care
+## What Does This Actually Do?
 
-Because your console remembers everything.
-The grind. The breaks. The phase where you only played one game for three weeks straight.
+### Daily Console Journal
+Your Xbox auto-writes short blog entries based on what you *actually* play —  
+not what you *promise* you’ll finish.
 
-We just turn that into a story worth reading.
+### Year-Round Stats & Recaps
+No vibes.  
+No guessing.  
+Just **tracked data**, updated as you play.
 
-👉 Generate your recap. Let your console speak.
+### Compare Yourself to Others
+- Friends  
+- Randoms  
+- That one mate who “barely plays anymore”  
+
+Flex responsibly. Or don’t. We’re not your squad leader.
+
+---
+
+## Why You’ll Care
+
+Because your console remembers:
+- The grind  
+- The breaks  
+- The phase where you only played *one game* for three weeks straight  
+
+We turn all of that into a story worth reading.
+
+---
+
+## Get Started
+
+1. Enter your **gamertag**
+2. Generate your **live recap**
+3. Share it, embed it, or quietly judge yourself
+
+**Let your console speak.**
+
+---
+
+## Notes From the Dungeon Master
+
+- Tracking starts from first use  
+- No data selling, no nonsense  
+- Some stats improve when you connect your Xbox account  
+
+This is about **stories**, not scores.
