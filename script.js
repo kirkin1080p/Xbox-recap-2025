@@ -1,6 +1,6 @@
 // === CONFIG ===
 const WORKER_BASE = "https://falling-cake-f670.kirkjlemon.workers.dev";
-const PUBLIC_KEY = "4f6e9e47-98c9-0501-ae8a-4c078183a6dc";
+const PUBLIC_KEY  = "4f6e9e47-98c9-0501-ae8a-4c078183a6dc";
 
 // === DOM ===
 const gamertagInput = document.getElementById("gamertagInput");
@@ -60,7 +60,7 @@ const bbcode = document.getElementById("bbcode");
 const copyLiveLinkBtn = document.getElementById("copyLiveLinkBtn");
 const copyBbBtn = document.getElementById("copyBbBtn");
 
-// NEW: user area
+// User area (always visible)
 const userArea = document.getElementById("userArea");
 const userAvatar = document.getElementById("userAvatar");
 const userName = document.getElementById("userName");
@@ -141,7 +141,14 @@ function setPillQuality(recap, linked) {
 }
 
 function setLastUpdated(recap) {
-  lastUpdatedPill.textContent = `Updated ${fmtDateTime(recap?.lastSeen)}`;
+  const observed = recap?.lastObservedAt || null;
+  const refreshed = recap?.lastSeen || null;
+
+  if (observed) {
+    lastUpdatedPill.textContent = `Last observed ${fmtDateTime(observed)}`;
+  } else {
+    lastUpdatedPill.textContent = `Last refreshed ${fmtDateTime(refreshed)}`;
+  }
 }
 
 function showCard() {
@@ -155,16 +162,9 @@ function getOpenXblSigninUrl() {
   return `https://xbl.io/app/auth/${PUBLIC_KEY}`;
 }
 
-/**
- * User area states
- * - Always visible
- * - Sign out only visible when linked
- */
+// ---- user area states ----
 function setSignedInUiState({ gamertag, avatarUrl, qualityLabel }) {
-  // Always visible
   userArea.classList.remove("hidden");
-
-  // Hide CTA when linked
   signinPrompt.classList.add("hidden");
 
   safeText(userName, gamertag, "—");
@@ -183,16 +183,14 @@ function setSignedInUiState({ gamertag, avatarUrl, qualityLabel }) {
     qualityLabel === "Full" ? "good" : qualityLabel === "Limited" ? "limited" : "off"
   );
 
-  // Show signout only when linked
   signoutBtn.classList.remove("hidden");
   signoutBtn.disabled = false;
 }
 
 function setSignedOutUiState() {
-  // Always visible
+  // SHOW user area even when signed out (you asked for this)
   userArea.classList.remove("hidden");
 
-  // Default “logged out” user area look
   userAvatar.removeAttribute("src");
   userAvatar.alt = "Not connected";
   userName.textContent = "Not connected";
@@ -201,48 +199,57 @@ function setSignedOutUiState() {
   userBadge.classList.add("off");
   userBadge.textContent = "Not connected";
 
-  // Hide/disable signout
   signoutBtn.classList.add("hidden");
   signoutBtn.disabled = true;
 
-  // Keep CTA visible
   signinPrompt.classList.remove("hidden");
+}
+
+// === NETWORK HELPERS (better errors) ===
+async function fetchJsonOrText(url, init) {
+  const res = await fetch(url, init);
+  const text = await res.text();
+  let data = null;
+  try { data = JSON.parse(text); } catch { /* not json */ }
+  return { res, text, data };
 }
 
 // === DATA LOADERS ===
 async function fetchRecap(gamertag) {
   const url = `${WORKER_BASE}/?gamertag=${encodeURIComponent(gamertag)}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Worker error ${res.status}`);
-  return res.json();
+  const { res, text, data } = await fetchJsonOrText(url);
+
+  if (!res.ok) {
+    const msg = (data && data.error) ? data.error : text || `HTTP ${res.status}`;
+    throw new Error(`Worker recap failed (${res.status}): ${msg}`);
+  }
+  return data;
 }
 
 async function fetchBlog(gamertag) {
   const url = `${WORKER_BASE}/blog?gamertag=${encodeURIComponent(gamertag)}&limit=7`;
-  const res = await fetch(url);
+  const { res, data } = await fetchJsonOrText(url);
   if (!res.ok) return null;
-  return res.json();
+  return data;
 }
 
 async function fetchDonateStats() {
   const url = `${WORKER_BASE}/donate-stats`;
-  const res = await fetch(url);
+  const { res, data } = await fetchJsonOrText(url);
   if (!res.ok) return null;
-  return res.json();
+  return data;
 }
 
-// signout endpoint (must exist on worker)
 async function signOutWorker(gamertag) {
-  const res = await fetch(`${WORKER_BASE}/signout`, {
+  const { res, data, text } = await fetchJsonOrText(`${WORKER_BASE}/signout`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ gamertag }),
   });
 
-  const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const msg = data?.error || `Sign out failed (HTTP ${res.status}).`;
-    throw new Error(msg);
+    const msg = (data && data.error) ? data.error : text || `HTTP ${res.status}`;
+    throw new Error(`Sign out failed (${res.status}): ${msg}`);
   }
   return data;
 }
@@ -302,6 +309,7 @@ function renderRecap(data) {
   const { gamertag, profile, recap, linked } = data;
 
   safeText(gtName, gamertag);
+
   safeText(
     presence,
     profile?.presenceText ||
@@ -325,6 +333,7 @@ function renderRecap(data) {
   }
 
   safeText(daysPlayed, recap?.daysPlayedCount ?? "—");
+
   const range =
     recap?.firstPlayDay && recap?.lastPlayDay
       ? `${recap.firstPlayDay} → ${recap.lastPlayDay}`
@@ -460,7 +469,7 @@ async function run(gamertag) {
     clearStatus();
   } catch (err) {
     console.error(err);
-    setStatus("Failed to load recap. Check the worker + gamertag.");
+    setStatus(String(err?.message || "Failed to load recap."));
   }
 }
 
@@ -480,13 +489,17 @@ copyLinkBtn.addEventListener("click", () => {
 copyLiveLinkBtn.addEventListener("click", () => copyToClipboard(liveLink.value));
 copyBbBtn.addEventListener("click", () => copyToClipboard(bbcode.value));
 
-// Connect opens sign-in directly
+// ✅ CONNECT (popup-safe):
+// - Always set a real href (so navigation works if popups are blocked)
+// - Only preventDefault if the popup actually opened
 signinBtn.addEventListener("click", (e) => {
-  e.preventDefault();
   const url = getOpenXblSigninUrl();
-  window.open(url, "_blank", "noopener,noreferrer");
-  setStatus("Opened Xbox sign-in in a new tab ✅");
-  setTimeout(clearStatus, 1400);
+  const w = window.open(url, "_blank", "noopener,noreferrer");
+  if (w) {
+    e.preventDefault();
+    setStatus("Opened Xbox sign-in in a new tab ✅");
+    setTimeout(clearStatus, 1400);
+  }
 });
 
 // Sign out
@@ -503,7 +516,6 @@ signoutBtn.addEventListener("click", async () => {
   try {
     await signOutWorker(gt);
 
-    // Clear URL + UI
     const u = new URL(window.location.href);
     u.searchParams.delete("gamertag");
     u.searchParams.delete("embed");
@@ -525,8 +537,11 @@ signoutBtn.addEventListener("click", async () => {
 (function init() {
   setEmbedModeIfNeeded();
 
-  // Always show a consistent header user area immediately
+  // Always show user area (even logged out)
   setSignedOutUiState();
+
+  // ✅ Bulletproof connect: ensure href exists so click navigates if popup blocked
+  signinBtn.href = getOpenXblSigninUrl();
 
   const params = new URLSearchParams(window.location.search);
   const gt = params.get("gamertag");
