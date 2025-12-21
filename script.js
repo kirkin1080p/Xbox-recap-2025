@@ -3,6 +3,8 @@
 // =======================
 
 // === CONFIG ===
+const SIGNED_IN_KEY = "xr_signedInGamertag";
+
 const WORKER_BASE = "https://falling-cake-f670.kirkjlemon.workers.dev";
 const PUBLIC_KEY = "4f6e9e47-98c9-0501-ae8a-4c078183a6dc";
 
