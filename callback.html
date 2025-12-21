@@ -14,6 +14,7 @@
     h1 { margin:0 0 10px; font-size:18px; }
     p { margin:0 0 10px; color:rgba(255,255,255,0.75); }
     .status { margin-top:12px; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,0.06); }
+    code { color: rgba(255,255,255,0.85); }
   </style>
 </head>
 <body>
@@ -26,17 +27,34 @@
   </div>
 
   <script>
+    // Must match the Worker you deployed
     const WORKER_URL = "https://falling-cake-f670.kirkjlemon.workers.dev";
-    const HOME_URL = "https://kirkin1080p.github.io/Xbox-recap-2025/";
-    const statusEl = document.getElementById("status");
 
+    const statusEl = document.getElementById("status");
     function setStatus(msg) { statusEl.textContent = msg; }
+
+    function getHomeUrl() {
+      // This makes HOME always correct even if you rename the repo.
+      // Example: https://kirkin1080p.github.io/Xbox-recap-2025/callback.html
+      // Home becomes: https://kirkin1080p.github.io/Xbox-recap-2025/
+      const u = new URL(window.location.href);
+      const parts = u.pathname.split("/").filter(Boolean);
+
+      // If hosted under a repo path, keep the first segment
+      // /Xbox-recap-2025/callback.html -> base /Xbox-recap-2025/
+      if (parts.length >= 2) {
+        return `${u.origin}/${parts[0]}/`;
+      }
+      // If hosted at root, just return origin
+      return `${u.origin}/`;
+    }
 
     async function run() {
       const params = new URLSearchParams(window.location.search);
       const code = params.get("code");
+
       if (!code) {
-        setStatus("No code found in URL. Check your OpenXBL Redirect URI.");
+        setStatus("No code found in URL. Check your OpenXBL Redirect URI points to callback.html");
         return;
       }
 
@@ -63,12 +81,13 @@
 
         setStatus(`Linked as ${gamertag}. Redirecting…`);
 
-        const url = new URL(HOME_URL);
+        const home = getHomeUrl();
+        const url = new URL(home);
         url.searchParams.set("gamertag", gamertag);
         window.location.replace(url.toString());
       } catch (e) {
         console.error(e);
-        setStatus("Network error while claiming. Check Worker URL / CORS.");
+        setStatus("Network error while claiming. Check WORKER_URL and that the Worker is deployed.");
       }
     }
 
