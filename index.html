@@ -4,10 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Xbox Recap</title>
-  <link rel="stylesheet" href="./style.css?v=2026.6" />
+  <link rel="stylesheet" href="./style.css?v=2026.7" />
 </head>
 <body>
-  <div class="bg" aria-hidden="true"><div class="bgGlow"></div></div>
+  <div class="bg" aria-hidden="true">
+    <div class="bgGlow"></div>
+  </div>
 
   <header class="siteHeader" id="siteHeader">
     <div class="brand">
@@ -21,13 +23,7 @@
     <div class="headerActions">
       <div id="userArea" class="userArea">
         <div class="avatarWrap sm" aria-hidden="true">
-          <img
-            id="userAvatar"
-            class="userAvatar"
-            alt="Not connected"
-            crossorigin="anonymous"
-            referrerpolicy="no-referrer"
-          />
+          <img id="userAvatar" class="userAvatar" alt="Not connected" crossorigin="anonymous" referrerpolicy="no-referrer" />
           <div id="userAvatarFallback" class="avatarFallback sm">?</div>
           <span class="avatarRing sm"></span>
         </div>
@@ -74,26 +70,19 @@
         <div class="cardTop">
           <div class="profileRow">
             <div class="avatarWrap" aria-hidden="true">
-              <img
-                id="profilePic"
-                class="pfp"
-                alt="No gamerpic"
-                crossorigin="anonymous"
-                referrerpolicy="no-referrer"
-              />
+              <img id="profilePic" class="pfp" alt="No gamerpic" crossorigin="anonymous" referrerpolicy="no-referrer" />
               <div id="profilePicFallback" class="avatarFallback">?</div>
               <span class="avatarRing"></span>
             </div>
 
             <div class="profileCopy">
               <div id="gtName" class="gtName">—</div>
-              <div id="presence" class="presence">—</div>
+              <div id="presence" class="presence muted">—</div>
+              <div class="metaRow">
+                <span id="dataQualityPill" class="pill">Tracking</span>
+                <span id="lastUpdatedPill" class="pill mutedPill">Updated —</span>
+              </div>
             </div>
-          </div>
-
-          <div class="pillRow">
-            <span id="dataQualityPill" class="pill">Tracking</span>
-            <span id="lastUpdatedPill" class="pill mutedPill">Updated —</span>
           </div>
         </div>
 
@@ -191,8 +180,24 @@
         </div>
 
         <div class="journal">
-          <div class="journalTitle">Xbox Journal</div>
+          <div class="journalHead">
+            <div class="journalTitle">Xbox Journal</div>
+            <div class="journalHint muted">A daily entry from your console. Roast-friendly.</div>
+          </div>
+
           <div id="blogEntries" class="blogEntries"></div>
+
+          <div class="tweetBox" id="tweetBox">
+            <div class="tweetTop">
+              <div class="tweetTitle">Tweet the latest entry</div>
+              <div id="tweetCount" class="tweetCount">—</div>
+            </div>
+            <textarea id="tweetText" class="tweetText" readonly></textarea>
+            <div class="tweetActions">
+              <button id="copyTweetBtn" class="btn ghost small" type="button">Copy tweet</button>
+              <a id="tweetBtn" class="btn small" href="#" target="_blank" rel="noopener noreferrer">Tweet</a>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -212,6 +217,7 @@
             <div class="k">Supporters</div>
             <div class="v" id="donateSupporters">0</div>
           </div>
+          <a id="supportBtn" class="btn primary donateBtn" href="https://www.buymeacoffee.com/" target="_blank" rel="noopener noreferrer">☕ Buy me a coffee</a>
         </div>
       </div>
     </section>
@@ -224,6 +230,6 @@
   </main>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
-  <script src="./script.js?v=2026.6"></script>
+  <script src="./script.js?v=2026.7"></script>
 </body>
 </html>
