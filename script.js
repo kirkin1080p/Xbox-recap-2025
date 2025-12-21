@@ -190,7 +190,6 @@ function setSignedInUiState({ gamertag, avatarUrl, qualityLabel }) {
 }
 
 function setSignedOutUiState() {
-  // Keep user area visible for consistent layout
   userArea.classList.remove("hidden");
 
   userAvatar.removeAttribute("src");
@@ -275,6 +274,7 @@ function renderAchievement(recap) {
 
 function renderBlog(blog, recap) {
   blogEntries.innerHTML = "";
+
   if (!blog?.entries?.length) {
     blogEntries.innerHTML = `<div class="blogLine muted">No journal entries yet — generate again tomorrow and it’ll start writing daily.</div>`;
   } else {
@@ -307,8 +307,16 @@ function renderRecap(data) {
 
   safeText(gtName, gamertag);
 
-  const lastPlayedName = recap?.lastPlayedGame || recap?.titleHistory?.lastTitleName || recap?.lastObservedGame || null;
-  const lastPlayedAt = recap?.lastPlayedAt || recap?.titleHistory?.lastTimePlayed || null;
+  const lastPlayedName =
+    recap?.lastPlayedGame ||
+    recap?.titleHistory?.lastTitleName ||
+    recap?.lastObservedGame ||
+    null;
+
+  const lastPlayedAt =
+    recap?.lastPlayedAt ||
+    recap?.titleHistory?.lastTimePlayed ||
+    null;
 
   const fallbackPresence =
     lastPlayedName
@@ -334,16 +342,21 @@ function renderRecap(data) {
   }
 
   safeText(daysPlayed, recap?.daysPlayedCount ?? "—");
+
   const range =
     recap?.firstPlayDay && recap?.lastPlayDay
       ? `${recap.firstPlayDay} → ${recap.lastPlayDay}`
       : recap?.firstSeen
       ? `Tracking since ${fmtDateTime(recap.firstSeen)}`
       : "—";
+
   safeText(playRange, range);
 
   safeText(favGame, recap?.favouriteGame ?? "—");
-  safeText(favGameSessions, recap?.favouriteGameSessions ? `${recap.favouriteGameSessions} sessions` : "—");
+  safeText(
+    favGameSessions,
+    recap?.favouriteGameSessions ? `${recap.favouriteGameSessions} sessions` : "—"
+  );
 
   safeText(currentStreak, recap?.currentStreak ?? "—");
   safeText(longestStreak, recap?.longestStreak ? `Best: ${recap.longestStreak} days` : "—");
@@ -364,10 +377,16 @@ function renderRecap(data) {
   }
 
   safeText(activeWeekday, recap?.mostActiveWeekdayName ?? "—");
-  safeText(activeWeekdaySub, recap?.mostActiveWeekdayDays != null ? `${recap.mostActiveWeekdayDays} days` : "—");
+  safeText(
+    activeWeekdaySub,
+    recap?.mostActiveWeekdayDays != null ? `${recap.mostActiveWeekdayDays} days` : "—"
+  );
 
   safeText(activeMonth, recap?.mostActiveMonthName ?? "—");
-  safeText(activeMonthSub, recap?.mostActiveMonthDays != null ? `${recap.mostActiveMonthDays} days` : "—");
+  safeText(
+    activeMonthSub,
+    recap?.mostActiveMonthDays != null ? `${recap.mostActiveMonthDays} days` : "—"
+  );
 
   const observedLine = recap?.lastObservedAt
     ? `Observed play: ${fmtDateTime(recap.lastObservedAt)}`
@@ -494,14 +513,20 @@ copyLinkBtn.addEventListener("click", () => {
 copyLiveLinkBtn.addEventListener("click", () => copyToClipboard(liveLink.value));
 copyBbBtn.addEventListener("click", () => copyToClipboard(bbcode.value));
 
+// Connect
+// - We set href in init() so it works even if JS/popup-blockers interfere.
+// - On click we *try* to open a new tab; if blocked, normal navigation happens.
 signinBtn.addEventListener("click", (e) => {
-  e.preventDefault();
   const url = getOpenXblSigninUrl();
-  window.open(url, "_blank", "noopener,noreferrer");
-  setStatus("Opened Xbox sign-in in a new tab ✅");
-  setTimeout(clearStatus, 1400);
+  const w = window.open(url, "_blank", "noopener,noreferrer");
+  if (w) {
+    e.preventDefault();
+    setStatus("Opened Xbox sign-in in a new tab ✅");
+    setTimeout(clearStatus, 1400);
+  }
 });
 
+// Sign out
 signoutBtn.addEventListener("click", async () => {
   const gt = (gamertagInput.value || "").trim() || (gtName.textContent || "").trim();
   if (!gt || gt === "—") {
@@ -536,6 +561,10 @@ signoutBtn.addEventListener("click", async () => {
 (function init() {
   setEmbedModeIfNeeded();
   setSignedOutUiState();
+
+  // ✅ Ensure Connect works even if popup open is blocked:
+  // The anchor will still navigate.
+  signinBtn.href = getOpenXblSigninUrl();
 
   const params = new URLSearchParams(window.location.search);
   const gt = params.get("gamertag");
