@@ -14,6 +14,7 @@
     h1 { margin:0 0 10px; font-size:18px; }
     p { margin:0 0 10px; color:rgba(255,255,255,0.75); }
     .status { margin-top:12px; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,0.06); }
+    code { color: rgba(255,255,255,0.85); }
   </style>
 </head>
 <body>
@@ -26,16 +27,25 @@
   </div>
 
   <script>
+    // Must match the Worker you deployed
     const WORKER_URL = "https://falling-cake-f670.kirkjlemon.workers.dev";
-    const SIGNED_IN_KEY = "xr_signedInGamertag";
 
     const statusEl = document.getElementById("status");
     function setStatus(msg) { statusEl.textContent = msg; }
 
     function getHomeUrl() {
+      // This makes HOME always correct even if you rename the repo.
+      // Example: https://kirkin1080p.github.io/Xbox-recap-2025/callback.html
+      // Home becomes: https://kirkin1080p.github.io/Xbox-recap-2025/
       const u = new URL(window.location.href);
       const parts = u.pathname.split("/").filter(Boolean);
-      if (parts.length >= 2) return `${u.origin}/${parts[0]}/`;
+
+      // If hosted under a repo path, keep the first segment
+      // /Xbox-recap-2025/callback.html -> base /Xbox-recap-2025/
+      if (parts.length >= 2) {
+        return `${u.origin}/${parts[0]}/`;
+      }
+      // If hosted at root, just return origin
       return `${u.origin}/`;
     }
 
@@ -63,13 +73,11 @@
           return;
         }
 
-        const gamertag = data.gamertag ? String(data.gamertag).trim() : "";
+        const gamertag = data.gamertag ? String(data.gamertag) : "";
         if (!gamertag) {
           setStatus("Claimed, but worker did not return a gamertag.");
           return;
         }
-
-        try { localStorage.setItem(SIGNED_IN_KEY, gamertag); } catch {}
 
         setStatus(`Linked as ${gamertag}. Redirecting…`);
 
