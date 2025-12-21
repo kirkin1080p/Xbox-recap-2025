@@ -2,11 +2,10 @@
 const WORKER_BASE = "https://falling-cake-f670.kirkjlemon.workers.dev";
 const PUBLIC_KEY  = "4f6e9e47-98c9-0501-ae8a-4c078183a6dc";
 
-// Simple in-memory cache
-let _donateStatsCache = null;
-let _runToken = 0;
+// Auth storage key (signed-in identity)
+const LS_AUTH_GT = "xbr_auth_gamertag";
 
-// === DOM HELPERS (NULL SAFE) ===
+// === DOM HELPERS ===
 function el(id) { return document.getElementById(id); }
 
 function setText(node, value, fallback = "—") {
@@ -15,36 +14,11 @@ function setText(node, value, fallback = "—") {
     value === null || value === undefined || value === "" ? fallback : String(value);
 }
 
-function setHtml(node, html) {
-  if (!node) return;
-  node.innerHTML = html;
-}
+function show(node) { if (node) node.classList.remove("hidden"); }
+function hide(node) { if (node) node.classList.add("hidden"); }
 
-function show(node) {
-  if (!node) return;
-  node.classList.remove("hidden");
-}
-
-function hide(node) {
-  if (!node) return;
-  node.classList.add("hidden");
-}
-
-function setAttr(node, name, value) {
-  if (!node) return;
-  if (value === null || value === undefined || value === "") node.removeAttribute(name);
-  else node.setAttribute(name, value);
-}
-
-function addClass(node, ...cls) {
-  if (!node) return;
-  node.classList.add(...cls);
-}
-
-function removeClass(node, ...cls) {
-  if (!node) return;
-  node.classList.remove(...cls);
-}
+function addClass(node, ...cls) { if (node) node.classList.add(...cls); }
+function removeClass(node, ...cls) { if (node) node.classList.remove(...cls); }
 
 // === DOM ===
 const gamertagInput = el("gamertagInput");
@@ -55,6 +29,8 @@ const gamerCardWrap = el("gamerCardWrap");
 const gamerCard     = el("gamerCard");
 
 const profilePic = el("profilePic");
+const profilePicFallback = el("profilePicFallback");
+
 const gtName     = el("gtName");
 const presence   = el("presence");
 
@@ -84,10 +60,11 @@ const lastUpdatedPill = el("lastUpdatedPill");
 
 const signinPrompt  = el("signinPrompt");
 const signinBtn     = el("signinBtn");
-const openEmbedLink = el("openEmbedLink");
 
 const exportBtn   = el("exportBtn");
 const copyLinkBtn = el("copyLinkBtn");
+const openEmbedLink = el("openEmbedLink");
+const openEmbedLink2 = el("openEmbedLink2");
 
 const achievementBlock   = el("achievementBlock");
 const achievementIcon    = el("achievementIcon");
@@ -96,6 +73,7 @@ const achievementPercent = el("achievementPercent");
 const achievementContext = el("achievementContext");
 
 const blogEntries = el("blogEntries");
+const tweetLatestBtn = el("tweetLatestBtn");
 
 const donateTotal      = el("donateTotal");
 const donateSupporters = el("donateSupporters");
@@ -105,12 +83,18 @@ const bbcode   = el("bbcode");
 const copyLiveLinkBtn = el("copyLiveLinkBtn");
 const copyBbBtn       = el("copyBbBtn");
 
-// User area (always visible)
+// Header user area
 const userArea   = el("userArea");
 const userAvatar = el("userAvatar");
+const userAvatarFallback = el("userAvatarFallback");
 const userName   = el("userName");
 const userBadge  = el("userBadge");
+const userSub    = el("userSub");
 const signoutBtn = el("signoutBtn");
+
+// === STATE ===
+let authGamertag = (localStorage.getItem(LS_AUTH_GT) || "").trim();
+let lastRenderedJournalPlain = []; // used for Tweet latest
 
 // === STATUS ===
 function setStatus(msg) {
@@ -125,45 +109,36 @@ function clearStatus() {
 }
 
 function setLoading(isLoading) {
-  if (generateBtn) generateBtn.disabled = !!isLoading;
-  if (generateBtn) generateBtn.classList.toggle("loading", !!isLoading);
+  if (!generateBtn) return;
+  generateBtn.disabled = !!isLoading;
+  generateBtn.classList.toggle("loading", !!isLoading);
 }
 
-// === PRE-FLIGHT ===
-const CARD_IDS_THAT_SHOULD_EXIST = [
-  "gamerCardWrap", "gamerCard",
-  "profilePic", "gtName", "presence",
-  "gamerscore", "gamerscoreDelta", "daysPlayed", "playRange",
-  "favGame", "favGameSessions",
-  "currentStreak", "longestStreak", "longestBreak", "uniqueGames", "oneHit",
-  "peakDay", "peakDaySub",
-  "activeWeekday", "activeWeekdaySub",
-  "activeMonth", "activeMonthSub",
-  "trackingInfo", "dataQualityPill", "lastUpdatedPill",
-  "blogEntries",
-  "donateTotal", "donateSupporters",
-  "liveLink", "bbcode",
-  "exportBtn", "copyLinkBtn", "copyLiveLinkBtn", "copyBbBtn"
-];
+function showCard() { show(gamerCardWrap); }
+function hideCard() { hide(gamerCardWrap); }
 
-function preflightReportMissingIds() {
-  const missing = CARD_IDS_THAT_SHOULD_EXIST.filter((id) => !document.getElementById(id));
-  if (missing.length) {
-    setStatus(
-      `Your index.html is missing ${missing.length} element(s) that the script expects:\n` +
-      missing.map((m) => `• #${m}`).join("\n")
-    );
-    return false;
-  }
-  return true;
+// === URL / SHARE ===
+function buildShareUrls(gamertag) {
+  const url = new URL(window.location.href);
+  url.searchParams.set("gamertag", gamertag);
+
+  const embed = new URL(window.location.href);
+  embed.searchParams.set("gamertag", gamertag);
+  embed.searchParams.set("embed", "1");
+
+  return { normal: url.toString(), embed: embed.toString() };
 }
 
-// === GENERAL HELPERS ===
+function getOpenXblSigninUrl() {
+  return `https://xbl.io/app/auth/${PUBLIC_KEY}`;
+}
+
 function setEmbedModeIfNeeded() {
   const params = new URLSearchParams(window.location.search);
   if (params.get("embed") === "1") document.body.classList.add("embed");
 }
 
+// === DATE ===
 function fmtDateTime(iso) {
   if (!iso) return "—";
   try {
@@ -181,6 +156,7 @@ function fmtDateTime(iso) {
   }
 }
 
+// === CLIPBOARD ===
 async function copyToClipboard(text) {
   try {
     await navigator.clipboard.writeText(text);
@@ -198,60 +174,71 @@ async function copyToClipboard(text) {
   }
 }
 
-function buildShareUrls(gamertag) {
-  const url = new URL(window.location.href);
-  url.searchParams.set("gamertag", gamertag);
-
-  const embed = new URL(window.location.href);
-  embed.searchParams.set("gamertag", gamertag);
-  embed.searchParams.set("embed", "1");
-
-  return { normal: url.toString(), embed: embed.toString() };
+// === AVATAR FALLBACKS ===
+function initialFromGamertag(gt) {
+  const s = String(gt || "").trim();
+  if (!s) return "?";
+  return s[0].toUpperCase();
 }
 
-function getOpenXblSigninUrl() {
-  return `https://xbl.io/app/auth/${PUBLIC_KEY}`;
+function setAvatar(imgEl, fallbackEl, url, gt) {
+  if (!imgEl || !fallbackEl) return;
+
+  const letter = initialFromGamertag(gt);
+  fallbackEl.textContent = letter;
+
+  // No URL? show fallback
+  if (!url) {
+    imgEl.removeAttribute("src");
+    hide(imgEl);
+    show(fallbackEl);
+    return;
+  }
+
+  // Try load; if it fails, fallback
+  imgEl.onload = () => {
+    show(imgEl);
+    hide(fallbackEl);
+  };
+  imgEl.onerror = () => {
+    imgEl.removeAttribute("src");
+    hide(imgEl);
+    show(fallbackEl);
+  };
+
+  imgEl.src = url;
+  show(imgEl);
 }
 
-function setPillQuality(recap, linked) {
-  if (!dataQualityPill) return;
-  const q = recap?.dataQuality || (linked ? "good" : "tracking-only");
-  let label = "Tracking";
-  if (q === "good") label = "Full";
-  if (q === "limited") label = "Limited";
-  if (q === "tracking-only") label = "Tracking";
-  dataQualityPill.textContent = label;
+// === USER AREA (AUTH ONLY) ===
+function setSignedOutUiState() {
+  show(userArea);
+  setText(userName, "Not connected", "Not connected");
+  if (userSub) userSub.textContent = "Sign in to lock your profile";
+
+  if (userBadge) {
+    removeClass(userBadge, "good", "limited", "off");
+    addClass(userBadge, "off");
+    userBadge.textContent = "Not connected";
+  }
+
+  // avatar fallback
+  setAvatar(userAvatar, userAvatarFallback, "", "");
+
+  hide(signoutBtn);
+  if (signoutBtn) signoutBtn.disabled = true;
+
+  show(signinPrompt);
 }
 
-function setLastUpdated(recap) {
-  if (!lastUpdatedPill) return;
-  const observed = recap?.lastObservedAt || null;
-  const refreshed = recap?.lastSeen || null;
-
-  if (observed) lastUpdatedPill.textContent = `Last observed ${fmtDateTime(observed)}`;
-  else lastUpdatedPill.textContent = `Last refreshed ${fmtDateTime(refreshed)}`;
-}
-
-function showCard() { show(gamerCardWrap); }
-function hideCard() { hide(gamerCardWrap); }
-
-// === USER AREA STATES ===
-function setSignedInUiState({ gamertag, avatarUrl, qualityLabel }) {
+function setSignedInUiState(gamertag, qualityLabel = "Connected", avatarUrl = "") {
   show(userArea);
   hide(signinPrompt);
 
   setText(userName, gamertag, "—");
+  if (userSub) userSub.textContent = "Signed in";
 
-  if (userAvatar) {
-    if (avatarUrl) {
-      userAvatar.src = avatarUrl;
-      userAvatar.alt = `${gamertag} gamerpic`;
-    } else {
-      userAvatar.removeAttribute("src");
-      userAvatar.alt = "No gamerpic";
-    }
-  }
-
+  // badge
   if (userBadge) {
     removeClass(userBadge, "good", "limited", "off");
     userBadge.textContent = qualityLabel || "Connected";
@@ -261,37 +248,30 @@ function setSignedInUiState({ gamertag, avatarUrl, qualityLabel }) {
     );
   }
 
+  setAvatar(userAvatar, userAvatarFallback, avatarUrl, gamertag);
+
   show(signoutBtn);
   if (signoutBtn) signoutBtn.disabled = false;
 }
 
-function setSignedOutUiState() {
-  show(userArea);
-
-  if (userAvatar) {
-    userAvatar.removeAttribute("src");
-    userAvatar.alt = "Not connected";
-  }
-  setText(userName, "Not connected", "Not connected");
-
-  if (userBadge) {
-    removeClass(userBadge, "good", "limited", "off");
-    addClass(userBadge, "off");
-    userBadge.textContent = "Not connected";
+function refreshAuthUiFromStorageOnly() {
+  authGamertag = (localStorage.getItem(LS_AUTH_GT) || "").trim();
+  if (!authGamertag) {
+    setSignedOutUiState();
+    return;
   }
 
-  hide(signoutBtn);
-  if (signoutBtn) signoutBtn.disabled = true;
-
-  show(signinPrompt);
+  // We don't fetch here (avoids extra calls)
+  // We’ll populate avatar when the user generates THEIR own recap.
+  setSignedInUiState(authGamertag, "Connected", "");
 }
 
-// === NETWORK (WITH GOOD ERRORS) ===
+// === NETWORK ===
 async function fetchJsonOrText(url, init) {
   const res = await fetch(url, init);
   const text = await res.text();
   let data = null;
-  try { data = JSON.parse(text); } catch { /* not json */ }
+  try { data = JSON.parse(text); } catch {}
   return { res, text, data };
 }
 
@@ -314,11 +294,9 @@ async function fetchBlog(gamertag) {
 }
 
 async function fetchDonateStats() {
-  if (_donateStatsCache) return _donateStatsCache;
   const url = `${WORKER_BASE}/donate-stats`;
   const { res, data } = await fetchJsonOrText(url);
   if (!res.ok) return null;
-  _donateStatsCache = data;
   return data;
 }
 
@@ -336,7 +314,27 @@ async function signOutWorker(gamertag) {
   return data;
 }
 
-// === RENDERERS (NULL SAFE) ===
+// === PILLS ===
+function setPillQuality(recap) {
+  if (!dataQualityPill) return;
+  const q = recap?.dataQuality || "tracking-only";
+  let label = "Tracking";
+  if (q === "good") label = "Full";
+  if (q === "limited") label = "Limited";
+  if (q === "tracking-only") label = "Tracking";
+  dataQualityPill.textContent = label;
+}
+
+function setLastUpdated(recap) {
+  if (!lastUpdatedPill) return;
+  const observed = recap?.lastObservedAt || null;
+  const refreshed = recap?.lastSeen || null;
+
+  if (observed) lastUpdatedPill.textContent = `Last observed ${fmtDateTime(observed)}`;
+  else lastUpdatedPill.textContent = `Last refreshed ${fmtDateTime(refreshed)}`;
+}
+
+// === ACHIEVEMENT ===
 function renderAchievement(recap) {
   if (!achievementBlock) return;
 
@@ -369,29 +367,137 @@ function renderAchievement(recap) {
   setText(achievementContext, title ? `From ${title}` : "From recent play");
 }
 
-function renderBlog(blog, recap) {
+// === JOURNAL FORMATTING ===
+function escapeHtml(s) {
+  return String(s || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+// Very small “good enough” markdown-ish formatter:
+// - **bold**
+// - *italics*
+// - `code`
+// - lines starting with "-" or "*" become bullets
+function formatJournalTextToHtml(text) {
+  let t = escapeHtml(text);
+
+  // Normalize weird asterisk spam: collapse multiple asterisks
+  t = t.replace(/\*{3,}/g, "**");
+
+  // bullets: lines starting with "- " or "* "
+  const lines = t.split("\n");
+  const bulletLines = [];
+  let inList = false;
+
+  function flushList() {
+    if (!inList) return;
+    bulletLines.push("</ul>");
+    inList = false;
+  }
+
+  for (const raw of lines) {
+    const line = raw.trimEnd();
+    const m = line.match(/^(\-|\*)\s+(.*)$/);
+    if (m) {
+      if (!inList) {
+        inList = true;
+        bulletLines.push("<ul class=\"journalList\">");
+      }
+      bulletLines.push(`<li>${m[2]}</li>`);
+    } else {
+      flushList();
+      bulletLines.push(line);
+    }
+  }
+  flushList();
+  t = bulletLines.join("\n");
+
+  // inline code
+  t = t.replace(/`([^`]+)`/g, "<code>$1</code>");
+  // bold
+  t = t.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  // italics (single *)
+  t = t.replace(/(^|[\s(])\*([^*]+)\*(?=[\s).,!?:]|$)/g, "$1<em>$2</em>");
+
+  // convert remaining newlines to <br> but not inside <ul>
+  // quick hack: if we see <ul>, we keep newlines (CSS handles)
+  if (!t.includes("<ul")) {
+    t = t.replace(/\n/g, "<br>");
+  } else {
+    // for text outside lists, still allow <br>
+    t = t.replace(/\n(?!<\/?ul|<li)/g, "<br>\n");
+  }
+
+  return t;
+}
+
+function buildTweetUrl(text) {
+  const base = "https://twitter.com/intent/tweet";
+  const u = new URL(base);
+  u.searchParams.set("text", text);
+  return u.toString();
+}
+
+function renderBlog(blog) {
   if (!blogEntries) return;
 
   blogEntries.innerHTML = "";
+  lastRenderedJournalPlain = [];
 
-  if (!blog?.entries?.length) {
-    blogEntries.innerHTML =
-      `<div class="blogLine muted">No journal entries yet — generate again tomorrow and it’ll start writing daily.</div>`;
-  } else {
-    for (const e of blog.entries.slice(0, 4)) {
-      const div = document.createElement("div");
-      div.className = "blogLine";
-      div.textContent = e?.text ? e.text : `📓 ${e?.date || ""} — (missing entry)`;
-      blogEntries.appendChild(div);
-    }
+  const entries = blog?.entries?.slice(0, 6) || [];
+  if (!entries.length) {
+    blogEntries.innerHTML = `<div class="blogLine muted">No journal entries yet — generate again tomorrow and it’ll start writing daily.</div>`;
+    hide(tweetLatestBtn);
+    return;
   }
 
-  if (recap?.journal?.policy) {
-    const hint = document.createElement("div");
-    hint.className = "blogLine muted";
-    hint.textContent = recap.journal.policy;
-    blogEntries.appendChild(hint);
+  // Store plain text for "Tweet latest"
+  for (const e of entries) {
+    const plain = e?.text ? String(e.text) : "";
+    lastRenderedJournalPlain.push(plain);
   }
+
+  show(tweetLatestBtn);
+
+  entries.forEach((e, idx) => {
+    const plain = e?.text ? String(e.text) : "";
+    const html = formatJournalTextToHtml(plain);
+
+    const row = document.createElement("div");
+    row.className = "blogLine";
+
+    const content = document.createElement("div");
+    content.className = "blogText";
+    content.innerHTML = html;
+
+    const actions = document.createElement("div");
+    actions.className = "blogActions";
+
+    const copyBtn = document.createElement("button");
+    copyBtn.className = "btn ghost small";
+    copyBtn.type = "button";
+    copyBtn.textContent = "Copy";
+    copyBtn.addEventListener("click", () => copyToClipboard(plain));
+
+    const tweetBtn = document.createElement("a");
+    tweetBtn.className = "btn ghost small";
+    tweetBtn.href = buildTweetUrl(plain);
+    tweetBtn.target = "_blank";
+    tweetBtn.rel = "noopener noreferrer";
+    tweetBtn.textContent = "Tweet";
+
+    actions.appendChild(copyBtn);
+    actions.appendChild(tweetBtn);
+
+    row.appendChild(content);
+    row.appendChild(actions);
+
+    blogEntries.appendChild(row);
+  });
 }
 
 function renderDonate(ds) {
@@ -404,11 +510,13 @@ function renderDonate(ds) {
   donateSupporters.textContent = String(ds.supporters || 0);
 }
 
+// === MAIN RENDER ===
 function renderRecap(data) {
-  const { gamertag, profile, recap, linked } = data;
+  const { gamertag, profile, recap } = data;
 
   setText(gtName, gamertag);
 
+  // Presence fallback
   const lastPlayedName =
     recap?.lastPlayedGame ||
     recap?.titleHistory?.lastTitleName ||
@@ -427,23 +535,15 @@ function renderRecap(data) {
 
   setText(presence, profile?.presenceText || fallbackPresence);
 
-  if (profilePic) {
-    if (profile?.displayPicRaw) {
-      profilePic.src = profile.displayPicRaw;
-      profilePic.alt = `${gamertag} gamerpic`;
-    } else {
-      profilePic.removeAttribute("src");
-      profilePic.alt = "No gamerpic";
-    }
-  }
+  // Card avatar with fallback
+  setAvatar(profilePic, profilePicFallback, profile?.displayPicRaw || "", gamertag);
 
   setText(gamerscore, recap?.gamerscoreCurrent ?? profile?.gamerscore ?? "—");
-
   if (gamerscoreDelta) {
     gamerscoreDelta.textContent =
       recap?.gamerscoreDelta != null
         ? `+${recap.gamerscoreDelta} since tracking`
-        : (linked ? "Delta unknown" : "Connect Xbox for delta");
+        : "—";
   }
 
   setText(daysPlayed, recap?.daysPlayedCount ?? "—");
@@ -469,8 +569,8 @@ function renderRecap(data) {
   const mature = recap?.oneHitWondersIsMature ?? false;
   setText(oneHit, mature ? `${oneHitEff} one-hit wonders` : "—");
 
-  if (peakDay) setText(peakDay, recap?.peakDay?.date ?? "—");
-  if (peakDaySub) setText(peakDaySub, recap?.peakDay?.uniqueGames != null ? `${recap.peakDay.uniqueGames} unique games` : "—");
+  setText(peakDay, recap?.peakDay?.date ?? "—");
+  setText(peakDaySub, recap?.peakDay?.uniqueGames != null ? `${recap.peakDay.uniqueGames} unique games` : "—");
 
   setText(activeWeekday, recap?.mostActiveWeekdayName ?? "—");
   setText(activeWeekdaySub, recap?.mostActiveWeekdayDays != null ? `${recap.mostActiveWeekdayDays} days` : "—");
@@ -482,33 +582,31 @@ function renderRecap(data) {
     const observedLine = recap?.lastObservedAt
       ? `Observed play: ${fmtDateTime(recap.lastObservedAt)}`
       : `No play observed yet`;
-    trackingInfo.textContent = `First seen: ${fmtDateTime(recap?.firstSeen)} • ${observedLine} • Lookups: ${recap?.lookupCount ?? 0}`;
+    trackingInfo.textContent =
+      `First seen: ${fmtDateTime(recap?.firstSeen)} • ${observedLine} • Lookups: ${recap?.lookupCount ?? 0}`;
   }
 
-  setPillQuality(recap, linked);
+  setPillQuality(recap);
   setLastUpdated(recap);
 
   const urls = buildShareUrls(gamertag);
   if (liveLink) liveLink.value = urls.embed;
   if (bbcode) bbcode.value = `[url=${urls.embed}]Xbox Recap Card[/url]`;
   if (openEmbedLink) openEmbedLink.href = urls.embed;
+  if (openEmbedLink2) openEmbedLink2.href = urls.embed;
 
   renderAchievement(recap);
   showCard();
 
-  const quality =
-    recap?.dataQuality === "good" ? "Full" :
-    recap?.dataQuality === "limited" ? "Limited" :
-    linked ? "Connected" : "Not connected";
+  // ✅ IMPORTANT FIX:
+  // ONLY update header user area if this recap is for the signed-in account
+  if (authGamertag && gamertag.toLowerCase() === authGamertag.toLowerCase()) {
+    const quality =
+      recap?.dataQuality === "good" ? "Full" :
+      recap?.dataQuality === "limited" ? "Limited" :
+      "Connected";
 
-  if (linked) {
-    setSignedInUiState({
-      gamertag,
-      avatarUrl: profile?.displayPicRaw || null,
-      qualityLabel: quality,
-    });
-  } else {
-    setSignedOutUiState();
+    setSignedInUiState(authGamertag, quality, profile?.displayPicRaw || "");
   }
 
   return recap;
@@ -561,7 +659,9 @@ async function exportCardAsPng() {
   setTimeout(clearStatus, 1600);
 }
 
-// === MAIN FLOW (Optimized) ===
+// === MAIN FLOW ===
+let _runToken = 0;
+
 async function run(gamertag) {
   const token = ++_runToken;
 
@@ -570,14 +670,13 @@ async function run(gamertag) {
     clearStatus();
     hideCard();
 
-    if (!preflightReportMissingIds()) return;
-
     const gt = (gamertag || "").trim();
     if (!gt) {
       setStatus("Enter a gamertag first.");
       return;
     }
 
+    // keep URL shareable (this is VIEW state, not AUTH state)
     try {
       const u = new URL(window.location.href);
       u.searchParams.set("gamertag", gt);
@@ -586,26 +685,25 @@ async function run(gamertag) {
 
     setStatus("Loading recap…");
 
-    // 1) Fetch + render recap FIRST
+    // 1) recap first for fast UI
     const recapData = await fetchRecap(gt);
-    if (token !== _runToken) return; // stale run
+    if (token !== _runToken) return;
+
     const recap = renderRecap(recapData);
-    showCard();
     clearStatus();
 
-    // 2) Then enrich with blog + donate
-    const [blogData, donateData] = await Promise.allSettled([
+    // 2) enrich
+    const [blogRes, donateRes] = await Promise.allSettled([
       fetchBlog(gt),
       fetchDonateStats(),
     ]);
-
     if (token !== _runToken) return;
 
-    if (blogData.status === "fulfilled") renderBlog(blogData.value, recap);
-    if (donateData.status === "fulfilled") renderDonate(donateData.value);
+    if (blogRes.status === "fulfilled") renderBlog(blogRes.value);
+    if (donateRes.status === "fulfilled") renderDonate(donateRes.value);
   } catch (err) {
     console.error(err);
-    setStatus(`JS crashed: ${String(err?.message || err)}\nOpen DevTools Console for the stack trace.`);
+    setStatus(`Error: ${String(err?.message || err)}`);
   } finally {
     if (token === _runToken) setLoading(false);
   }
@@ -631,7 +729,16 @@ if (copyLinkBtn) {
 if (copyLiveLinkBtn && liveLink) copyLiveLinkBtn.addEventListener("click", () => copyToClipboard(liveLink.value || ""));
 if (copyBbBtn && bbcode) copyBbBtn.addEventListener("click", () => copyToClipboard(bbcode.value || ""));
 
-// ✅ CONNECT (reliable)
+// Tweet latest
+if (tweetLatestBtn) {
+  tweetLatestBtn.addEventListener("click", () => {
+    const latest = lastRenderedJournalPlain?.[0] || "";
+    if (!latest) return;
+    window.open(buildTweetUrl(latest), "_blank", "noopener,noreferrer");
+  });
+}
+
+// ✅ CONNECT
 if (signinBtn) {
   signinBtn.href = getOpenXblSigninUrl();
   signinBtn.addEventListener("click", (e) => {
@@ -643,13 +750,9 @@ if (signinBtn) {
 // Sign out
 if (signoutBtn) {
   signoutBtn.addEventListener("click", async () => {
-    const gt =
-      (gamertagInput?.value || "").trim() ||
-      (gtName?.textContent || "").trim();
-
-    if (!gt || gt === "—") {
-      setStatus("No gamertag to sign out.");
-      setTimeout(clearStatus, 1400);
+    const gt = (localStorage.getItem(LS_AUTH_GT) || "").trim();
+    if (!gt) {
+      setSignedOutUiState();
       return;
     }
 
@@ -657,31 +760,34 @@ if (signoutBtn) {
 
     try {
       await signOutWorker(gt);
-
-      try {
-        const u = new URL(window.location.href);
-        u.searchParams.delete("gamertag");
-        u.searchParams.delete("embed");
-        window.history.replaceState({}, "", u);
-      } catch {}
-
-      if (gamertagInput) gamertagInput.value = "";
-      hideCard();
-      setSignedOutUiState();
-
-      setStatus("Signed out ✅");
-      setTimeout(clearStatus, 1400);
-    } catch (err) {
-      console.error(err);
-      setStatus(String(err?.message || "Sign out failed."));
+    } catch (e) {
+      // Even if Worker fails, user still wants to sign out locally
+      console.error(e);
     }
+
+    localStorage.removeItem(LS_AUTH_GT);
+    authGamertag = "";
+    setSignedOutUiState();
+
+    setStatus("Signed out ✅");
+    setTimeout(clearStatus, 1400);
   });
 }
 
 // === INIT ===
 (function init() {
   setEmbedModeIfNeeded();
-  setSignedOutUiState();
+
+  // Auth UI: independent of what recap you view
+  refreshAuthUiFromStorageOnly();
+
+  // open embed default
+  if (openEmbedLink) {
+    openEmbedLink.href = `${window.location.origin}${window.location.pathname}?embed=1`;
+  }
+  if (openEmbedLink2) {
+    openEmbedLink2.href = `${window.location.origin}${window.location.pathname}?embed=1`;
+  }
 
   const params = new URLSearchParams(window.location.search);
   const gt = params.get("gamertag");
@@ -690,10 +796,6 @@ if (signoutBtn) {
     gamertagInput.value = gt;
     run(gt);
   } else {
-    // Donate stats can load once on idle path
     fetchDonateStats().then(renderDonate).catch(() => {});
-    if (openEmbedLink) {
-      openEmbedLink.href = `${window.location.origin}${window.location.pathname}?embed=1`;
-    }
   }
 })();
