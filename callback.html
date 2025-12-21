@@ -25,73 +25,93 @@
       <div id="status" class="status">Waiting for code…</div>
     </div>
   </div>
+<script>
+  const WORKER_URL = "https://falling-cake-f670.kirkjlemon.workers.dev";
+  const SIGNED_IN_KEY = "xr_signedInGamertag";
 
-  <script>
-    // Must match the Worker you deployed
-    const WORKER_URL = "https://falling-cake-f670.kirkjlemon.workers.dev";
+  const statusEl = document.getElementById("status");
+  function setStatus(msg) { statusEl.textContent = msg; }
 
-    const statusEl = document.getElementById("status");
-    function setStatus(msg) { statusEl.textContent = msg; }
+  function getHomeUrl() {
+    const u = new URL(window.location.href);
+    const parts = u.pathname.split("/").filter(Boolean);
+    if (parts.length >= 2) return `${u.origin}/${parts[0]}/`;
+    return `${u.origin}/`;
+  }
 
-    function getHomeUrl() {
-      // This makes HOME always correct even if you rename the repo.
-      // Example: https://kirkin1080p.github.io/Xbox-recap-2025/callback.html
-      // Home becomes: https://kirkin1080p.github.io/Xbox-recap-2025/
-      const u = new URL(window.location.href);
-      const parts = u.pathname.split("/").filter(Boolean);
+  function getParamFromSearchOrHash(name) {
+    // Query string first
+    const qs = new URLSearchParams(window.location.search);
+    const fromQs = qs.get(name);
+    if (fromQs) return fromQs;
 
-      // If hosted under a repo path, keep the first segment
-      // /Xbox-recap-2025/callback.html -> base /Xbox-recap-2025/
-      if (parts.length >= 2) {
-        return `${u.origin}/${parts[0]}/`;
+    // Then hash fragment (#code=... or #/path?code=...)
+    const rawHash = (window.location.hash || "").replace(/^#/, "");
+    if (!rawHash) return null;
+
+    // If hash contains ? then parse after ?
+    const hashQuery = rawHash.includes("?") ? rawHash.split("?").slice(1).join("?") : rawHash;
+    const hs = new URLSearchParams(hashQuery);
+    return hs.get(name);
+  }
+
+  async function run() {
+    const code = getParamFromSearchOrHash("code");
+    const error = getParamFromSearchOrHash("error");
+    const errorDesc = getParamFromSearchOrHash("error_description");
+
+    if (!code) {
+      if (error) {
+        setStatus(`Auth error: ${error}${errorDesc ? " — " + errorDesc : ""}`);
+      } else {
+        setStatus(
+          "No code found in URL.\n\n" +
+          "Fixes:\n" +
+          "1) Ensure your OpenXBL Redirect URI is EXACTLY:\n" +
+          `${location.origin}${location.pathname.replace(/\/[^\/]*$/, "/")}callback.html\n\n` +
+          "2) If the URL shows #code=..., update callback.html to read the hash fragment (this page now does)."
+        );
       }
-      // If hosted at root, just return origin
-      return `${u.origin}/`;
+      return;
     }
 
-    async function run() {
-      const params = new URLSearchParams(window.location.search);
-      const code = params.get("code");
+    setStatus("Got code. Claiming…");
 
-      if (!code) {
-        setStatus("No code found in URL. Check your OpenXBL Redirect URI points to callback.html");
+    try {
+      const res = await fetch(`${WORKER_URL}/claim`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code })
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setStatus(`Claim failed: ${data.error || ("HTTP " + res.status)}`);
         return;
       }
 
-      setStatus("Got code. Claiming…");
-
-      try {
-        const res = await fetch(`${WORKER_URL}/claim`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code })
-        });
-
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          setStatus(`Claim failed: ${data.error || ("HTTP " + res.status)}`);
-          return;
-        }
-
-        const gamertag = data.gamertag ? String(data.gamertag) : "";
-        if (!gamertag) {
-          setStatus("Claimed, but worker did not return a gamertag.");
-          return;
-        }
-
-        setStatus(`Linked as ${gamertag}. Redirecting…`);
-
-        const home = getHomeUrl();
-        const url = new URL(home);
-        url.searchParams.set("gamertag", gamertag);
-        window.location.replace(url.toString());
-      } catch (e) {
-        console.error(e);
-        setStatus("Network error while claiming. Check WORKER_URL and that the Worker is deployed.");
+      const gamertag = data.gamertag ? String(data.gamertag).trim() : "";
+      if (!gamertag) {
+        setStatus("Claimed, but worker did not return a gamertag.");
+        return;
       }
-    }
 
-    run();
-  </script>
+      try { localStorage.setItem(SIGNED_IN_KEY, gamertag); } catch {}
+
+      setStatus(`Linked as ${gamertag}. Redirecting…`);
+
+      const home = getHomeUrl();
+      const url = new URL(home);
+      url.searchParams.set("gamertag", gamertag);
+      window.location.replace(url.toString());
+    } catch (e) {
+      console.error(e);
+      setStatus("Network error while claiming. Check WORKER_URL and that the Worker is deployed.");
+    }
+  }
+
+  run();
+</script>
+
 </body>
 </html>
