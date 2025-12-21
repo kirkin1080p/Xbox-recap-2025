@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Xbox Recap</title>
-  <link rel="stylesheet" href="./style.css?v=2026.4" />
+  <link rel="stylesheet" href="./style.css?v=2026.5" />
 </head>
 <body>
   <div class="bg" aria-hidden="true">
@@ -22,14 +22,17 @@
 
     <div class="headerActions">
       <div id="userArea" class="userArea">
-        <div class="avatarWrap avatarWrap--header" aria-label="User avatar">
+        <div class="avatarWrap sm" aria-hidden="true">
           <img id="userAvatar" class="userAvatar" alt="Not connected" />
-          <div id="userAvatarFallback" class="avatarFallback" aria-hidden="true">?</div>
+          <div id="userAvatarFallback" class="avatarFallback sm">?</div>
+          <span class="avatarRing sm"></span>
         </div>
+
         <div class="userMeta">
           <div id="userName" class="userName">Not connected</div>
           <div id="userBadge" class="userBadge off">Not connected</div>
         </div>
+
         <button id="signoutBtn" class="btn ghost small" type="button" disabled>Sign out</button>
       </div>
     </div>
@@ -55,9 +58,7 @@
           </div>
         </div>
 
-        <!-- ✅ FIX: real auth URL in HTML so it never "does nothing" even if JS fails -->
-        <a id="signinBtn" class="btn ghost ctaBtn" href="https://xbl.io/app/auth/4f6e9e47-98c9-0501-ae8a-4c078183a6dc">Connect Xbox</a>
-
+        <a id="signinBtn" class="btn ghost ctaBtn" href="#">Connect Xbox</a>
         <p class="tiny">By generating a recap you agree to tracking from today onward. We don’t sell data.</p>
       </div>
     </section>
@@ -68,10 +69,12 @@
       <div id="gamerCard" class="card">
         <div class="cardTop">
           <div class="profileRow">
-            <div class="avatarWrap avatarWrap--card" aria-label="Profile picture">
+            <div class="avatarWrap" aria-hidden="true">
               <img id="profilePic" class="pfp" alt="No gamerpic" />
-              <div id="profilePicFallback" class="avatarFallback avatarFallback--card" aria-hidden="true">?</div>
+              <div id="profilePicFallback" class="avatarFallback">?</div>
+              <span class="avatarRing"></span>
             </div>
+
             <div class="profileCopy">
               <div id="gtName" class="gtName">—</div>
               <div id="presence" class="presence">—</div>
@@ -211,6 +214,6 @@
   </main>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
-  <script src="./script.js?v=2026.4"></script>
+  <script src="./script.js?v=2026.5"></script>
 </body>
 </html>
