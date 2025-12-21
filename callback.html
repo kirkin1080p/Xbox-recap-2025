@@ -28,7 +28,7 @@
 
   <script>
     const WORKER_URL = "https://falling-cake-f670.kirkjlemon.workers.dev";
-    const LS_AUTH_GT = "xbr_auth_gamertag";
+    const SIGNED_IN_KEY = "xr_signedInGamertag";
 
     const statusEl = document.getElementById("status");
     function setStatus(msg) { statusEl.textContent = msg; }
@@ -36,7 +36,10 @@
     function getHomeUrl() {
       const u = new URL(window.location.href);
       const parts = u.pathname.split("/").filter(Boolean);
-      if (parts.length >= 2) return `${u.origin}/${parts[0]}/`;
+
+      if (parts.length >= 2) {
+        return `${u.origin}/${parts[0]}/`;
+      }
       return `${u.origin}/`;
     }
 
@@ -64,16 +67,15 @@
           return;
         }
 
-        const gamertag = data.gamertag ? String(data.gamertag) : "";
+        const gamertag = data.gamertag ? String(data.gamertag).trim() : "";
         if (!gamertag) {
           setStatus("Claimed, but worker did not return a gamertag.");
           return;
         }
 
-        // ✅ LOCK SIGNED-IN IDENTITY
-        try {
-          localStorage.setItem(LS_AUTH_GT, gamertag);
-        } catch {}
+        // ✅ This is the important part:
+        // Store the signed-in user so the header user area always reflects WHO IS SIGNED IN.
+        try { localStorage.setItem(SIGNED_IN_KEY, gamertag); } catch {}
 
         setStatus(`Linked as ${gamertag}. Redirecting…`);
 
