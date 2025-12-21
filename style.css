@@ -106,6 +106,13 @@ body{
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.journalActions{
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 .userBadge{
   font-size: 11px;
   padding: 4px 8px;
