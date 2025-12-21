@@ -209,6 +209,19 @@ function proxifyImage(url) {
   return `${WORKER_BASE}/img?url=${encodeURIComponent(url)}`;
 }
 
+// ✅ Sanitize legacy Xbox gamerpic URLs (helps some 360-era pics)
+function sanitizeXboxPicUrl(url) {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    // Known offender on some legacy endpoints
+    u.searchParams.delete("mode");
+    return u.toString();
+  } catch {
+    return url;
+  }
+}
+
 // === AVATAR FALLBACK ===
 function firstLetter(name) {
   const s = String(name || "").trim();
@@ -245,8 +258,11 @@ function setAvatar({ imgEl, fallbackEl, url, labelText }) {
     fallbackEl.style.display = "grid";
   };
 
-  const prox = proxifyImage(url);
-  imgEl.src = prox ? `${prox}&_=${Date.now()}` : `${url}${url.includes("?") ? "&" : "?"}_=${Date.now()}`;
+  const cleanUrl = sanitizeXboxPicUrl(url);
+  const prox = proxifyImage(cleanUrl);
+  imgEl.src = prox
+    ? `${prox}&_=${Date.now()}`
+    : `${cleanUrl}${cleanUrl.includes("?") ? "&" : "?"}_=${Date.now()}`;
 }
 
 // === SIGNED-IN STORAGE (authoritative) ===
@@ -483,8 +499,9 @@ function renderAchievement(recap) {
 
   if (achievementIcon) {
     if (icon) {
-      const prox = proxifyImage(icon);
-      achievementIcon.src = prox ? `${prox}&_=${Date.now()}` : icon;
+      const cleanIcon = sanitizeXboxPicUrl(icon);
+      const prox = proxifyImage(cleanIcon);
+      achievementIcon.src = prox ? `${prox}&_=${Date.now()}` : cleanIcon;
       show(achievementIcon);
     } else {
       hide(achievementIcon);
