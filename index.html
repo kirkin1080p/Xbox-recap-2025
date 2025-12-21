@@ -22,7 +22,10 @@
 
     <div class="headerActions">
       <div id="userArea" class="userArea">
-        <img id="userAvatar" class="userAvatar" alt="Not connected" />
+        <div class="avatarWrap avatarWrap--header" aria-label="User avatar">
+          <img id="userAvatar" class="userAvatar" alt="Not connected" />
+          <div id="userAvatarFallback" class="avatarFallback" aria-hidden="true">?</div>
+        </div>
         <div class="userMeta">
           <div id="userName" class="userName">Not connected</div>
           <div id="userBadge" class="userBadge off">Not connected</div>
@@ -63,14 +66,12 @@
       <div id="gamerCard" class="card">
         <div class="cardTop">
           <div class="profileRow">
-            <img id="profilePic" class="pfp" alt="No gamerpic" />
+            <div class="avatarWrap avatarWrap--card" aria-label="Profile picture">
+              <img id="profilePic" class="pfp" alt="No gamerpic" />
+              <div id="profilePicFallback" class="avatarFallback avatarFallback--card" aria-hidden="true">?</div>
+            </div>
             <div class="profileCopy">
               <div id="gtName" class="gtName">—</div>
-
-              <!-- ✅ NEW: "Now playing" line (live presence) -->
-              <div id="nowPlaying" class="presence muted">—</div>
-
-              <!-- Existing line (kept) -->
               <div id="presence" class="presence">—</div>
             </div>
           </div>
