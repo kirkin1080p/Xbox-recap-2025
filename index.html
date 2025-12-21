@@ -29,6 +29,20 @@
     </div>
 
     <div class="headerActions">
+      <!-- User area (hidden until we have a gamertag / linked state) -->
+      <div id="userArea" class="userArea hidden" aria-live="polite">
+        <img id="userAvatar" class="userAvatar" alt="User gamerpic" />
+        <div class="userMeta">
+          <div class="userNameRow">
+            <span id="userName" class="userName">—</span>
+            <span id="userBadge" class="userBadge">—</span>
+          </div>
+          <button id="signoutBtn" class="btn small ghost userSignout" type="button" title="Disconnect Xbox from this site">
+            Sign out
+          </button>
+        </div>
+      </div>
+
       <a class="chip" href="https://buymeacoffee.com/KeepXboxFree" target="_blank" rel="noreferrer">🍪 Support</a>
       <a class="chip" id="openEmbedLink" href="#" title="Live signature card">🪪 Live Card</a>
     </div>
