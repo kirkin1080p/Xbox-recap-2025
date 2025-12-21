@@ -1,6 +1,6 @@
 // === CONFIG ===
-const WORKER_BASE = "https://falling-cake-f670.kirkjlemon.workers.dev";
-const PUBLIC_KEY = "4f6e9e47-98c9-0501-ae8a-4c078183a6dc";
+const WORKER_BASE = secrets.WORKER_BASE;
+const PUBLIC_KEY  = secrets.PUBLIC_KEY;
 
 // === DOM ===
 const gamertagInput = document.getElementById("gamertagInput");
