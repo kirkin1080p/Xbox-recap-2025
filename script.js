@@ -37,6 +37,7 @@ const trackingInfo = document.getElementById("trackingInfo");
 const dataQualityPill = document.getElementById("dataQualityPill");
 const lastUpdatedPill = document.getElementById("lastUpdatedPill");
 
+const signinPrompt = document.getElementById("signinPrompt");
 const signinBtn = document.getElementById("signinBtn");
 const openEmbedLink = document.getElementById("openEmbedLink");
 
@@ -58,6 +59,13 @@ const liveLink = document.getElementById("liveLink");
 const bbcode = document.getElementById("bbcode");
 const copyLiveLinkBtn = document.getElementById("copyLiveLinkBtn");
 const copyBbBtn = document.getElementById("copyBbBtn");
+
+// NEW: user area
+const userArea = document.getElementById("userArea");
+const userAvatar = document.getElementById("userAvatar");
+const userName = document.getElementById("userName");
+const userBadge = document.getElementById("userBadge");
+const signoutBtn = document.getElementById("signoutBtn");
 
 // === HELPERS ===
 function setStatus(msg) {
@@ -147,6 +155,31 @@ function getOpenXblSigninUrl() {
   return `https://xbl.io/app/auth/${PUBLIC_KEY}`;
 }
 
+function setSignedInUiState({ gamertag, avatarUrl, qualityLabel }) {
+  // show user area
+  userArea.classList.remove("hidden");
+  signinPrompt.classList.add("hidden");
+
+  safeText(userName, gamertag, "—");
+
+  if (avatarUrl) {
+    userAvatar.src = avatarUrl;
+    userAvatar.alt = `${gamertag} gamerpic`;
+  } else {
+    userAvatar.removeAttribute("src");
+    userAvatar.alt = "No gamerpic";
+  }
+
+  userBadge.classList.remove("good", "limited", "off");
+  userBadge.textContent = qualityLabel || "Connected";
+  userBadge.classList.add(qualityLabel === "Full" ? "good" : qualityLabel === "Limited" ? "limited" : "off");
+}
+
+function setSignedOutUiState() {
+  userArea.classList.add("hidden");
+  signinPrompt.classList.remove("hidden");
+}
+
 // === DATA LOADERS ===
 async function fetchRecap(gamertag) {
   const url = `${WORKER_BASE}/?gamertag=${encodeURIComponent(gamertag)}`;
@@ -167,6 +200,25 @@ async function fetchDonateStats() {
   const res = await fetch(url);
   if (!res.ok) return null;
   return res.json();
+}
+
+// NEW: signout endpoint (must exist on worker)
+async function signOutWorker(gamertag) {
+  const res = await fetch(`${WORKER_BASE}/signout`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ gamertag }),
+  });
+
+  // If your worker returns JSON, we’ll attempt to read it (optional)
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    const msg = data?.error || `Sign out failed (HTTP ${res.status}).`;
+    throw new Error(msg);
+  }
+
+  return data;
 }
 
 // === RENDER ===
@@ -292,6 +344,23 @@ function renderRecap(data) {
 
   renderAchievement(recap);
   showCard();
+
+  // NEW: user area + CTA logic
+  const quality =
+    recap?.dataQuality === "good" ? "Full" :
+    recap?.dataQuality === "limited" ? "Limited" :
+    linked ? "Connected" : "Not connected";
+
+  if (linked) {
+    setSignedInUiState({
+      gamertag,
+      avatarUrl: profile?.displayPicRaw || null,
+      qualityLabel: quality,
+    });
+  } else {
+    // If not linked, keep the CTA visible, but still show gamertag in header if we have one.
+    setSignedOutUiState();
+  }
 }
 
 // === EXPORT PNG ===
@@ -396,6 +465,38 @@ signinBtn.addEventListener("click", (e) => {
   setTimeout(clearStatus, 1400);
 });
 
+// NEW: Sign out button
+signoutBtn.addEventListener("click", async () => {
+  const gt = (gamertagInput.value || "").trim() || (gtName.textContent || "").trim();
+  if (!gt || gt === "—") {
+    setStatus("No gamertag to sign out.");
+    setTimeout(clearStatus, 1400);
+    return;
+  }
+
+  setStatus("Signing out…");
+
+  try {
+    await signOutWorker(gt);
+
+    // Clear URL + UI
+    const u = new URL(window.location.href);
+    u.searchParams.delete("gamertag");
+    u.searchParams.delete("embed");
+    window.history.replaceState({}, "", u);
+
+    gamertagInput.value = "";
+    hideCard();
+    setSignedOutUiState();
+
+    setStatus("Signed out ✅");
+    setTimeout(clearStatus, 1400);
+  } catch (err) {
+    console.error(err);
+    setStatus(String(err?.message || "Sign out failed."));
+  }
+});
+
 // === INIT ===
 (function init() {
   setEmbedModeIfNeeded();
@@ -409,5 +510,6 @@ signinBtn.addEventListener("click", (e) => {
   } else {
     fetchDonateStats().then(renderDonate).catch(() => {});
     openEmbedLink.href = `${window.location.origin}${window.location.pathname}?embed=1`;
+    setSignedOutUiState();
   }
 })();
