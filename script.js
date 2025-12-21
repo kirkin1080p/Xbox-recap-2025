@@ -42,6 +42,45 @@ function removeClass(node, ...cls) {
   node.classList.remove(...cls);
 }
 
+// === AVATAR (PFP) HELPERS ===
+// Shows Xbox gamerpic when available, otherwise shows first letter fallback (like before).
+function firstLetter(gt) {
+  const s = (gt || "").trim();
+  return s ? s[0].toUpperCase() : "?";
+}
+
+function setAvatarImage(imgEl, fallbackEl, gamertag, url) {
+  if (fallbackEl) fallbackEl.textContent = firstLetter(gamertag);
+
+  if (!imgEl) return;
+
+  const wrap = typeof imgEl.closest === "function" ? imgEl.closest(".avatarWrap") : null;
+
+  // reset handlers to avoid stacking
+  imgEl.onload = null;
+  imgEl.onerror = null;
+
+  if (!url) {
+    imgEl.removeAttribute("src");
+    imgEl.alt = "";
+    if (wrap) wrap.classList.remove("hasImage");
+    return;
+  }
+
+  imgEl.src = url;
+  imgEl.alt = `${gamertag} gamerpic`;
+
+  imgEl.onload = () => {
+    if (wrap) wrap.classList.add("hasImage");
+  };
+
+  imgEl.onerror = () => {
+    imgEl.removeAttribute("src");
+    imgEl.alt = "";
+    if (wrap) wrap.classList.remove("hasImage");
+  };
+}
+
 // === DOM ===
 const gamertagInput = el("gamertagInput");
 const generateBtn   = el("generateBtn");
@@ -51,11 +90,8 @@ const gamerCardWrap = el("gamerCardWrap");
 const gamerCard     = el("gamerCard");
 
 const profilePic = el("profilePic");
+const profilePicFallback = el("profilePicFallback");
 const gtName     = el("gtName");
-
-// ✅ NEW
-const nowPlaying = el("nowPlaying");
-
 const presence   = el("presence");
 
 const gamerscore      = el("gamerscore");
@@ -82,71 +118,82 @@ const trackingInfo    = el("trackingInfo");
 const dataQualityPill = el("dataQualityPill");
 const lastUpdatedPill = el("lastUpdatedPill");
 
-const signinPrompt  = el("signinPrompt");
-const signinBtn     = el("signinBtn");
-const openEmbedLink = el("openEmbedLink");
-
-const exportBtn   = el("exportBtn");
-const copyLinkBtn = el("copyLinkBtn");
-
 const achievementBlock   = el("achievementBlock");
 const achievementIcon    = el("achievementIcon");
 const achievementName    = el("achievementName");
 const achievementPercent = el("achievementPercent");
 const achievementContext = el("achievementContext");
 
-const blogEntries = el("blogEntries");
-
-const donateTotal      = el("donateTotal");
-const donateSupporters = el("donateSupporters");
-
-const liveLink = el("liveLink");
-const bbcode   = el("bbcode");
+const exportBtn      = el("exportBtn");
+const copyLinkBtn    = el("copyLinkBtn");
+const openEmbedLink  = el("openEmbedLink");
 const copyLiveLinkBtn = el("copyLiveLinkBtn");
 const copyBbBtn       = el("copyBbBtn");
+const liveLink        = el("liveLink");
+const bbcode          = el("bbcode");
 
-// User area (always visible)
-const userArea   = el("userArea");
+const blogEntries = el("blogEntries");
+const donateTotal = el("donateTotal");
+const donateSupporters = el("donateSupporters");
+
+// User area
+const userArea = el("userArea");
 const userAvatar = el("userAvatar");
-const userName   = el("userName");
-const userBadge  = el("userBadge");
+const userAvatarFallback = el("userAvatarFallback");
+const userName = el("userName");
+const userBadge = el("userBadge");
 const signoutBtn = el("signoutBtn");
+
+const signinPrompt = el("signinPrompt");
+const signinBtn = el("signinBtn");
 
 // === STATUS ===
 function setStatus(msg) {
   if (!statusEl) return;
-  show(statusEl);
   statusEl.textContent = msg;
+  show(statusEl);
 }
 function clearStatus() {
   if (!statusEl) return;
-  hide(statusEl);
   statusEl.textContent = "";
+  hide(statusEl);
 }
 
-// === PRE-FLIGHT ===
+// === PRE-FLIGHT: catch missing IDs early ===
 const CARD_IDS_THAT_SHOULD_EXIST = [
+  "status",
+  "gamertagInput", "generateBtn",
   "gamerCardWrap", "gamerCard",
-  "profilePic", "gtName",
 
-  // ✅ NEW (Now playing line)
-  "nowPlaying",
+  // header
+  "profilePic", "gtName", "presence",
 
-  "presence",
+  // mini stats / key stats
   "gamerscore", "gamerscoreDelta", "daysPlayed", "playRange",
   "favGame", "favGameSessions",
+
+  // streaks + counts
   "currentStreak", "longestStreak", "longestBreak", "uniqueGames", "oneHit",
+
+  // peak/activity
   "peakDay", "peakDaySub",
   "activeWeekday", "activeWeekdaySub",
   "activeMonth", "activeMonthSub",
+
+  // pills / tracking
   "trackingInfo", "dataQualityPill", "lastUpdatedPill",
+
+  // blog + donate + share
   "blogEntries",
   "donateTotal", "donateSupporters",
   "liveLink", "bbcode",
+
+  // buttons (optional but should exist if your UI has them)
   "exportBtn", "copyLinkBtn", "copyLiveLinkBtn", "copyBbBtn"
 ];
 
 function preflightReportMissingIds() {
+  // Only warn after you try to generate (so you can still use embed pages etc.)
   const missing = CARD_IDS_THAT_SHOULD_EXIST.filter((id) => !document.getElementById(id));
   if (missing.length) {
     setStatus(
@@ -180,13 +227,6 @@ function fmtDateTime(iso) {
   } catch {
     return "—";
   }
-}
-
-// ✅ NEW: parse "Playing X" safely
-function parseNowPlaying(presenceText) {
-  if (!presenceText || typeof presenceText !== "string") return null;
-  const m = presenceText.match(/^Playing\s+(.+)$/i);
-  return m ? m[1].trim() : null;
 }
 
 async function copyToClipboard(text) {
@@ -250,15 +290,7 @@ function setSignedInUiState({ gamertag, avatarUrl, qualityLabel }) {
 
   setText(userName, gamertag, "—");
 
-  if (userAvatar) {
-    if (avatarUrl) {
-      userAvatar.src = avatarUrl;
-      userAvatar.alt = `${gamertag} gamerpic`;
-    } else {
-      userAvatar.removeAttribute("src");
-      userAvatar.alt = "No gamerpic";
-    }
-  }
+  setAvatarImage(userAvatar, userAvatarFallback, gamertag, avatarUrl || null);
 
   if (userBadge) {
     removeClass(userBadge, "good", "limited", "off");
@@ -276,10 +308,9 @@ function setSignedInUiState({ gamertag, avatarUrl, qualityLabel }) {
 function setSignedOutUiState() {
   show(userArea);
 
-  if (userAvatar) {
-    userAvatar.removeAttribute("src");
-    userAvatar.alt = "Not connected";
-  }
+  setAvatarImage(userAvatar, userAvatarFallback, "?", null);
+  if (userAvatar) userAvatar.alt = "Not connected";
+
   setText(userName, "Not connected", "Not connected");
 
   if (userBadge) {
@@ -294,12 +325,12 @@ function setSignedOutUiState() {
   show(signinPrompt);
 }
 
-// === NETWORK ===
+// === NETWORK (WITH GOOD ERRORS) ===
 async function fetchJsonOrText(url, init) {
   const res = await fetch(url, init);
   const text = await res.text();
   let data = null;
-  try { data = JSON.parse(text); } catch {}
+  try { data = JSON.parse(text); } catch { /* not json */ }
   return { res, text, data };
 }
 
@@ -342,7 +373,7 @@ async function signOutWorker(gamertag) {
   return data;
 }
 
-// === RENDERERS ===
+// === RENDERERS (NULL SAFE) ===
 function renderAchievement(recap) {
   if (!achievementBlock) return;
 
@@ -415,16 +446,6 @@ function renderRecap(data) {
 
   setText(gtName, gamertag);
 
-  // ✅ Now playing should ONLY show if there is real live presence data.
-  const liveNow = parseNowPlaying(profile?.presenceText || "");
-  if (liveNow) {
-    setText(nowPlaying, `Now playing: ${liveNow}`);
-    show(nowPlaying);
-  } else {
-    // Hide the line entirely if there's nothing real to show
-    hide(nowPlaying);
-  }
-
   const lastPlayedName =
     recap?.lastPlayedGame ||
     recap?.titleHistory?.lastTitleName ||
@@ -443,15 +464,7 @@ function renderRecap(data) {
 
   setText(presence, profile?.presenceText || fallbackPresence);
 
-  if (profilePic) {
-    if (profile?.displayPicRaw) {
-      profilePic.src = profile.displayPicRaw;
-      profilePic.alt = `${gamertag} gamerpic`;
-    } else {
-      profilePic.removeAttribute("src");
-      profilePic.alt = "No gamerpic";
-    }
-  }
+  setAvatarImage(profilePic, profilePicFallback, gamertag, profile?.displayPicRaw || null);
 
   setText(gamerscore, recap?.gamerscoreCurrent ?? profile?.gamerscore ?? "—");
 
@@ -579,10 +592,13 @@ async function exportCardAsPng() {
 
 // === MAIN FLOW ===
 async function run(gamertag) {
+  // HARD SAFETY NET: never silently die with "null textContent"
   try {
     clearStatus();
     hideCard();
 
+    // First: tell you if your HTML is missing the stuff your JS expects
+    // (This is usually why you get null textContent errors.)
     if (!preflightReportMissingIds()) return;
 
     const gt = (gamertag || "").trim();
@@ -591,6 +607,7 @@ async function run(gamertag) {
       return;
     }
 
+    // keep URL shareable
     try {
       const u = new URL(window.location.href);
       u.searchParams.set("gamertag", gt);
@@ -616,7 +633,7 @@ async function run(gamertag) {
   }
 }
 
-// === EVENTS ===
+// === EVENTS (ONLY IF ELEMENT EXISTS) ===
 if (generateBtn) generateBtn.addEventListener("click", () => run(gamertagInput?.value || ""));
 if (gamertagInput) {
   gamertagInput.addEventListener("keydown", (e) => {
@@ -636,9 +653,12 @@ if (copyLinkBtn) {
 if (copyLiveLinkBtn && liveLink) copyLiveLinkBtn.addEventListener("click", () => copyToClipboard(liveLink.value || ""));
 if (copyBbBtn && bbcode) copyBbBtn.addEventListener("click", () => copyToClipboard(bbcode.value || ""));
 
-// ✅ CONNECT
+// ✅ CONNECT (ABSOLUTELY RELIABLE)
 if (signinBtn) {
+  // Always set a real URL (so even if JS fails later, it still works)
   signinBtn.href = getOpenXblSigninUrl();
+
+  // Also handle click to navigate (no popup logic; no "nothing happens")
   signinBtn.addEventListener("click", (e) => {
     e.preventDefault();
     window.location.href = getOpenXblSigninUrl();
