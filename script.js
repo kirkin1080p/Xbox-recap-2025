@@ -1,6 +1,8 @@
 // === CONFIG ===
-const WORKER_BASE = secrets.WORKER_BASE;
-const PUBLIC_KEY  = secrets.PUBLIC_KEY;
+// These are injected at deploy time (e.g. GitHub Secrets -> string replace).
+// The browser CANNOT read GitHub secrets directly.
+const WORKER_BASE = "__WORKER_BASE__";
+const PUBLIC_KEY = "__PUBLIC_KEY__";
 
 // === DOM ===
 const gamertagInput = document.getElementById("gamertagInput");
@@ -156,7 +158,6 @@ function getOpenXblSigninUrl() {
 }
 
 function setSignedInUiState({ gamertag, avatarUrl, qualityLabel }) {
-  // show user area
   userArea.classList.remove("hidden");
   signinPrompt.classList.add("hidden");
 
@@ -202,7 +203,6 @@ async function fetchDonateStats() {
   return res.json();
 }
 
-// NEW: signout endpoint (must exist on worker)
 async function signOutWorker(gamertag) {
   const res = await fetch(`${WORKER_BASE}/signout`, {
     method: "POST",
@@ -210,7 +210,6 @@ async function signOutWorker(gamertag) {
     body: JSON.stringify({ gamertag }),
   });
 
-  // If your worker returns JSON, we’ll attempt to read it (optional)
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
@@ -345,7 +344,6 @@ function renderRecap(data) {
   renderAchievement(recap);
   showCard();
 
-  // NEW: user area + CTA logic
   const quality =
     recap?.dataQuality === "good" ? "Full" :
     recap?.dataQuality === "limited" ? "Limited" :
@@ -358,7 +356,6 @@ function renderRecap(data) {
       qualityLabel: quality,
     });
   } else {
-    // If not linked, keep the CTA visible, but still show gamertag in header if we have one.
     setSignedOutUiState();
   }
 }
@@ -456,7 +453,6 @@ copyLinkBtn.addEventListener("click", () => {
 copyLiveLinkBtn.addEventListener("click", () => copyToClipboard(liveLink.value));
 copyBbBtn.addEventListener("click", () => copyToClipboard(bbcode.value));
 
-// OPTION 1: Connect opens sign-in directly (no modal, no claim)
 signinBtn.addEventListener("click", (e) => {
   e.preventDefault();
   const url = getOpenXblSigninUrl();
@@ -465,7 +461,6 @@ signinBtn.addEventListener("click", (e) => {
   setTimeout(clearStatus, 1400);
 });
 
-// NEW: Sign out button
 signoutBtn.addEventListener("click", async () => {
   const gt = (gamertagInput.value || "").trim() || (gtName.textContent || "").trim();
   if (!gt || gt === "—") {
@@ -479,7 +474,6 @@ signoutBtn.addEventListener("click", async () => {
   try {
     await signOutWorker(gt);
 
-    // Clear URL + UI
     const u = new URL(window.location.href);
     u.searchParams.delete("gamertag");
     u.searchParams.delete("embed");
