@@ -76,6 +76,64 @@ body{
 .tagline{ margin: 3px 0 0; color: var(--muted); font-size: 13px; }
 
 .headerActions{ display:flex; gap:8px; align-items:center; }
+
+/* NEW: User area */
+.userArea{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.10);
+  backdrop-filter: blur(10px);
+}
+.userAvatar{
+  width:34px;
+  height:34px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.25);
+}
+.userMeta{ display:flex; flex-direction:column; gap:6px; min-width: 0; }
+.userNameRow{ display:flex; align-items:center; gap:8px; min-width: 0; }
+.userName{
+  font-size: 12px;
+  font-weight: 800;
+  max-width: 170px;
+  overflow:hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.userBadge{
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.12);
+  color: rgba(245,246,247,.85);
+  background: rgba(0,0,0,.18);
+}
+.userBadge.good{
+  border-color: rgba(14,205,17,.35);
+  background: rgba(14,205,17,.12);
+}
+.userBadge.limited{
+  border-color: rgba(255,221,0,.35);
+  background: rgba(255,221,0,.10);
+}
+.userBadge.off{
+  border-color: rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+}
+.userSignout{
+  align-self:flex-start;
+  min-height: 30px;
+  padding: 7px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
 .chip{
   text-decoration:none;
   color: var(--text);
