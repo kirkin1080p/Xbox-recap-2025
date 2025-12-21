@@ -128,7 +128,10 @@ const REQUIRED_IDS = [
   "blogEntries",
   "donateTotal", "donateSupporters",
   "liveLink", "bbcode",
-  "exportBtn", "copyLinkBtn", "copyLiveLinkBtn", "copyBbBtn"
+  "exportBtn", "copyLinkBtn", "copyLiveLinkBtn", "copyBbBtn",
+  // user area ids (safe to require; your UI expects them)
+  "userArea", "userAvatar", "userAvatarFallback", "userName", "userBadge", "signoutBtn",
+  "signinPrompt", "signinBtn"
 ];
 
 function preflightReportMissingIds() {
@@ -246,6 +249,23 @@ function setAvatar({ imgEl, fallbackEl, url, labelText }) {
   imgEl.src = prox ? `${prox}&_=${Date.now()}` : `${url}${url.includes("?") ? "&" : "?"}_=${Date.now()}`;
 }
 
+// === SIGNED-IN STORAGE (authoritative) ===
+function getSignedInGamertag() {
+  try {
+    const gt = localStorage.getItem(SIGNED_IN_KEY);
+    return gt ? String(gt).trim() : null;
+  } catch {
+    return null;
+  }
+}
+
+function setSignedInGamertag(gt) {
+  try {
+    if (!gt) localStorage.removeItem(SIGNED_IN_KEY);
+    else localStorage.setItem(SIGNED_IN_KEY, String(gt).trim());
+  } catch {}
+}
+
 // === USER AREA STATES ===
 function setSignedInUiState({ gamertag, avatarUrl, qualityLabel }) {
   show(userArea);
@@ -295,6 +315,49 @@ function setSignedOutUiState() {
   if (signoutBtn) signoutBtn.disabled = true;
 
   show(signinPrompt);
+}
+
+// Render user area ONLY from signed-in identity (never from generated gamertag)
+async function renderUserAreaFromSignedIn() {
+  const signedInGt = getSignedInGamertag();
+
+  if (!signedInGt) {
+    setSignedOutUiState();
+    return;
+  }
+
+  // Immediate UI (fast) while we fetch better details
+  setSignedInUiState({
+    gamertag: signedInGt,
+    avatarUrl: null,
+    qualityLabel: "Connected",
+  });
+
+  // Fetch profile/quality for signed-in gamertag ONLY
+  try {
+    const data = await fetchRecap(signedInGt);
+    const profile = data?.profile || null;
+    const recap = data?.recap || null;
+    const linked = !!data?.linked;
+
+    const quality =
+      recap?.dataQuality === "good" ? "Full" :
+      recap?.dataQuality === "limited" ? "Limited" :
+      linked ? "Connected" : "Tracking";
+
+    setSignedInUiState({
+      gamertag: signedInGt,
+      avatarUrl: profile?.displayPicRaw || null,
+      qualityLabel: quality,
+    });
+  } catch {
+    // Keep the basic signed-in state even if fetch fails
+    setSignedInUiState({
+      gamertag: signedInGt,
+      avatarUrl: null,
+      qualityLabel: "Connected",
+    });
+  }
 }
 
 // === NETWORK (NO-CACHE) ===
@@ -591,20 +654,9 @@ function renderRecap(data) {
   renderAchievement(recap);
   showCard();
 
-  const quality =
-    recap?.dataQuality === "good" ? "Full" :
-    recap?.dataQuality === "limited" ? "Limited" :
-    linked ? "Connected" : "Not connected";
-
-  if (linked) {
-    setSignedInUiState({
-      gamertag,
-      avatarUrl: profile?.displayPicRaw || null,
-      qualityLabel: quality,
-    });
-  } else {
-    setSignedOutUiState();
-  }
+  // IMPORTANT:
+  // Do NOT touch the user area here.
+  // User area is authoritative from localStorage SIGNED_IN_KEY only.
 
   return recap;
 }
@@ -735,33 +787,28 @@ if (signinBtn) {
   });
 }
 
-// Sign out
+// Sign out (SIGNED-IN USER ONLY)
 if (signoutBtn) {
   signoutBtn.addEventListener("click", async () => {
-    const gt =
-      (gamertagInput?.value || "").trim() ||
-      (gtName?.textContent || "").trim();
+    const signedInGt = getSignedInGamertag();
 
-    if (!gt || gt === "—") {
-      setStatus("No gamertag to sign out.");
+    if (!signedInGt) {
+      setStatus("Not signed in.");
       setTimeout(clearStatus, 1400);
+      setSignedOutUiState();
       return;
     }
 
     setStatus("Signing out…");
 
     try {
-      await signOutWorker(gt);
+      // Tell worker to forget auth for this signed-in identity
+      await signOutWorker(signedInGt);
 
-      try {
-        const u = new URL(window.location.href);
-        u.searchParams.delete("gamertag");
-        u.searchParams.delete("embed");
-        window.history.replaceState({}, "", u);
-      } catch {}
+      // Clear local identity
+      setSignedInGamertag(null);
 
-      if (gamertagInput) gamertagInput.value = "";
-      hideCard();
+      // Reset UI state
       setSignedOutUiState();
 
       setStatus("Signed out ✅");
@@ -776,7 +823,11 @@ if (signoutBtn) {
 // === INIT ===
 (function init() {
   setEmbedModeIfNeeded();
-  setSignedOutUiState();
+
+  // User area should ONLY ever reflect localStorage SIGNED_IN_KEY
+  // and should NOT be changed by generating recaps.
+  if (!preflightReportMissingIds()) return;
+  renderUserAreaFromSignedIn();
 
   const params = new URLSearchParams(window.location.search);
   const gt = params.get("gamertag");
