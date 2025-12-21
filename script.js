@@ -2,6 +2,10 @@
 const WORKER_BASE = "https://falling-cake-f670.kirkjlemon.workers.dev";
 const PUBLIC_KEY  = "4f6e9e47-98c9-0501-ae8a-4c078183a6dc";
 
+// Simple in-memory cache
+let _donateStatsCache = null;
+let _runToken = 0;
+
 // === DOM HELPERS (NULL SAFE) ===
 function el(id) { return document.getElementById(id); }
 
@@ -120,47 +124,34 @@ function clearStatus() {
   statusEl.textContent = "";
 }
 
-// === PRE-FLIGHT (THIS IS WHAT YOU NEEDED) ===
-// If any of these are missing in index.html, Generate can’t fully render the card.
+function setLoading(isLoading) {
+  if (generateBtn) generateBtn.disabled = !!isLoading;
+  if (generateBtn) generateBtn.classList.toggle("loading", !!isLoading);
+}
+
+// === PRE-FLIGHT ===
 const CARD_IDS_THAT_SHOULD_EXIST = [
-  // wrapper + base card
   "gamerCardWrap", "gamerCard",
-
-  // header
   "profilePic", "gtName", "presence",
-
-  // mini stats / key stats
   "gamerscore", "gamerscoreDelta", "daysPlayed", "playRange",
   "favGame", "favGameSessions",
-
-  // streaks + counts
   "currentStreak", "longestStreak", "longestBreak", "uniqueGames", "oneHit",
-
-  // peak/activity
   "peakDay", "peakDaySub",
   "activeWeekday", "activeWeekdaySub",
   "activeMonth", "activeMonthSub",
-
-  // pills / tracking
   "trackingInfo", "dataQualityPill", "lastUpdatedPill",
-
-  // blog + donate + share
   "blogEntries",
   "donateTotal", "donateSupporters",
   "liveLink", "bbcode",
-
-  // buttons (optional but should exist if your UI has them)
   "exportBtn", "copyLinkBtn", "copyLiveLinkBtn", "copyBbBtn"
 ];
 
 function preflightReportMissingIds() {
-  // Only warn after you try to generate (so you can still use embed pages etc.)
   const missing = CARD_IDS_THAT_SHOULD_EXIST.filter((id) => !document.getElementById(id));
   if (missing.length) {
     setStatus(
       `Your index.html is missing ${missing.length} element(s) that the script expects:\n` +
-      missing.map((m) => `• #${m}`).join("\n") +
-      `\n\nFix: restore the gamer card markup (the section inside #gamerCardWrap).`
+      missing.map((m) => `• #${m}`).join("\n")
     );
     return false;
   }
@@ -323,9 +314,11 @@ async function fetchBlog(gamertag) {
 }
 
 async function fetchDonateStats() {
+  if (_donateStatsCache) return _donateStatsCache;
   const url = `${WORKER_BASE}/donate-stats`;
   const { res, data } = await fetchJsonOrText(url);
   if (!res.ok) return null;
+  _donateStatsCache = data;
   return data;
 }
 
@@ -568,15 +561,15 @@ async function exportCardAsPng() {
   setTimeout(clearStatus, 1600);
 }
 
-// === MAIN FLOW ===
+// === MAIN FLOW (Optimized) ===
 async function run(gamertag) {
-  // HARD SAFETY NET: never silently die with "null textContent"
+  const token = ++_runToken;
+
   try {
+    setLoading(true);
     clearStatus();
     hideCard();
 
-    // First: tell you if your HTML is missing the stuff your JS expects
-    // (This is usually why you get null textContent errors.)
     if (!preflightReportMissingIds()) return;
 
     const gt = (gamertag || "").trim();
@@ -585,7 +578,6 @@ async function run(gamertag) {
       return;
     }
 
-    // keep URL shareable
     try {
       const u = new URL(window.location.href);
       u.searchParams.set("gamertag", gt);
@@ -594,24 +586,32 @@ async function run(gamertag) {
 
     setStatus("Loading recap…");
 
-    const [recapData, blogData, donateData] = await Promise.all([
-      fetchRecap(gt),
+    // 1) Fetch + render recap FIRST
+    const recapData = await fetchRecap(gt);
+    if (token !== _runToken) return; // stale run
+    const recap = renderRecap(recapData);
+    showCard();
+    clearStatus();
+
+    // 2) Then enrich with blog + donate
+    const [blogData, donateData] = await Promise.allSettled([
       fetchBlog(gt),
       fetchDonateStats(),
     ]);
 
-    const recap = renderRecap(recapData);
-    renderBlog(blogData, recap);
-    renderDonate(donateData);
+    if (token !== _runToken) return;
 
-    clearStatus();
+    if (blogData.status === "fulfilled") renderBlog(blogData.value, recap);
+    if (donateData.status === "fulfilled") renderDonate(donateData.value);
   } catch (err) {
     console.error(err);
     setStatus(`JS crashed: ${String(err?.message || err)}\nOpen DevTools Console for the stack trace.`);
+  } finally {
+    if (token === _runToken) setLoading(false);
   }
 }
 
-// === EVENTS (ONLY IF ELEMENT EXISTS) ===
+// === EVENTS ===
 if (generateBtn) generateBtn.addEventListener("click", () => run(gamertagInput?.value || ""));
 if (gamertagInput) {
   gamertagInput.addEventListener("keydown", (e) => {
@@ -631,12 +631,9 @@ if (copyLinkBtn) {
 if (copyLiveLinkBtn && liveLink) copyLiveLinkBtn.addEventListener("click", () => copyToClipboard(liveLink.value || ""));
 if (copyBbBtn && bbcode) copyBbBtn.addEventListener("click", () => copyToClipboard(bbcode.value || ""));
 
-// ✅ CONNECT (ABSOLUTELY RELIABLE)
+// ✅ CONNECT (reliable)
 if (signinBtn) {
-  // Always set a real URL (so even if JS fails later, it still works)
   signinBtn.href = getOpenXblSigninUrl();
-
-  // Also handle click to navigate (no popup logic; no "nothing happens")
   signinBtn.addEventListener("click", (e) => {
     e.preventDefault();
     window.location.href = getOpenXblSigninUrl();
@@ -693,6 +690,7 @@ if (signoutBtn) {
     gamertagInput.value = gt;
     run(gt);
   } else {
+    // Donate stats can load once on idle path
     fetchDonateStats().then(renderDonate).catch(() => {});
     if (openEmbedLink) {
       openEmbedLink.href = `${window.location.origin}${window.location.pathname}?embed=1`;
