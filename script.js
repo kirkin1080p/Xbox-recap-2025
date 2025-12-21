@@ -11,13 +11,39 @@ function setText(node, value, fallback = "—") {
     value === null || value === undefined || value === "" ? fallback : String(value);
 }
 
-function show(node) { if (node) node.classList.remove("hidden"); }
-function hide(node) { if (node) node.classList.add("hidden"); }
+function setHtml(node, html) {
+  if (!node) return;
+  node.innerHTML = html;
+}
 
-function addClass(node, ...cls) { if (node) node.classList.add(...cls); }
-function removeClass(node, ...cls) { if (node) node.classList.remove(...cls); }
+function show(node) {
+  if (!node) return;
+  node.classList.remove("hidden");
+}
+
+function hide(node) {
+  if (!node) return;
+  node.classList.add("hidden");
+}
+
+function setAttr(node, name, value) {
+  if (!node) return;
+  if (value === null || value === undefined || value === "") node.removeAttribute(name);
+  else node.setAttribute(name, value);
+}
+
+function addClass(node, ...cls) {
+  if (!node) return;
+  node.classList.add(...cls);
+}
+
+function removeClass(node, ...cls) {
+  if (!node) return;
+  node.classList.remove(...cls);
+}
 
 // === AVATAR (PFP) HELPERS ===
+// Shows Xbox gamerpic when available, otherwise shows first letter fallback (like before).
 function firstLetter(gt) {
   const s = (gt || "").trim();
   return s ? s[0].toUpperCase() : "?";
@@ -25,7 +51,6 @@ function firstLetter(gt) {
 
 function setAvatarImage(imgEl, fallbackEl, gamertag, url) {
   if (fallbackEl) fallbackEl.textContent = firstLetter(gamertag);
-
   if (!imgEl) return;
 
   const wrap = typeof imgEl.closest === "function" ? imgEl.closest(".avatarWrap") : null;
@@ -51,13 +76,6 @@ function setAvatarImage(imgEl, fallbackEl, gamertag, url) {
   };
 }
 
-// === Now Playing parser ===
-function parseNowPlaying(presenceText) {
-  if (!presenceText || typeof presenceText !== "string") return null;
-  const m = presenceText.match(/^Playing\s+(.+)$/i);
-  return m ? m[1].trim() : null;
-}
-
 // === DOM ===
 const gamertagInput = el("gamertagInput");
 const generateBtn   = el("generateBtn");
@@ -69,7 +87,6 @@ const gamerCard     = el("gamerCard");
 const profilePic = el("profilePic");
 const profilePicFallback = el("profilePicFallback");
 const gtName     = el("gtName");
-const nowPlaying = el("nowPlaying");
 const presence   = el("presence");
 
 const gamerscore      = el("gamerscore");
@@ -96,64 +113,64 @@ const trackingInfo    = el("trackingInfo");
 const dataQualityPill = el("dataQualityPill");
 const lastUpdatedPill = el("lastUpdatedPill");
 
+const signinPrompt = el("signinPrompt");
+const signinBtn     = el("signinBtn");
+const openEmbedLink = el("openEmbedLink");
+
+const exportBtn   = el("exportBtn");
+const copyLinkBtn = el("copyLinkBtn");
+
 const achievementBlock   = el("achievementBlock");
 const achievementIcon    = el("achievementIcon");
 const achievementName    = el("achievementName");
 const achievementPercent = el("achievementPercent");
 const achievementContext = el("achievementContext");
 
-const exportBtn       = el("exportBtn");
-const copyLinkBtn     = el("copyLinkBtn");
-const openEmbedLink   = el("openEmbedLink");
-const copyLiveLinkBtn = el("copyLiveLinkBtn");
-const copyBbBtn       = el("copyBbBtn");
-const liveLink        = el("liveLink");
-const bbcode          = el("bbcode");
-
 const blogEntries = el("blogEntries");
-const donateTotal = el("donateTotal");
+
+const donateTotal      = el("donateTotal");
 const donateSupporters = el("donateSupporters");
 
-// User area
-const userArea = el("userArea");
+const liveLink = el("liveLink");
+const bbcode   = el("bbcode");
+const copyLiveLinkBtn = el("copyLiveLinkBtn");
+const copyBbBtn       = el("copyBbBtn");
+
+// User area (always visible)
+const userArea   = el("userArea");
 const userAvatar = el("userAvatar");
 const userAvatarFallback = el("userAvatarFallback");
-const userName = el("userName");
-const userBadge = el("userBadge");
+const userName   = el("userName");
+const userBadge  = el("userBadge");
 const signoutBtn = el("signoutBtn");
-
-const signinPrompt = el("signinPrompt");
-const signinBtn = el("signinBtn");
 
 // === STATUS ===
 function setStatus(msg) {
   if (!statusEl) return;
-  statusEl.textContent = msg;
   show(statusEl);
+  statusEl.textContent = msg;
 }
 function clearStatus() {
   if (!statusEl) return;
-  statusEl.textContent = "";
   hide(statusEl);
+  statusEl.textContent = "";
 }
 
-// === PRE-FLIGHT ===
+// === PRE-FLIGHT (ONLY RUN ON GENERATE) ===
 const CARD_IDS_THAT_SHOULD_EXIST = [
-  "status",
-  "gamertagInput","generateBtn",
-  "gamerCardWrap","gamerCard",
-  "profilePic","gtName","nowPlaying","presence",
-  "gamerscore","gamerscoreDelta","daysPlayed","playRange",
-  "favGame","favGameSessions",
-  "currentStreak","longestStreak","longestBreak","uniqueGames","oneHit",
-  "peakDay","peakDaySub",
-  "activeWeekday","activeWeekdaySub",
-  "activeMonth","activeMonthSub",
-  "trackingInfo","dataQualityPill","lastUpdatedPill",
+  "gamerCardWrap", "gamerCard",
+  "profilePic", "gtName", "presence",
+  "gamerscore", "gamerscoreDelta", "daysPlayed", "playRange",
+  "favGame", "favGameSessions",
+  "currentStreak", "longestStreak", "longestBreak", "uniqueGames", "oneHit",
+  "peakDay", "peakDaySub",
+  "activeWeekday", "activeWeekdaySub",
+  "activeMonth", "activeMonthSub",
+  "trackingInfo", "dataQualityPill", "lastUpdatedPill",
   "blogEntries",
-  "donateTotal","donateSupporters",
-  "liveLink","bbcode",
-  "exportBtn","copyLinkBtn","copyLiveLinkBtn","copyBbBtn"
+  "donateTotal", "donateSupporters",
+  "liveLink", "bbcode",
+  "exportBtn", "copyLinkBtn", "copyLiveLinkBtn", "copyBbBtn"
 ];
 
 function preflightReportMissingIds() {
@@ -169,7 +186,7 @@ function preflightReportMissingIds() {
   return true;
 }
 
-// === HELPERS ===
+// === GENERAL HELPERS ===
 function setEmbedModeIfNeeded() {
   const params = new URLSearchParams(window.location.search);
   if (params.get("embed") === "1") document.body.classList.add("embed");
@@ -224,28 +241,6 @@ function getOpenXblSigninUrl() {
   return `https://xbl.io/app/auth/${PUBLIC_KEY}`;
 }
 
-function setPillQuality(recap, linked) {
-  if (!dataQualityPill) return;
-  const q = recap?.dataQuality || (linked ? "good" : "tracking-only");
-  let label = "Tracking";
-  if (q === "good") label = "Full";
-  if (q === "limited") label = "Limited";
-  dataQualityPill.textContent = label;
-}
-
-function setLastUpdated(recap) {
-  if (!lastUpdatedPill) return;
-  const observed = recap?.lastObservedAt || null;
-  const refreshed = recap?.lastSeen || null;
-
-  if (observed) lastUpdatedPill.textContent = `Last observed ${fmtDateTime(observed)}`;
-  else lastUpdatedPill.textContent = `Last refreshed ${fmtDateTime(refreshed)}`;
-}
-
-function showCard() { show(gamerCardWrap); }
-function hideCard() { hide(gamerCardWrap); }
-
-// === USER AREA STATES ===
 function setSignedInUiState({ gamertag, avatarUrl, qualityLabel }) {
   show(userArea);
   hide(signinPrompt);
@@ -283,7 +278,6 @@ function setSignedOutUiState() {
   show(signinPrompt);
 }
 
-// === NETWORK ===
 async function fetchJsonOrText(url, init) {
   const res = await fetch(url, init);
   const text = await res.text();
@@ -329,7 +323,6 @@ async function signOutWorker(gamertag) {
   return data;
 }
 
-// === RENDERERS ===
 function renderAchievement(recap) {
   if (!achievementBlock) return;
 
@@ -395,16 +388,32 @@ function renderDonate(ds) {
   donateSupporters.textContent = String(ds.supporters || 0);
 }
 
+function setPillQuality(recap, linked) {
+  if (!dataQualityPill) return;
+  const q = recap?.dataQuality || (linked ? "good" : "tracking-only");
+  let label = "Tracking";
+  if (q === "good") label = "Full";
+  if (q === "limited") label = "Limited";
+  dataQualityPill.textContent = label;
+}
+
+function setLastUpdated(recap) {
+  if (!lastUpdatedPill) return;
+  const observed = recap?.lastObservedAt || null;
+  const refreshed = recap?.lastSeen || null;
+
+  if (observed) lastUpdatedPill.textContent = `Last observed ${fmtDateTime(observed)}`;
+  else lastUpdatedPill.textContent = `Last refreshed ${fmtDateTime(refreshed)}`;
+}
+
+function showCard() { show(gamerCardWrap); }
+function hideCard() { hide(gamerCardWrap); }
+
 function renderRecap(data) {
   const { gamertag, profile, recap, linked } = data;
 
   setText(gtName, gamertag);
 
-  // ✅ Now Playing (live presence)
-  const np = parseNowPlaying(profile?.presenceText || "");
-  setText(nowPlaying, np ? `Now playing: ${np}` : "Now playing: —");
-
-  // Presence line stays as your extra info line
   const lastPlayedName =
     recap?.lastPlayedGame ||
     recap?.titleHistory?.lastTitleName ||
@@ -502,7 +511,6 @@ function renderRecap(data) {
   return recap;
 }
 
-// === EXPORT PNG ===
 async function exportCardAsPng() {
   clearStatus();
 
@@ -549,7 +557,6 @@ async function exportCardAsPng() {
   setTimeout(clearStatus, 1600);
 }
 
-// === MAIN FLOW ===
 async function run(gamertag) {
   try {
     clearStatus();
@@ -588,13 +595,14 @@ async function run(gamertag) {
   }
 }
 
-// === EVENTS ===
+// === EVENTS (ONLY IF ELEMENT EXISTS) ===
 if (generateBtn) generateBtn.addEventListener("click", () => run(gamertagInput?.value || ""));
 if (gamertagInput) {
   gamertagInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") run(gamertagInput.value);
   });
 }
+
 if (exportBtn) exportBtn.addEventListener("click", exportCardAsPng);
 
 if (copyLinkBtn) {
@@ -603,10 +611,11 @@ if (copyLinkBtn) {
     copyToClipboard(url.toString());
   });
 }
+
 if (copyLiveLinkBtn && liveLink) copyLiveLinkBtn.addEventListener("click", () => copyToClipboard(liveLink.value || ""));
 if (copyBbBtn && bbcode) copyBbBtn.addEventListener("click", () => copyToClipboard(bbcode.value || ""));
 
-// ✅ CONNECT never "does nothing"
+// ✅ CONNECT (ABSOLUTELY RELIABLE)
 if (signinBtn) {
   signinBtn.href = getOpenXblSigninUrl();
   signinBtn.addEventListener("click", (e) => {
