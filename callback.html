@@ -27,25 +27,16 @@
   </div>
 
   <script>
-    // Must match the Worker you deployed
     const WORKER_URL = "https://falling-cake-f670.kirkjlemon.workers.dev";
+    const LS_AUTH_GT = "xbr_auth_gamertag";
 
     const statusEl = document.getElementById("status");
     function setStatus(msg) { statusEl.textContent = msg; }
 
     function getHomeUrl() {
-      // This makes HOME always correct even if you rename the repo.
-      // Example: https://kirkin1080p.github.io/Xbox-recap-2025/callback.html
-      // Home becomes: https://kirkin1080p.github.io/Xbox-recap-2025/
       const u = new URL(window.location.href);
       const parts = u.pathname.split("/").filter(Boolean);
-
-      // If hosted under a repo path, keep the first segment
-      // /Xbox-recap-2025/callback.html -> base /Xbox-recap-2025/
-      if (parts.length >= 2) {
-        return `${u.origin}/${parts[0]}/`;
-      }
-      // If hosted at root, just return origin
+      if (parts.length >= 2) return `${u.origin}/${parts[0]}/`;
       return `${u.origin}/`;
     }
 
@@ -78,6 +69,11 @@
           setStatus("Claimed, but worker did not return a gamertag.");
           return;
         }
+
+        // ✅ LOCK SIGNED-IN IDENTITY
+        try {
+          localStorage.setItem(LS_AUTH_GT, gamertag);
+        } catch {}
 
         setStatus(`Linked as ${gamertag}. Redirecting…`);
 
