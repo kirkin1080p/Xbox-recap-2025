@@ -558,3 +558,51 @@ body.embed .cardShell{ margin-top: 0; }
     display: none;
   }
 }
+
+/* =========================================================
+   APPENDED UI POLISH (NO COLOUR SCHEME CHANGES)
+   - Easier on eyes: spacing, readability, softer edges
+   - No removals: only overrides at the end
+   ========================================================= */
+
+body {
+  line-height: 1.45;
+}
+
+.searchBox, .ctaBox {
+  padding: 16px;
+}
+
+.searchInputRow input {
+  padding: 14px 15px;
+}
+
+.btn {
+  letter-spacing: 0.2px;
+}
+
+.status {
+  line-height: 1.4;
+}
+
+.gtName {
+  line-height: 1.1;
+}
+
+.presence {
+  line-height: 1.35;
+}
+
+/* Make card content breathe slightly more */
+.cardShell {
+  margin-top: 16px;
+}
+
+/* Slightly softer separators/boxes without changing colours */
+.stat, .mini, .feature, .blogLine {
+  border-color: rgba(255,255,255,.09);
+}
+
+/* Improve readability of blog text */
+.blogLine {
+  padding: 11px 12
