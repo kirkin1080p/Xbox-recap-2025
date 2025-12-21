@@ -29,22 +29,21 @@
     </div>
 
     <div class="headerActions">
-      <!-- User area (hidden until we have a gamertag / linked state) -->
-      <div id="userArea" class="userArea hidden" aria-live="polite">
-        <img id="userAvatar" class="userAvatar" alt="User gamerpic" />
-        <div class="userMeta">
-          <div class="userNameRow">
-            <span id="userName" class="userName">—</span>
-            <span id="userBadge" class="userBadge">—</span>
-          </div>
-          <button id="signoutBtn" class="btn small ghost userSignout" type="button" title="Disconnect Xbox from this site">
-            Sign out
-          </button>
-        </div>
-      </div>
-
       <a class="chip" href="https://buymeacoffee.com/KeepXboxFree" target="_blank" rel="noreferrer">🍪 Support</a>
       <a class="chip" id="openEmbedLink" href="#" title="Live signature card">🪪 Live Card</a>
+
+      <!-- NEW: User area (always visible) -->
+      <div id="userArea" class="userArea">
+        <img id="userAvatar" class="userAvatar" alt="Not connected" />
+        <div class="userMeta">
+          <div id="userName" class="userName">Not connected</div>
+          <div id="userBadge" class="userBadge off">Not connected</div>
+        </div>
+
+        <button id="signoutBtn" class="chipBtn hidden" type="button" title="Sign out">
+          Sign out
+        </button>
+      </div>
     </div>
   </header>
 
@@ -163,37 +162,20 @@
           </div>
         </div>
 
-        <!-- Achievement highlight -->
-        <div id="achievementBlock" class="feature hidden">
-          <div class="featureHead">
-            <div class="featureIcon">🏆</div>
-            <div>
-              <div class="featureTitle">Rarest achievement</div>
-              <div class="featureSub" id="achievementContext">—</div>
-            </div>
-          </div>
-
-          <div class="achievementRow">
-            <img id="achievementIcon" class="achIcon" alt="Achievement icon" />
-            <div>
-              <div id="achievementName" class="achName">—</div>
-              <div id="achievementPercent" class="achMeta muted">—</div>
-            </div>
+        <!-- Achievement -->
+        <div id="achievementBlock" class="achBlock hidden">
+          <img id="achievementIcon" class="achIcon hidden" alt="Achievement icon" />
+          <div class="achMeta">
+            <div id="achievementName" class="achName">—</div>
+            <div id="achievementPercent" class="achPercent muted">—</div>
+            <div id="achievementContext" class="achContext muted">—</div>
           </div>
         </div>
 
-        <!-- Journal preview -->
-        <div class="feature">
-          <div class="featureHead">
-            <div class="featureIcon">📓</div>
-            <div>
-              <div class="featureTitle">Xbox Journal</div>
-              <div class="featureSub">Auto-written daily. Because your console has opinions.</div>
-            </div>
-          </div>
-          <div id="blogEntries" class="blogEntries">
-            <div class="blogLine muted">Loading entries…</div>
-          </div>
+        <!-- Journal -->
+        <div class="blogBox">
+          <div class="blogTitle">Xbox Journal</div>
+          <div id="blogEntries" class="blogEntries"></div>
         </div>
 
         <div class="cardFooter">
