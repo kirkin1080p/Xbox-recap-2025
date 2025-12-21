@@ -11,70 +11,11 @@ function setText(node, value, fallback = "—") {
     value === null || value === undefined || value === "" ? fallback : String(value);
 }
 
-function setHtml(node, html) {
-  if (!node) return;
-  node.innerHTML = html;
-}
+function show(node) { if (node) node.classList.remove("hidden"); }
+function hide(node) { if (node) node.classList.add("hidden"); }
 
-function show(node) {
-  if (!node) return;
-  node.classList.remove("hidden");
-}
-
-function hide(node) {
-  if (!node) return;
-  node.classList.add("hidden");
-}
-
-function setAttr(node, name, value) {
-  if (!node) return;
-  if (value === null || value === undefined || value === "") node.removeAttribute(name);
-  else node.setAttribute(name, value);
-}
-
-function addClass(node, ...cls) {
-  if (!node) return;
-  node.classList.add(...cls);
-}
-
-function removeClass(node, ...cls) {
-  if (!node) return;
-  node.classList.remove(...cls);
-}
-
-// === AVATAR (PFP) HELPERS ===
-// Shows Xbox gamerpic when available, otherwise shows first letter fallback (like before).
-function firstLetter(gt) {
-  const s = (gt || "").trim();
-  return s ? s[0].toUpperCase() : "?";
-}
-
-function setAvatarImage(imgEl, fallbackEl, gamertag, url) {
-  if (fallbackEl) fallbackEl.textContent = firstLetter(gamertag);
-  if (!imgEl) return;
-
-  const wrap = typeof imgEl.closest === "function" ? imgEl.closest(".avatarWrap") : null;
-
-  imgEl.onload = null;
-  imgEl.onerror = null;
-
-  if (!url) {
-    imgEl.removeAttribute("src");
-    imgEl.alt = "";
-    if (wrap) wrap.classList.remove("hasImage");
-    return;
-  }
-
-  imgEl.src = url;
-  imgEl.alt = `${gamertag} gamerpic`;
-
-  imgEl.onload = () => { if (wrap) wrap.classList.add("hasImage"); };
-  imgEl.onerror = () => {
-    imgEl.removeAttribute("src");
-    imgEl.alt = "";
-    if (wrap) wrap.classList.remove("hasImage");
-  };
-}
+function addClass(node, ...cls) { if (node) node.classList.add(...cls); }
+function removeClass(node, ...cls) { if (node) node.classList.remove(...cls); }
 
 // === DOM ===
 const gamertagInput = el("gamertagInput");
@@ -86,6 +27,7 @@ const gamerCard     = el("gamerCard");
 
 const profilePic = el("profilePic");
 const profilePicFallback = el("profilePicFallback");
+
 const gtName     = el("gtName");
 const presence   = el("presence");
 
@@ -113,7 +55,7 @@ const trackingInfo    = el("trackingInfo");
 const dataQualityPill = el("dataQualityPill");
 const lastUpdatedPill = el("lastUpdatedPill");
 
-const signinPrompt = el("signinPrompt");
+const signinPrompt  = el("signinPrompt");
 const signinBtn     = el("signinBtn");
 const openEmbedLink = el("openEmbedLink");
 
@@ -156,7 +98,7 @@ function clearStatus() {
   statusEl.textContent = "";
 }
 
-// === PRE-FLIGHT (ONLY RUN ON GENERATE) ===
+// === PRE-FLIGHT ===
 const CARD_IDS_THAT_SHOULD_EXIST = [
   "gamerCardWrap", "gamerCard",
   "profilePic", "gtName", "presence",
@@ -178,8 +120,7 @@ function preflightReportMissingIds() {
   if (missing.length) {
     setStatus(
       `Your index.html is missing ${missing.length} element(s) that the script expects:\n` +
-      missing.map((m) => `• #${m}`).join("\n") +
-      `\n\nFix: restore the gamer card markup (the section inside #gamerCardWrap).`
+      missing.map((m) => `• #${m}`).join("\n")
     );
     return false;
   }
@@ -241,17 +182,92 @@ function getOpenXblSigninUrl() {
   return `https://xbl.io/app/auth/${PUBLIC_KEY}`;
 }
 
+function setPillQuality(recap, linked) {
+  if (!dataQualityPill) return;
+  const q = recap?.dataQuality || (linked ? "good" : "tracking-only");
+  let label = "Tracking";
+  if (q === "good") label = "Full";
+  if (q === "limited") label = "Limited";
+  if (q === "tracking-only") label = "Tracking";
+  dataQualityPill.textContent = label;
+}
+
+function setLastUpdated(recap) {
+  if (!lastUpdatedPill) return;
+  const observed = recap?.lastObservedAt || null;
+  const refreshed = recap?.lastSeen || null;
+
+  if (observed) lastUpdatedPill.textContent = `Last observed ${fmtDateTime(observed)}`;
+  else lastUpdatedPill.textContent = `Last refreshed ${fmtDateTime(refreshed)}`;
+}
+
+function showCard() { show(gamerCardWrap); }
+function hideCard() { hide(gamerCardWrap); }
+
+// === AVATAR FALLBACK (THIS IS THE FIX) ===
+function firstLetter(name) {
+  const s = String(name || "").trim();
+  return s ? s[0].toUpperCase() : "?";
+}
+
+function setAvatar({ imgEl, fallbackEl, url, labelText }) {
+  if (!imgEl || !fallbackEl) return;
+
+  const letter = firstLetter(labelText);
+  fallbackEl.textContent = letter;
+
+  // Reset handlers (avoid stacking multiple onerror handlers per run)
+  imgEl.onerror = null;
+  imgEl.onload = null;
+
+  if (!url) {
+    imgEl.removeAttribute("src");
+    imgEl.style.display = "none";
+    fallbackEl.style.display = "grid";
+    return;
+  }
+
+  // Optimistic: try to load
+  fallbackEl.style.display = "none";
+  imgEl.style.display = "block";
+  imgEl.alt = `${labelText || "Player"} gamerpic`;
+
+  imgEl.onload = () => {
+    fallbackEl.style.display = "none";
+    imgEl.style.display = "block";
+  };
+
+  imgEl.onerror = () => {
+    // This is what fixes “360 era pic = blank nothing”
+    imgEl.removeAttribute("src");
+    imgEl.style.display = "none";
+    fallbackEl.style.display = "grid";
+  };
+
+  imgEl.src = url;
+}
+
+// === USER AREA STATES ===
 function setSignedInUiState({ gamertag, avatarUrl, qualityLabel }) {
   show(userArea);
   hide(signinPrompt);
 
   setText(userName, gamertag, "—");
-  setAvatarImage(userAvatar, userAvatarFallback, gamertag, avatarUrl || null);
+
+  setAvatar({
+    imgEl: userAvatar,
+    fallbackEl: userAvatarFallback,
+    url: avatarUrl,
+    labelText: gamertag,
+  });
 
   if (userBadge) {
     removeClass(userBadge, "good", "limited", "off");
     userBadge.textContent = qualityLabel || "Connected";
-    addClass(userBadge, qualityLabel === "Full" ? "good" : qualityLabel === "Limited" ? "limited" : "off");
+    addClass(
+      userBadge,
+      qualityLabel === "Full" ? "good" : qualityLabel === "Limited" ? "limited" : "off"
+    );
   }
 
   show(signoutBtn);
@@ -261,8 +277,12 @@ function setSignedInUiState({ gamertag, avatarUrl, qualityLabel }) {
 function setSignedOutUiState() {
   show(userArea);
 
-  setAvatarImage(userAvatar, userAvatarFallback, "?", null);
-  if (userAvatar) userAvatar.alt = "Not connected";
+  setAvatar({
+    imgEl: userAvatar,
+    fallbackEl: userAvatarFallback,
+    url: null,
+    labelText: "?",
+  });
 
   setText(userName, "Not connected", "Not connected");
 
@@ -278,17 +298,19 @@ function setSignedOutUiState() {
   show(signinPrompt);
 }
 
+// === NETWORK ===
 async function fetchJsonOrText(url, init) {
   const res = await fetch(url, init);
   const text = await res.text();
   let data = null;
-  try { data = JSON.parse(text); } catch {}
+  try { data = JSON.parse(text); } catch { /* not json */ }
   return { res, text, data };
 }
 
 async function fetchRecap(gamertag) {
   const url = `${WORKER_BASE}/?gamertag=${encodeURIComponent(gamertag)}`;
   const { res, text, data } = await fetchJsonOrText(url);
+
   if (!res.ok) {
     const msg = (data && data.error) ? data.error : (text || `HTTP ${res.status}`);
     throw new Error(`Worker recap failed (${res.status}): ${msg}`);
@@ -316,6 +338,7 @@ async function signOutWorker(gamertag) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ gamertag }),
   });
+
   if (!res.ok) {
     const msg = (data && data.error) ? data.error : (text || `HTTP ${res.status}`);
     throw new Error(`Sign out failed (${res.status}): ${msg}`);
@@ -323,6 +346,7 @@ async function signOutWorker(gamertag) {
   return data;
 }
 
+// === RENDERERS ===
 function renderAchievement(recap) {
   if (!achievementBlock) return;
 
@@ -381,33 +405,14 @@ function renderBlog(blog, recap) {
 }
 
 function renderDonate(ds) {
-  if (!ds || !donateTotal || !donateSupporters) return;
+  if (!ds) return;
+  if (!donateTotal || !donateSupporters) return;
+
   const cur = ds.currency || "GBP";
   const symbol = cur === "GBP" ? "£" : cur === "USD" ? "$" : cur === "EUR" ? "€" : "";
   donateTotal.textContent = `${symbol}${Number(ds.totalRaised || 0).toFixed(0)}`;
   donateSupporters.textContent = String(ds.supporters || 0);
 }
-
-function setPillQuality(recap, linked) {
-  if (!dataQualityPill) return;
-  const q = recap?.dataQuality || (linked ? "good" : "tracking-only");
-  let label = "Tracking";
-  if (q === "good") label = "Full";
-  if (q === "limited") label = "Limited";
-  dataQualityPill.textContent = label;
-}
-
-function setLastUpdated(recap) {
-  if (!lastUpdatedPill) return;
-  const observed = recap?.lastObservedAt || null;
-  const refreshed = recap?.lastSeen || null;
-
-  if (observed) lastUpdatedPill.textContent = `Last observed ${fmtDateTime(observed)}`;
-  else lastUpdatedPill.textContent = `Last refreshed ${fmtDateTime(refreshed)}`;
-}
-
-function showCard() { show(gamerCardWrap); }
-function hideCard() { hide(gamerCardWrap); }
 
 function renderRecap(data) {
   const { gamertag, profile, recap, linked } = data;
@@ -432,7 +437,13 @@ function renderRecap(data) {
 
   setText(presence, profile?.presenceText || fallbackPresence);
 
-  setAvatarImage(profilePic, profilePicFallback, gamertag, profile?.displayPicRaw || null);
+  // ✅ MAIN CARD AVATAR (with fallback)
+  setAvatar({
+    imgEl: profilePic,
+    fallbackEl: profilePicFallback,
+    url: profile?.displayPicRaw || null,
+    labelText: gamertag,
+  });
 
   setText(gamerscore, recap?.gamerscoreCurrent ?? profile?.gamerscore ?? "—");
 
@@ -511,6 +522,7 @@ function renderRecap(data) {
   return recap;
 }
 
+// === EXPORT PNG ===
 async function exportCardAsPng() {
   clearStatus();
 
@@ -557,6 +569,7 @@ async function exportCardAsPng() {
   setTimeout(clearStatus, 1600);
 }
 
+// === MAIN FLOW ===
 async function run(gamertag) {
   try {
     clearStatus();
@@ -595,14 +608,13 @@ async function run(gamertag) {
   }
 }
 
-// === EVENTS (ONLY IF ELEMENT EXISTS) ===
+// === EVENTS ===
 if (generateBtn) generateBtn.addEventListener("click", () => run(gamertagInput?.value || ""));
 if (gamertagInput) {
   gamertagInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") run(gamertagInput.value);
   });
 }
-
 if (exportBtn) exportBtn.addEventListener("click", exportCardAsPng);
 
 if (copyLinkBtn) {
@@ -611,11 +623,10 @@ if (copyLinkBtn) {
     copyToClipboard(url.toString());
   });
 }
-
 if (copyLiveLinkBtn && liveLink) copyLiveLinkBtn.addEventListener("click", () => copyToClipboard(liveLink.value || ""));
-if (copyBbBtn && bbcode) copyBbBtn.addEventListener("click", () => copyToClipboard(bbcode.value || ""));
+if (copyBbBtn && bbcode) bbcode.addEventListener && copyBbBtn.addEventListener("click", () => copyToClipboard(bbcode.value || ""));
 
-// ✅ CONNECT (ABSOLUTELY RELIABLE)
+// ✅ CONNECT (reliable)
 if (signinBtn) {
   signinBtn.href = getOpenXblSigninUrl();
   signinBtn.addEventListener("click", (e) => {
