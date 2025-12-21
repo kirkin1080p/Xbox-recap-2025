@@ -2,81 +2,125 @@
 const WORKER_BASE = "https://falling-cake-f670.kirkjlemon.workers.dev";
 const PUBLIC_KEY  = "4f6e9e47-98c9-0501-ae8a-4c078183a6dc";
 
+// === DOM HELPERS (NULL SAFE) ===
+function el(id) { return document.getElementById(id); }
+
+function setText(node, value, fallback = "—") {
+  if (!node) return;
+  node.textContent =
+    value === null || value === undefined || value === "" ? fallback : String(value);
+}
+
+function setHtml(node, html) {
+  if (!node) return;
+  node.innerHTML = html;
+}
+
+function show(node) {
+  if (!node) return;
+  node.classList.remove("hidden");
+}
+
+function hide(node) {
+  if (!node) return;
+  node.classList.add("hidden");
+}
+
+function setAttr(node, name, value) {
+  if (!node) return;
+  if (value === null || value === undefined || value === "") node.removeAttribute(name);
+  else node.setAttribute(name, value);
+}
+
+function addClass(node, ...cls) {
+  if (!node) return;
+  node.classList.add(...cls);
+}
+
+function removeClass(node, ...cls) {
+  if (!node) return;
+  node.classList.remove(...cls);
+}
+
 // === DOM ===
-const gamertagInput = document.getElementById("gamertagInput");
-const generateBtn = document.getElementById("generateBtn");
-const statusEl = document.getElementById("status");
+const gamertagInput = el("gamertagInput");
+const generateBtn   = el("generateBtn");
+const statusEl      = el("status");
 
-const gamerCardWrap = document.getElementById("gamerCardWrap");
-const gamerCard = document.getElementById("gamerCard");
+const gamerCardWrap = el("gamerCardWrap");
+const gamerCard     = el("gamerCard");
 
-const profilePic = document.getElementById("profilePic");
-const gtName = document.getElementById("gtName");
-const presence = document.getElementById("presence");
+const profilePic = el("profilePic");
+const gtName     = el("gtName");
+const presence   = el("presence");
 
-const gamerscore = document.getElementById("gamerscore");
-const gamerscoreDelta = document.getElementById("gamerscoreDelta");
-const daysPlayed = document.getElementById("daysPlayed");
-const playRange = document.getElementById("playRange");
-const favGame = document.getElementById("favGame");
-const favGameSessions = document.getElementById("favGameSessions");
+const gamerscore      = el("gamerscore");
+const gamerscoreDelta = el("gamerscoreDelta");
+const daysPlayed      = el("daysPlayed");
+const playRange       = el("playRange");
+const favGame         = el("favGame");
+const favGameSessions = el("favGameSessions");
 
-const currentStreak = document.getElementById("currentStreak");
-const longestStreak = document.getElementById("longestStreak");
-const longestBreak = document.getElementById("longestBreak");
-const uniqueGames = document.getElementById("uniqueGames");
-const oneHit = document.getElementById("oneHit");
-const peakDay = document.getElementById("peakDay");
-const peakDaySub = document.getElementById("peakDaySub");
-const activeWeekday = document.getElementById("activeWeekday");
-const activeWeekdaySub = document.getElementById("activeWeekdaySub");
-const activeMonth = document.getElementById("activeMonth");
-const activeMonthSub = document.getElementById("activeMonthSub");
+const currentStreak = el("currentStreak");
+const longestStreak = el("longestStreak");
+const longestBreak  = el("longestBreak");
+const uniqueGames   = el("uniqueGames");
+const oneHit        = el("oneHit");
 
-const trackingInfo = document.getElementById("trackingInfo");
-const dataQualityPill = document.getElementById("dataQualityPill");
-const lastUpdatedPill = document.getElementById("lastUpdatedPill");
+const peakDay     = el("peakDay");
+const peakDaySub  = el("peakDaySub");
+const activeWeekday    = el("activeWeekday");
+const activeWeekdaySub = el("activeWeekdaySub");
+const activeMonth      = el("activeMonth");
+const activeMonthSub   = el("activeMonthSub");
 
-const signinPrompt = document.getElementById("signinPrompt");
-const signinBtn = document.getElementById("signinBtn");
-const openEmbedLink = document.getElementById("openEmbedLink");
+const trackingInfo    = el("trackingInfo");
+const dataQualityPill = el("dataQualityPill");
+const lastUpdatedPill = el("lastUpdatedPill");
 
-const exportBtn = document.getElementById("exportBtn");
-const copyLinkBtn = document.getElementById("copyLinkBtn");
+const signinPrompt  = el("signinPrompt");
+const signinBtn     = el("signinBtn");
+const openEmbedLink = el("openEmbedLink");
 
-const achievementBlock = document.getElementById("achievementBlock");
-const achievementIcon = document.getElementById("achievementIcon");
-const achievementName = document.getElementById("achievementName");
-const achievementPercent = document.getElementById("achievementPercent");
-const achievementContext = document.getElementById("achievementContext");
+const exportBtn   = el("exportBtn");
+const copyLinkBtn = el("copyLinkBtn");
 
-const blogEntries = document.getElementById("blogEntries");
+const achievementBlock   = el("achievementBlock");
+const achievementIcon    = el("achievementIcon");
+const achievementName    = el("achievementName");
+const achievementPercent = el("achievementPercent");
+const achievementContext = el("achievementContext");
 
-const donateTotal = document.getElementById("donateTotal");
-const donateSupporters = document.getElementById("donateSupporters");
+const blogEntries = el("blogEntries");
 
-const liveLink = document.getElementById("liveLink");
-const bbcode = document.getElementById("bbcode");
-const copyLiveLinkBtn = document.getElementById("copyLiveLinkBtn");
-const copyBbBtn = document.getElementById("copyBbBtn");
+const donateTotal      = el("donateTotal");
+const donateSupporters = el("donateSupporters");
+
+const liveLink = el("liveLink");
+const bbcode   = el("bbcode");
+const copyLiveLinkBtn = el("copyLiveLinkBtn");
+const copyBbBtn       = el("copyBbBtn");
 
 // User area (always visible)
-const userArea = document.getElementById("userArea");
-const userAvatar = document.getElementById("userAvatar");
-const userName = document.getElementById("userName");
-const userBadge = document.getElementById("userBadge");
-const signoutBtn = document.getElementById("signoutBtn");
+const userArea   = el("userArea");
+const userAvatar = el("userAvatar");
+const userName   = el("userName");
+const userBadge  = el("userBadge");
+const signoutBtn = el("signoutBtn");
 
-// === HELPERS ===
+// === STATUS ===
 function setStatus(msg) {
-  statusEl.classList.remove("hidden");
+  if (!statusEl) return; // do not crash if status element is missing
+  show(statusEl);
   statusEl.textContent = msg;
 }
 function clearStatus() {
-  statusEl.classList.add("hidden");
+  if (!statusEl) return;
+  hide(statusEl);
   statusEl.textContent = "";
 }
 
+// === GENERAL HELPERS ===
 function setEmbedModeIfNeeded() {
   const params = new URLSearchParams(window.location.search);
   if (params.get("embed") === "1") document.body.classList.add("embed");
@@ -86,6 +130,7 @@ function fmtDateTime(iso) {
   if (!iso) return "—";
   try {
     const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "—";
     return d.toLocaleString(undefined, {
       year: "numeric",
       month: "short",
@@ -96,11 +141,6 @@ function fmtDateTime(iso) {
   } catch {
     return "—";
   }
-}
-
-function safeText(el, value, fallback = "—") {
-  el.textContent =
-    value === null || value === undefined || value === "" ? fallback : String(value);
 }
 
 async function copyToClipboard(text) {
@@ -131,7 +171,12 @@ function buildShareUrls(gamertag) {
   return { normal: url.toString(), embed: embed.toString() };
 }
 
+function getOpenXblSigninUrl() {
+  return `https://xbl.io/app/auth/${PUBLIC_KEY}`;
+}
+
 function setPillQuality(recap, linked) {
+  if (!dataQualityPill) return;
   const q = recap?.dataQuality || (linked ? "good" : "tracking-only");
   let label = "Tracking";
   if (q === "good") label = "Full";
@@ -141,71 +186,70 @@ function setPillQuality(recap, linked) {
 }
 
 function setLastUpdated(recap) {
+  if (!lastUpdatedPill) return;
   const observed = recap?.lastObservedAt || null;
   const refreshed = recap?.lastSeen || null;
 
-  if (observed) {
-    lastUpdatedPill.textContent = `Last observed ${fmtDateTime(observed)}`;
-  } else {
-    lastUpdatedPill.textContent = `Last refreshed ${fmtDateTime(refreshed)}`;
-  }
+  if (observed) lastUpdatedPill.textContent = `Last observed ${fmtDateTime(observed)}`;
+  else lastUpdatedPill.textContent = `Last refreshed ${fmtDateTime(refreshed)}`;
 }
 
-function showCard() {
-  gamerCardWrap.classList.remove("hidden");
-}
-function hideCard() {
-  gamerCardWrap.classList.add("hidden");
-}
+function showCard() { show(gamerCardWrap); }
+function hideCard() { hide(gamerCardWrap); }
 
-function getOpenXblSigninUrl() {
-  return `https://xbl.io/app/auth/${PUBLIC_KEY}`;
-}
-
-// ---- user area states ----
+// === USER AREA STATES ===
 function setSignedInUiState({ gamertag, avatarUrl, qualityLabel }) {
-  userArea.classList.remove("hidden");
-  signinPrompt.classList.add("hidden");
+  show(userArea);
+  hide(signinPrompt);
 
-  safeText(userName, gamertag, "—");
+  setText(userName, gamertag, "—");
 
-  if (avatarUrl) {
-    userAvatar.src = avatarUrl;
-    userAvatar.alt = `${gamertag} gamerpic`;
-  } else {
-    userAvatar.removeAttribute("src");
-    userAvatar.alt = "No gamerpic";
+  if (userAvatar) {
+    if (avatarUrl) {
+      userAvatar.src = avatarUrl;
+      userAvatar.alt = `${gamertag} gamerpic`;
+    } else {
+      userAvatar.removeAttribute("src");
+      userAvatar.alt = "No gamerpic";
+    }
   }
 
-  userBadge.classList.remove("good", "limited", "off");
-  userBadge.textContent = qualityLabel || "Connected";
-  userBadge.classList.add(
-    qualityLabel === "Full" ? "good" : qualityLabel === "Limited" ? "limited" : "off"
-  );
+  if (userBadge) {
+    removeClass(userBadge, "good", "limited", "off");
+    userBadge.textContent = qualityLabel || "Connected";
+    addClass(
+      userBadge,
+      qualityLabel === "Full" ? "good" : qualityLabel === "Limited" ? "limited" : "off"
+    );
+  }
 
-  signoutBtn.classList.remove("hidden");
-  signoutBtn.disabled = false;
+  show(signoutBtn);
+  if (signoutBtn) signoutBtn.disabled = false;
 }
 
 function setSignedOutUiState() {
-  // SHOW user area even when signed out (you asked for this)
-  userArea.classList.remove("hidden");
+  // Always visible user area for consistent layout
+  show(userArea);
 
-  userAvatar.removeAttribute("src");
-  userAvatar.alt = "Not connected";
-  userName.textContent = "Not connected";
+  if (userAvatar) {
+    userAvatar.removeAttribute("src");
+    userAvatar.alt = "Not connected";
+  }
+  setText(userName, "Not connected", "Not connected");
 
-  userBadge.classList.remove("good", "limited", "off");
-  userBadge.classList.add("off");
-  userBadge.textContent = "Not connected";
+  if (userBadge) {
+    removeClass(userBadge, "good", "limited", "off");
+    addClass(userBadge, "off");
+    userBadge.textContent = "Not connected";
+  }
 
-  signoutBtn.classList.add("hidden");
-  signoutBtn.disabled = true;
+  hide(signoutBtn);
+  if (signoutBtn) signoutBtn.disabled = true;
 
-  signinPrompt.classList.remove("hidden");
+  show(signinPrompt);
 }
 
-// === NETWORK HELPERS (better errors) ===
+// === NETWORK (WITH GOOD ERRORS) ===
 async function fetchJsonOrText(url, init) {
   const res = await fetch(url, init);
   const text = await res.text();
@@ -214,13 +258,12 @@ async function fetchJsonOrText(url, init) {
   return { res, text, data };
 }
 
-// === DATA LOADERS ===
 async function fetchRecap(gamertag) {
   const url = `${WORKER_BASE}/?gamertag=${encodeURIComponent(gamertag)}`;
   const { res, text, data } = await fetchJsonOrText(url);
 
   if (!res.ok) {
-    const msg = (data && data.error) ? data.error : text || `HTTP ${res.status}`;
+    const msg = (data && data.error) ? data.error : (text || `HTTP ${res.status}`);
     throw new Error(`Worker recap failed (${res.status}): ${msg}`);
   }
   return data;
@@ -248,57 +291,74 @@ async function signOutWorker(gamertag) {
   });
 
   if (!res.ok) {
-    const msg = (data && data.error) ? data.error : text || `HTTP ${res.status}`;
+    const msg = (data && data.error) ? data.error : (text || `HTTP ${res.status}`);
     throw new Error(`Sign out failed (${res.status}): ${msg}`);
   }
   return data;
 }
 
-// === RENDER ===
+// === RENDERERS (NULL SAFE) ===
 function renderAchievement(recap) {
+  if (!achievementBlock) return;
+
   const rarestEver = recap?.achievements?.rarestEver;
   const fallback = recap?.achievements;
 
   const name = rarestEver?.name || fallback?.rarestName || null;
-  const pct = rarestEver?.percent ?? fallback?.rarestPercent ?? null;
+  const pct  = rarestEver?.percent ?? fallback?.rarestPercent ?? null;
   const icon = rarestEver?.icon || fallback?.rarestIcon || null;
   const title = rarestEver?.titleName || fallback?.lastTitleName || null;
 
   if (!name && !icon && pct == null) {
-    achievementBlock.classList.add("hidden");
+    hide(achievementBlock);
     return;
   }
 
-  achievementBlock.classList.remove("hidden");
+  show(achievementBlock);
 
-  if (icon) {
-    achievementIcon.src = icon;
-    achievementIcon.classList.remove("hidden");
-  } else {
-    achievementIcon.classList.add("hidden");
+  if (achievementIcon) {
+    if (icon) {
+      achievementIcon.src = icon;
+      show(achievementIcon);
+    } else {
+      hide(achievementIcon);
+    }
   }
 
-  safeText(achievementName, name || "Rarest achievement");
-  safeText(achievementPercent, pct != null ? `${pct}% unlocked` : "Rarity unknown");
-  safeText(achievementContext, title ? `From ${title}` : "From recent play");
+  setText(achievementName, name || "Rarest achievement");
+  setText(achievementPercent, pct != null ? `${pct}% unlocked` : "Rarity unknown");
+  setText(achievementContext, title ? `From ${title}` : "From recent play");
 }
 
-function renderBlog(blog) {
+function renderBlog(blog, recap) {
+  if (!blogEntries) return;
+
   blogEntries.innerHTML = "";
+
   if (!blog?.entries?.length) {
-    blogEntries.innerHTML = `<div class="blogLine muted">No journal entries yet — generate again tomorrow and it’ll start writing daily.</div>`;
-    return;
+    blogEntries.innerHTML =
+      `<div class="blogLine muted">No journal entries yet — generate again tomorrow and it’ll start writing daily.</div>`;
+  } else {
+    for (const e of blog.entries.slice(0, 4)) {
+      const div = document.createElement("div");
+      div.className = "blogLine";
+      div.textContent = e?.text ? e.text : `📓 ${e?.date || ""} — (missing entry)`;
+      blogEntries.appendChild(div);
+    }
   }
-  for (const e of blog.entries.slice(0, 4)) {
-    const div = document.createElement("div");
-    div.className = "blogLine";
-    div.textContent = e?.text ? e.text : `📓 ${e?.date || ""} — (missing entry)`;
-    blogEntries.appendChild(div);
+
+  if (recap?.journal?.policy) {
+    const hint = document.createElement("div");
+    hint.className = "blogLine muted";
+    hint.textContent = recap.journal.policy;
+    blogEntries.appendChild(hint);
   }
 }
 
 function renderDonate(ds) {
   if (!ds) return;
+  if (!donateTotal || !donateSupporters) return;
+
   const cur = ds.currency || "GBP";
   const symbol = cur === "GBP" ? "£" : cur === "USD" ? "$" : cur === "EUR" ? "€" : "";
   donateTotal.textContent = `${symbol}${Number(ds.totalRaised || 0).toFixed(0)}`;
@@ -308,31 +368,46 @@ function renderDonate(ds) {
 function renderRecap(data) {
   const { gamertag, profile, recap, linked } = data;
 
-  safeText(gtName, gamertag);
+  setText(gtName, gamertag);
 
-  safeText(
-    presence,
-    profile?.presenceText ||
-      (recap?.lastObservedGame ? `Last observed: ${recap.lastObservedGame}` : "No recent activity observed yet.")
-  );
+  const lastPlayedName =
+    recap?.lastPlayedGame ||
+    recap?.titleHistory?.lastTitleName ||
+    recap?.lastObservedGame ||
+    null;
 
-  if (profile?.displayPicRaw) {
-    profilePic.src = profile.displayPicRaw;
-    profilePic.alt = `${gamertag} gamerpic`;
-  } else {
-    profilePic.removeAttribute("src");
-    profilePic.alt = "No gamerpic";
+  const lastPlayedAt =
+    recap?.lastPlayedAt ||
+    recap?.titleHistory?.lastTimePlayed ||
+    null;
+
+  const fallbackPresence =
+    lastPlayedName
+      ? `Last played: ${lastPlayedName} • ${fmtDateTime(lastPlayedAt)}`
+      : "No recent activity observed yet.";
+
+  setText(presence, profile?.presenceText || fallbackPresence);
+
+  if (profilePic) {
+    if (profile?.displayPicRaw) {
+      profilePic.src = profile.displayPicRaw;
+      profilePic.alt = `${gamertag} gamerpic`;
+    } else {
+      profilePic.removeAttribute("src");
+      profilePic.alt = "No gamerpic";
+    }
   }
 
-  safeText(gamerscore, recap?.gamerscoreCurrent ?? profile?.gamerscore ?? "—");
+  setText(gamerscore, recap?.gamerscoreCurrent ?? profile?.gamerscore ?? "—");
 
-  if (recap?.gamerscoreDelta != null) {
-    gamerscoreDelta.textContent = `+${recap.gamerscoreDelta} since tracking`;
-  } else {
-    gamerscoreDelta.textContent = linked ? "Delta unknown" : "Connect Xbox for delta";
+  if (gamerscoreDelta) {
+    gamerscoreDelta.textContent =
+      recap?.gamerscoreDelta != null
+        ? `+${recap.gamerscoreDelta} since tracking`
+        : (linked ? "Delta unknown" : "Connect Xbox for delta");
   }
 
-  safeText(daysPlayed, recap?.daysPlayedCount ?? "—");
+  setText(daysPlayed, recap?.daysPlayedCount ?? "—");
 
   const range =
     recap?.firstPlayDay && recap?.lastPlayDay
@@ -340,42 +415,44 @@ function renderRecap(data) {
       : recap?.firstSeen
       ? `Tracking since ${fmtDateTime(recap.firstSeen)}`
       : "—";
-  safeText(playRange, range);
+  setText(playRange, range);
 
-  safeText(favGame, recap?.favouriteGame ?? "—");
-  safeText(favGameSessions, recap?.favouriteGameSessions ? `${recap.favouriteGameSessions} sessions` : "—");
+  setText(favGame, recap?.favouriteGame ?? "—");
+  setText(favGameSessions, recap?.favouriteGameSessions ? `${recap.favouriteGameSessions} sessions` : "—");
 
-  safeText(currentStreak, recap?.currentStreak ?? "—");
-  safeText(longestStreak, recap?.longestStreak ? `Best: ${recap.longestStreak} days` : "—");
+  setText(currentStreak, recap?.currentStreak ?? "—");
+  setText(longestStreak, recap?.longestStreak ? `Best: ${recap.longestStreak} days` : "—");
+  setText(longestBreak, recap?.longestBreakDays ?? 0);
 
-  safeText(longestBreak, recap?.longestBreakDays ?? 0);
+  setText(uniqueGames, recap?.uniqueGamesObserved ?? "—");
 
-  safeText(uniqueGames, recap?.uniqueGamesObserved ?? "—");
-  safeText(oneHit, recap?.oneHitWondersCount != null ? `${recap.oneHitWondersCount} one-hit wonders` : "—");
+  const oneHitEff = recap?.oneHitWondersEffective ?? recap?.oneHitWondersCount ?? 0;
+  const mature = recap?.oneHitWondersIsMature ?? false;
+  setText(oneHit, mature ? `${oneHitEff} one-hit wonders` : "—");
 
-  if (recap?.peakDay?.date) {
-    peakDay.textContent = recap.peakDay.date;
-    peakDaySub.textContent = `${recap.peakDay.uniqueGames} unique games`;
-  } else {
-    peakDay.textContent = "—";
-    peakDaySub.textContent = "—";
+  if (peakDay) setText(peakDay, recap?.peakDay?.date ?? "—");
+  if (peakDaySub) setText(peakDaySub, recap?.peakDay?.uniqueGames != null ? `${recap.peakDay.uniqueGames} unique games` : "—");
+
+  setText(activeWeekday, recap?.mostActiveWeekdayName ?? "—");
+  setText(activeWeekdaySub, recap?.mostActiveWeekdayDays != null ? `${recap.mostActiveWeekdayDays} days` : "—");
+
+  setText(activeMonth, recap?.mostActiveMonthName ?? "—");
+  setText(activeMonthSub, recap?.mostActiveMonthDays != null ? `${recap.mostActiveMonthDays} days` : "—");
+
+  if (trackingInfo) {
+    const observedLine = recap?.lastObservedAt
+      ? `Observed play: ${fmtDateTime(recap.lastObservedAt)}`
+      : `No play observed yet`;
+    trackingInfo.textContent = `First seen: ${fmtDateTime(recap?.firstSeen)} • ${observedLine} • Lookups: ${recap?.lookupCount ?? 0}`;
   }
-
-  safeText(activeWeekday, recap?.mostActiveWeekdayName ?? "—");
-  safeText(activeWeekdaySub, recap?.mostActiveWeekdayDays != null ? `${recap.mostActiveWeekdayDays} days` : "—");
-
-  safeText(activeMonth, recap?.mostActiveMonthName ?? "—");
-  safeText(activeMonthSub, recap?.mostActiveMonthDays != null ? `${recap.mostActiveMonthDays} days` : "—");
-
-  trackingInfo.textContent = `First seen: ${fmtDateTime(recap?.firstSeen)} • Lookups: ${recap?.lookupCount ?? 0}`;
 
   setPillQuality(recap, linked);
   setLastUpdated(recap);
 
   const urls = buildShareUrls(gamertag);
-  liveLink.value = urls.embed;
-  bbcode.value = `[url=${urls.embed}]Xbox Recap Card[/url]`;
-  openEmbedLink.href = urls.embed;
+  if (liveLink) liveLink.value = urls.embed;
+  if (bbcode) bbcode.value = `[url=${urls.embed}]Xbox Recap Card[/url]`;
+  if (openEmbedLink) openEmbedLink.href = urls.embed;
 
   renderAchievement(recap);
   showCard();
@@ -394,13 +471,20 @@ function renderRecap(data) {
   } else {
     setSignedOutUiState();
   }
+
+  return recap;
 }
 
 // === EXPORT PNG ===
 async function exportCardAsPng() {
   clearStatus();
+
   if (!window.html2canvas) {
     setStatus("PNG export library failed to load.");
+    return;
+  }
+  if (!gamerCard) {
+    setStatus("Card element missing (gamerCard).");
     return;
   }
 
@@ -429,7 +513,7 @@ async function exportCardAsPng() {
   const dataUrl = canvas.toDataURL("image/png");
   const a = document.createElement("a");
   a.href = dataUrl;
-  a.download = `xbox-recap-${(gtName.textContent || "player").replace(/\s+/g, "-")}.png`;
+  a.download = `xbox-recap-${(gtName?.textContent || "player").replace(/\s+/g, "-")}.png`;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -443,15 +527,18 @@ async function run(gamertag) {
   clearStatus();
   hideCard();
 
-  const gt = gamertag.trim();
+  const gt = (gamertag || "").trim();
   if (!gt) {
     setStatus("Enter a gamertag first.");
     return;
   }
 
-  const u = new URL(window.location.href);
-  u.searchParams.set("gamertag", gt);
-  window.history.replaceState({}, "", u);
+  // keep URL shareable
+  try {
+    const u = new URL(window.location.href);
+    u.searchParams.set("gamertag", gt);
+    window.history.replaceState({}, "", u);
+  } catch {}
 
   setStatus("Loading recap…");
 
@@ -462,8 +549,8 @@ async function run(gamertag) {
       fetchDonateStats(),
     ]);
 
-    renderRecap(recapData);
-    renderBlog(blogData);
+    const recap = renderRecap(recapData);
+    renderBlog(blogData, recap);
     renderDonate(donateData);
 
     clearStatus();
@@ -473,84 +560,96 @@ async function run(gamertag) {
   }
 }
 
-// === EVENTS ===
-generateBtn.addEventListener("click", () => run(gamertagInput.value));
-gamertagInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") run(gamertagInput.value);
-});
+// === EVENTS (ONLY IF ELEMENT EXISTS) ===
+if (generateBtn) generateBtn.addEventListener("click", () => run(gamertagInput?.value || ""));
+if (gamertagInput) {
+  gamertagInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") run(gamertagInput.value);
+  });
+}
 
-exportBtn.addEventListener("click", exportCardAsPng);
+if (exportBtn) exportBtn.addEventListener("click", exportCardAsPng);
 
-copyLinkBtn.addEventListener("click", () => {
-  const url = new URL(window.location.href);
-  copyToClipboard(url.toString());
-});
+if (copyLinkBtn) {
+  copyLinkBtn.addEventListener("click", () => {
+    const url = new URL(window.location.href);
+    copyToClipboard(url.toString());
+  });
+}
 
-copyLiveLinkBtn.addEventListener("click", () => copyToClipboard(liveLink.value));
-copyBbBtn.addEventListener("click", () => copyToClipboard(bbcode.value));
+if (copyLiveLinkBtn && liveLink) copyLiveLinkBtn.addEventListener("click", () => copyToClipboard(liveLink.value || ""));
+if (copyBbBtn && bbcode) copyBbBtn.addEventListener("click", () => copyToClipboard(bbcode.value || ""));
 
-// ✅ CONNECT (popup-safe):
-// - Always set a real href (so navigation works if popups are blocked)
-// - Only preventDefault if the popup actually opened
-signinBtn.addEventListener("click", (e) => {
-  const url = getOpenXblSigninUrl();
-  const w = window.open(url, "_blank", "noopener,noreferrer");
-  if (w) {
-    e.preventDefault();
-    setStatus("Opened Xbox sign-in in a new tab ✅");
-    setTimeout(clearStatus, 1400);
-  }
-});
+// ✅ CONNECT (popup-safe + href fallback)
+if (signinBtn) {
+  signinBtn.addEventListener("click", (e) => {
+    const url = getOpenXblSigninUrl();
+    const w = window.open(url, "_blank", "noopener,noreferrer");
+    if (w) {
+      e.preventDefault();
+      setStatus("Opened Xbox sign-in in a new tab ✅");
+      setTimeout(clearStatus, 1400);
+    }
+    // If popup blocked, we DO NOT prevent default, and the anchor href will navigate.
+  });
+}
 
 // Sign out
-signoutBtn.addEventListener("click", async () => {
-  const gt = (gamertagInput.value || "").trim() || (gtName.textContent || "").trim();
-  if (!gt || gt === "—") {
-    setStatus("No gamertag to sign out.");
-    setTimeout(clearStatus, 1400);
-    return;
-  }
+if (signoutBtn) {
+  signoutBtn.addEventListener("click", async () => {
+    const gt =
+      (gamertagInput?.value || "").trim() ||
+      (gtName?.textContent || "").trim();
 
-  setStatus("Signing out…");
+    if (!gt || gt === "—") {
+      setStatus("No gamertag to sign out.");
+      setTimeout(clearStatus, 1400);
+      return;
+    }
 
-  try {
-    await signOutWorker(gt);
+    setStatus("Signing out…");
 
-    const u = new URL(window.location.href);
-    u.searchParams.delete("gamertag");
-    u.searchParams.delete("embed");
-    window.history.replaceState({}, "", u);
+    try {
+      await signOutWorker(gt);
 
-    gamertagInput.value = "";
-    hideCard();
-    setSignedOutUiState();
+      try {
+        const u = new URL(window.location.href);
+        u.searchParams.delete("gamertag");
+        u.searchParams.delete("embed");
+        window.history.replaceState({}, "", u);
+      } catch {}
 
-    setStatus("Signed out ✅");
-    setTimeout(clearStatus, 1400);
-  } catch (err) {
-    console.error(err);
-    setStatus(String(err?.message || "Sign out failed."));
-  }
-});
+      if (gamertagInput) gamertagInput.value = "";
+      hideCard();
+      setSignedOutUiState();
+
+      setStatus("Signed out ✅");
+      setTimeout(clearStatus, 1400);
+    } catch (err) {
+      console.error(err);
+      setStatus(String(err?.message || "Sign out failed."));
+    }
+  });
+}
 
 // === INIT ===
 (function init() {
   setEmbedModeIfNeeded();
-
-  // Always show user area (even logged out)
   setSignedOutUiState();
 
-  // ✅ Bulletproof connect: ensure href exists so click navigates if popup blocked
-  signinBtn.href = getOpenXblSigninUrl();
+  // ✅ Make connect bulletproof even if popup is blocked
+  if (signinBtn) signinBtn.href = getOpenXblSigninUrl();
 
   const params = new URLSearchParams(window.location.search);
   const gt = params.get("gamertag");
 
-  if (gt) {
+  if (gt && gamertagInput) {
     gamertagInput.value = gt;
     run(gt);
   } else {
     fetchDonateStats().then(renderDonate).catch(() => {});
-    openEmbedLink.href = `${window.location.origin}${window.location.pathname}?embed=1`;
+    if (openEmbedLink) {
+      openEmbedLink.href = `${window.location.origin}${window.location.pathname}?embed=1`;
+    }
   }
 })();
