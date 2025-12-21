@@ -4,12 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Xbox Recap</title>
-  <link rel="stylesheet" href="./style.css?v=2026.5" />
+  <link rel="stylesheet" href="./style.css?v=2026.6" />
 </head>
 <body>
-  <div class="bg" aria-hidden="true">
-    <div class="bgGlow"></div>
-  </div>
+  <div class="bg" aria-hidden="true"><div class="bgGlow"></div></div>
 
   <header class="siteHeader" id="siteHeader">
     <div class="brand">
@@ -23,7 +21,13 @@
     <div class="headerActions">
       <div id="userArea" class="userArea">
         <div class="avatarWrap sm" aria-hidden="true">
-          <img id="userAvatar" class="userAvatar" alt="Not connected" />
+          <img
+            id="userAvatar"
+            class="userAvatar"
+            alt="Not connected"
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"
+          />
           <div id="userAvatarFallback" class="avatarFallback sm">?</div>
           <span class="avatarRing sm"></span>
         </div>
@@ -66,11 +70,17 @@
     <section id="status" class="status hidden"></section>
 
     <section id="gamerCardWrap" class="cardShell hidden">
-      <div id="gamerCard" class="card">
+      <div id="gamerCard" class="gamerCard">
         <div class="cardTop">
           <div class="profileRow">
             <div class="avatarWrap" aria-hidden="true">
-              <img id="profilePic" class="pfp" alt="No gamerpic" />
+              <img
+                id="profilePic"
+                class="pfp"
+                alt="No gamerpic"
+                crossorigin="anonymous"
+                referrerpolicy="no-referrer"
+              />
               <div id="profilePicFallback" class="avatarFallback">?</div>
               <span class="avatarRing"></span>
             </div>
@@ -144,7 +154,7 @@
         </div>
 
         <div id="achievementBlock" class="achievement hidden">
-          <img id="achievementIcon" class="achievementIcon hidden" alt="Achievement icon" />
+          <img id="achievementIcon" class="achievementIcon hidden" alt="Achievement icon" crossorigin="anonymous" referrerpolicy="no-referrer" />
           <div class="achievementCopy">
             <div id="achievementName" class="achievementName">—</div>
             <div id="achievementPercent" class="achievementPercent">—</div>
@@ -214,6 +224,6 @@
   </main>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
-  <script src="./script.js?v=2026.5"></script>
+  <script src="./script.js?v=2026.6"></script>
 </body>
 </html>
