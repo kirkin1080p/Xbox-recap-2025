@@ -470,3 +470,98 @@ body.embed .cardTopBar{
 }
 body.embed .wrap{ max-width: 720px; padding: 10px; }
 body.embed .cardShell{ margin-top: 0; }
+
+/* =========================
+   Header User Area
+   ========================= */
+
+.userArea {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(6px);
+}
+
+/* Avatar */
+.userAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Username + badge column */
+.userMeta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.userName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.userBadge {
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 2px;
+  width: fit-content;
+  padding: 2px 6px;
+  border-radius: 999px;
+}
+
+/* Badge states */
+.userBadge.good {
+  background: rgba(14, 205, 17, 0.18);
+  color: #0ecd11;
+}
+
+.userBadge.limited {
+  background: rgba(255, 170, 0, 0.2);
+  color: #ffaa00;
+}
+
+.userBadge.off {
+  background: rgba(255, 255, 255, 0.12);
+  color: #bbbbbb;
+}
+
+/* Sign out button */
+.chipBtn {
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.chipBtn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.chipBtn:active {
+  transform: scale(0.97);
+}
+
+/* Hide utility (shared with rest of UI) */
+.hidden {
+  display: none !important;
+}
+
+/* Responsive tweak */
+@media (max-width: 700px) {
+  .userName {
+    display: none;
+  }
+}
+
