@@ -1,3 +1,29 @@
+- name: Inject WORKER_BASE and PUBLIC_KEY into script.js
+  shell: bash
+  run: |
+    node - <<'NODE'
+    const fs = require("fs");
+
+    const wb = process.env.WORKER_BASE;
+    const pk = process.env.PUBLIC_KEY;
+
+    if (!wb || !pk) {
+      console.error("Missing WORKER_BASE or PUBLIC_KEY secrets.");
+      process.exit(1);
+    }
+
+    const path = "script.js";
+    let s = fs.readFileSync(path, "utf8");
+    s = s.replaceAll("__WORKER_BASE__", wb);
+    s = s.replaceAll("__PUBLIC_KEY__", pk);
+    fs.writeFileSync(path, s, "utf8");
+
+    console.log("Injected secrets into script.js");
+    NODE
+  env:
+    WORKER_BASE: ${{ secrets.WORKER_BASE }}
+    PUBLIC_KEY:  ${{ secrets.PUBLIC_KEY }}
+
 // === CONFIG ===
 // These are injected at deploy time (e.g. GitHub Secrets -> string replace).
 // The browser CANNOT read GitHub secrets directly.
