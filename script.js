@@ -415,9 +415,15 @@ function renderRecap(data) {
 
   setText(gtName, gamertag);
 
-  // ✅ NEW: explicit now playing line from presenceText
+  // ✅ Now playing should ONLY show if there is real live presence data.
   const liveNow = parseNowPlaying(profile?.presenceText || "");
-  setText(nowPlaying, liveNow ? `Now playing: ${liveNow}` : "Now playing: —");
+  if (liveNow) {
+    setText(nowPlaying, `Now playing: ${liveNow}`);
+    show(nowPlaying);
+  } else {
+    // Hide the line entirely if there's nothing real to show
+    hide(nowPlaying);
+  }
 
   const lastPlayedName =
     recap?.lastPlayedGame ||
