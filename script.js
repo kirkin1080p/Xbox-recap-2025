@@ -2,10 +2,10 @@
 const WORKER_BASE = "https://falling-cake-f670.kirkjlemon.workers.dev";
 const PUBLIC_KEY  = "4f6e9e47-98c9-0501-ae8a-4c078183a6dc";
 
-// Auth storage key (signed-in identity)
-const LS_AUTH_GT = "xbr_auth_gamertag";
+// localStorage key for "who is signed in"
+const SIGNED_IN_KEY = "xr_signedInGamertag";
 
-// === DOM HELPERS ===
+// === DOM HELPERS (NULL SAFE) ===
 function el(id) { return document.getElementById(id); }
 
 function setText(node, value, fallback = "—") {
@@ -14,11 +14,55 @@ function setText(node, value, fallback = "—") {
     value === null || value === undefined || value === "" ? fallback : String(value);
 }
 
-function show(node) { if (node) node.classList.remove("hidden"); }
-function hide(node) { if (node) node.classList.add("hidden"); }
+function setHtml(node, html) {
+  if (!node) return;
+  node.innerHTML = html;
+}
 
-function addClass(node, ...cls) { if (node) node.classList.add(...cls); }
-function removeClass(node, ...cls) { if (node) node.classList.remove(...cls); }
+function show(node) {
+  if (!node) return;
+  node.classList.remove("hidden");
+}
+
+function hide(node) {
+  if (!node) return;
+  node.classList.add("hidden");
+}
+
+function setAttr(node, name, value) {
+  if (!node) return;
+  if (value === null || value === undefined || value === "") node.removeAttribute(name);
+  else node.setAttribute(name, value);
+}
+
+function addClass(node, ...cls) {
+  if (!node) return;
+  node.classList.add(...cls);
+}
+
+function removeClass(node, ...cls) {
+  if (!node) return;
+  node.classList.remove(...cls);
+}
+
+// === SIGN-IN STORAGE ===
+function getSignedInGamertag() {
+  try {
+    const v = localStorage.getItem(SIGNED_IN_KEY);
+    return v ? String(v).trim() : "";
+  } catch {
+    return "";
+  }
+}
+function setSignedInGamertag(gt) {
+  try {
+    const v = String(gt || "").trim();
+    if (v) localStorage.setItem(SIGNED_IN_KEY, v);
+  } catch {}
+}
+function clearSignedInGamertag() {
+  try { localStorage.removeItem(SIGNED_IN_KEY); } catch {}
+}
 
 // === DOM ===
 const gamertagInput = el("gamertagInput");
@@ -29,8 +73,6 @@ const gamerCardWrap = el("gamerCardWrap");
 const gamerCard     = el("gamerCard");
 
 const profilePic = el("profilePic");
-const profilePicFallback = el("profilePicFallback");
-
 const gtName     = el("gtName");
 const presence   = el("presence");
 
@@ -60,11 +102,10 @@ const lastUpdatedPill = el("lastUpdatedPill");
 
 const signinPrompt  = el("signinPrompt");
 const signinBtn     = el("signinBtn");
+const openEmbedLink = el("openEmbedLink");
 
 const exportBtn   = el("exportBtn");
 const copyLinkBtn = el("copyLinkBtn");
-const openEmbedLink = el("openEmbedLink");
-const openEmbedLink2 = el("openEmbedLink2");
 
 const achievementBlock   = el("achievementBlock");
 const achievementIcon    = el("achievementIcon");
@@ -73,7 +114,6 @@ const achievementPercent = el("achievementPercent");
 const achievementContext = el("achievementContext");
 
 const blogEntries = el("blogEntries");
-const tweetLatestBtn = el("tweetLatestBtn");
 
 const donateTotal      = el("donateTotal");
 const donateSupporters = el("donateSupporters");
@@ -83,18 +123,12 @@ const bbcode   = el("bbcode");
 const copyLiveLinkBtn = el("copyLiveLinkBtn");
 const copyBbBtn       = el("copyBbBtn");
 
-// Header user area
+// User area (always visible)
 const userArea   = el("userArea");
 const userAvatar = el("userAvatar");
-const userAvatarFallback = el("userAvatarFallback");
 const userName   = el("userName");
 const userBadge  = el("userBadge");
-const userSub    = el("userSub");
 const signoutBtn = el("signoutBtn");
-
-// === STATE ===
-let authGamertag = (localStorage.getItem(LS_AUTH_GT) || "").trim();
-let lastRenderedJournalPlain = []; // used for Tweet latest
 
 // === STATUS ===
 function setStatus(msg) {
@@ -108,37 +142,42 @@ function clearStatus() {
   statusEl.textContent = "";
 }
 
-function setLoading(isLoading) {
-  if (!generateBtn) return;
-  generateBtn.disabled = !!isLoading;
-  generateBtn.classList.toggle("loading", !!isLoading);
+// === PRE-FLIGHT ===
+const CARD_IDS_THAT_SHOULD_EXIST = [
+  "gamerCardWrap", "gamerCard",
+  "profilePic", "gtName", "presence",
+  "gamerscore", "gamerscoreDelta", "daysPlayed", "playRange",
+  "favGame", "favGameSessions",
+  "currentStreak", "longestStreak", "longestBreak", "uniqueGames", "oneHit",
+  "peakDay", "peakDaySub",
+  "activeWeekday", "activeWeekdaySub",
+  "activeMonth", "activeMonthSub",
+  "trackingInfo", "dataQualityPill", "lastUpdatedPill",
+  "blogEntries",
+  "donateTotal", "donateSupporters",
+  "liveLink", "bbcode",
+  "exportBtn", "copyLinkBtn", "copyLiveLinkBtn", "copyBbBtn"
+];
+
+function preflightReportMissingIds() {
+  const missing = CARD_IDS_THAT_SHOULD_EXIST.filter((id) => !document.getElementById(id));
+  if (missing.length) {
+    setStatus(
+      `Your index.html is missing ${missing.length} element(s) that the script expects:\n` +
+      missing.map((m) => `• #${m}`).join("\n") +
+      `\n\nFix: restore the gamer card markup (the section inside #gamerCardWrap).`
+    );
+    return false;
+  }
+  return true;
 }
 
-function showCard() { show(gamerCardWrap); }
-function hideCard() { hide(gamerCardWrap); }
-
-// === URL / SHARE ===
-function buildShareUrls(gamertag) {
-  const url = new URL(window.location.href);
-  url.searchParams.set("gamertag", gamertag);
-
-  const embed = new URL(window.location.href);
-  embed.searchParams.set("gamertag", gamertag);
-  embed.searchParams.set("embed", "1");
-
-  return { normal: url.toString(), embed: embed.toString() };
-}
-
-function getOpenXblSigninUrl() {
-  return `https://xbl.io/app/auth/${PUBLIC_KEY}`;
-}
-
+// === GENERAL HELPERS ===
 function setEmbedModeIfNeeded() {
   const params = new URLSearchParams(window.location.search);
   if (params.get("embed") === "1") document.body.classList.add("embed");
 }
 
-// === DATE ===
 function fmtDateTime(iso) {
   if (!iso) return "—";
   try {
@@ -156,7 +195,6 @@ function fmtDateTime(iso) {
   }
 }
 
-// === CLIPBOARD ===
 async function copyToClipboard(text) {
   try {
     await navigator.clipboard.writeText(text);
@@ -174,71 +212,60 @@ async function copyToClipboard(text) {
   }
 }
 
-// === AVATAR FALLBACKS ===
-function initialFromGamertag(gt) {
-  const s = String(gt || "").trim();
-  if (!s) return "?";
-  return s[0].toUpperCase();
+function buildShareUrls(gamertag) {
+  const url = new URL(window.location.href);
+  url.searchParams.set("gamertag", gamertag);
+
+  const embed = new URL(window.location.href);
+  embed.searchParams.set("gamertag", gamertag);
+  embed.searchParams.set("embed", "1");
+
+  return { normal: url.toString(), embed: embed.toString() };
 }
 
-function setAvatar(imgEl, fallbackEl, url, gt) {
-  if (!imgEl || !fallbackEl) return;
-
-  const letter = initialFromGamertag(gt);
-  fallbackEl.textContent = letter;
-
-  // No URL? show fallback
-  if (!url) {
-    imgEl.removeAttribute("src");
-    hide(imgEl);
-    show(fallbackEl);
-    return;
-  }
-
-  // Try load; if it fails, fallback
-  imgEl.onload = () => {
-    show(imgEl);
-    hide(fallbackEl);
-  };
-  imgEl.onerror = () => {
-    imgEl.removeAttribute("src");
-    hide(imgEl);
-    show(fallbackEl);
-  };
-
-  imgEl.src = url;
-  show(imgEl);
+function getOpenXblSigninUrl() {
+  return `https://xbl.io/app/auth/${PUBLIC_KEY}`;
 }
 
-// === USER AREA (AUTH ONLY) ===
-function setSignedOutUiState() {
-  show(userArea);
-  setText(userName, "Not connected", "Not connected");
-  if (userSub) userSub.textContent = "Sign in to lock your profile";
-
-  if (userBadge) {
-    removeClass(userBadge, "good", "limited", "off");
-    addClass(userBadge, "off");
-    userBadge.textContent = "Not connected";
-  }
-
-  // avatar fallback
-  setAvatar(userAvatar, userAvatarFallback, "", "");
-
-  hide(signoutBtn);
-  if (signoutBtn) signoutBtn.disabled = true;
-
-  show(signinPrompt);
+function setPillQuality(recap, linked) {
+  if (!dataQualityPill) return;
+  const q = recap?.dataQuality || (linked ? "good" : "tracking-only");
+  let label = "Tracking";
+  if (q === "good") label = "Full";
+  if (q === "limited") label = "Limited";
+  if (q === "tracking-only") label = "Tracking";
+  dataQualityPill.textContent = label;
 }
 
-function setSignedInUiState(gamertag, qualityLabel = "Connected", avatarUrl = "") {
+function setLastUpdated(recap) {
+  if (!lastUpdatedPill) return;
+  const observed = recap?.lastObservedAt || null;
+  const refreshed = recap?.lastSeen || null;
+
+  if (observed) lastUpdatedPill.textContent = `Last observed ${fmtDateTime(observed)}`;
+  else lastUpdatedPill.textContent = `Last refreshed ${fmtDateTime(refreshed)}`;
+}
+
+function showCard() { show(gamerCardWrap); }
+function hideCard() { hide(gamerCardWrap); }
+
+// === USER AREA STATES ===
+function setSignedInUiState({ gamertag, avatarUrl, qualityLabel }) {
   show(userArea);
   hide(signinPrompt);
 
   setText(userName, gamertag, "—");
-  if (userSub) userSub.textContent = "Signed in";
 
-  // badge
+  if (userAvatar) {
+    if (avatarUrl) {
+      userAvatar.src = avatarUrl;
+      userAvatar.alt = `${gamertag} gamerpic`;
+    } else {
+      userAvatar.removeAttribute("src");
+      userAvatar.alt = "No gamerpic";
+    }
+  }
+
   if (userBadge) {
     removeClass(userBadge, "good", "limited", "off");
     userBadge.textContent = qualityLabel || "Connected";
@@ -248,25 +275,32 @@ function setSignedInUiState(gamertag, qualityLabel = "Connected", avatarUrl = ""
     );
   }
 
-  setAvatar(userAvatar, userAvatarFallback, avatarUrl, gamertag);
-
   show(signoutBtn);
   if (signoutBtn) signoutBtn.disabled = false;
 }
 
-function refreshAuthUiFromStorageOnly() {
-  authGamertag = (localStorage.getItem(LS_AUTH_GT) || "").trim();
-  if (!authGamertag) {
-    setSignedOutUiState();
-    return;
+function setSignedOutUiState() {
+  show(userArea);
+
+  if (userAvatar) {
+    userAvatar.removeAttribute("src");
+    userAvatar.alt = "Not connected";
+  }
+  setText(userName, "Not connected", "Not connected");
+
+  if (userBadge) {
+    removeClass(userBadge, "good", "limited", "off");
+    addClass(userBadge, "off");
+    userBadge.textContent = "Not connected";
   }
 
-  // We don't fetch here (avoids extra calls)
-  // We’ll populate avatar when the user generates THEIR own recap.
-  setSignedInUiState(authGamertag, "Connected", "");
+  hide(signoutBtn);
+  if (signoutBtn) signoutBtn.disabled = true;
+
+  show(signinPrompt);
 }
 
-// === NETWORK ===
+// === NETWORK (WITH GOOD ERRORS) ===
 async function fetchJsonOrText(url, init) {
   const res = await fetch(url, init);
   const text = await res.text();
@@ -314,27 +348,40 @@ async function signOutWorker(gamertag) {
   return data;
 }
 
-// === PILLS ===
-function setPillQuality(recap) {
-  if (!dataQualityPill) return;
-  const q = recap?.dataQuality || "tracking-only";
-  let label = "Tracking";
-  if (q === "good") label = "Full";
-  if (q === "limited") label = "Limited";
-  if (q === "tracking-only") label = "Tracking";
-  dataQualityPill.textContent = label;
+// === OPTION A: REFRESH SIGNED-IN USER ON PAGE LOAD ===
+function qualityLabelFromRecap(recap, linked) {
+  const q = recap?.dataQuality || (linked ? "good" : "tracking-only");
+  return q === "good" ? "Full" : q === "limited" ? "Limited" : "Not connected";
 }
 
-function setLastUpdated(recap) {
-  if (!lastUpdatedPill) return;
-  const observed = recap?.lastObservedAt || null;
-  const refreshed = recap?.lastSeen || null;
+async function refreshUserAreaOnLoad() {
+  const signedIn = getSignedInGamertag();
+  if (!signedIn) {
+    setSignedOutUiState();
+    return;
+  }
 
-  if (observed) lastUpdatedPill.textContent = `Last observed ${fmtDateTime(observed)}`;
-  else lastUpdatedPill.textContent = `Last refreshed ${fmtDateTime(refreshed)}`;
+  try {
+    // This is the refresh. It calls your Worker for the signed-in gamertag.
+    const data = await fetchRecap(signedIn);
+
+    const gt = data?.gamertag || signedIn;
+    const avatarUrl = data?.profile?.displayPicRaw || null;
+    const label = qualityLabelFromRecap(data?.recap, data?.linked);
+
+    setSignedInUiState({
+      gamertag: gt,
+      avatarUrl,
+      qualityLabel: label,
+    });
+  } catch (e) {
+    console.warn("User area refresh failed:", e);
+    // If it fails, don't lie—show signed-out UI.
+    setSignedOutUiState();
+  }
 }
 
-// === ACHIEVEMENT ===
+// === RENDERERS (NULL SAFE) ===
 function renderAchievement(recap) {
   if (!achievementBlock) return;
 
@@ -367,137 +414,29 @@ function renderAchievement(recap) {
   setText(achievementContext, title ? `From ${title}` : "From recent play");
 }
 
-// === JOURNAL FORMATTING ===
-function escapeHtml(s) {
-  return String(s || "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-// Very small “good enough” markdown-ish formatter:
-// - **bold**
-// - *italics*
-// - `code`
-// - lines starting with "-" or "*" become bullets
-function formatJournalTextToHtml(text) {
-  let t = escapeHtml(text);
-
-  // Normalize weird asterisk spam: collapse multiple asterisks
-  t = t.replace(/\*{3,}/g, "**");
-
-  // bullets: lines starting with "- " or "* "
-  const lines = t.split("\n");
-  const bulletLines = [];
-  let inList = false;
-
-  function flushList() {
-    if (!inList) return;
-    bulletLines.push("</ul>");
-    inList = false;
-  }
-
-  for (const raw of lines) {
-    const line = raw.trimEnd();
-    const m = line.match(/^(\-|\*)\s+(.*)$/);
-    if (m) {
-      if (!inList) {
-        inList = true;
-        bulletLines.push("<ul class=\"journalList\">");
-      }
-      bulletLines.push(`<li>${m[2]}</li>`);
-    } else {
-      flushList();
-      bulletLines.push(line);
-    }
-  }
-  flushList();
-  t = bulletLines.join("\n");
-
-  // inline code
-  t = t.replace(/`([^`]+)`/g, "<code>$1</code>");
-  // bold
-  t = t.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
-  // italics (single *)
-  t = t.replace(/(^|[\s(])\*([^*]+)\*(?=[\s).,!?:]|$)/g, "$1<em>$2</em>");
-
-  // convert remaining newlines to <br> but not inside <ul>
-  // quick hack: if we see <ul>, we keep newlines (CSS handles)
-  if (!t.includes("<ul")) {
-    t = t.replace(/\n/g, "<br>");
-  } else {
-    // for text outside lists, still allow <br>
-    t = t.replace(/\n(?!<\/?ul|<li)/g, "<br>\n");
-  }
-
-  return t;
-}
-
-function buildTweetUrl(text) {
-  const base = "https://twitter.com/intent/tweet";
-  const u = new URL(base);
-  u.searchParams.set("text", text);
-  return u.toString();
-}
-
-function renderBlog(blog) {
+function renderBlog(blog, recap) {
   if (!blogEntries) return;
 
   blogEntries.innerHTML = "";
-  lastRenderedJournalPlain = [];
 
-  const entries = blog?.entries?.slice(0, 6) || [];
-  if (!entries.length) {
-    blogEntries.innerHTML = `<div class="blogLine muted">No journal entries yet — generate again tomorrow and it’ll start writing daily.</div>`;
-    hide(tweetLatestBtn);
-    return;
+  if (!blog?.entries?.length) {
+    blogEntries.innerHTML =
+      `<div class="blogLine muted">No journal entries yet — generate again tomorrow and it’ll start writing daily.</div>`;
+  } else {
+    for (const e of blog.entries.slice(0, 4)) {
+      const div = document.createElement("div");
+      div.className = "blogLine";
+      div.textContent = e?.text ? e.text : `📓 ${e?.date || ""} — (missing entry)`;
+      blogEntries.appendChild(div);
+    }
   }
 
-  // Store plain text for "Tweet latest"
-  for (const e of entries) {
-    const plain = e?.text ? String(e.text) : "";
-    lastRenderedJournalPlain.push(plain);
+  if (recap?.journal?.policy) {
+    const hint = document.createElement("div");
+    hint.className = "blogLine muted";
+    hint.textContent = recap.journal.policy;
+    blogEntries.appendChild(hint);
   }
-
-  show(tweetLatestBtn);
-
-  entries.forEach((e, idx) => {
-    const plain = e?.text ? String(e.text) : "";
-    const html = formatJournalTextToHtml(plain);
-
-    const row = document.createElement("div");
-    row.className = "blogLine";
-
-    const content = document.createElement("div");
-    content.className = "blogText";
-    content.innerHTML = html;
-
-    const actions = document.createElement("div");
-    actions.className = "blogActions";
-
-    const copyBtn = document.createElement("button");
-    copyBtn.className = "btn ghost small";
-    copyBtn.type = "button";
-    copyBtn.textContent = "Copy";
-    copyBtn.addEventListener("click", () => copyToClipboard(plain));
-
-    const tweetBtn = document.createElement("a");
-    tweetBtn.className = "btn ghost small";
-    tweetBtn.href = buildTweetUrl(plain);
-    tweetBtn.target = "_blank";
-    tweetBtn.rel = "noopener noreferrer";
-    tweetBtn.textContent = "Tweet";
-
-    actions.appendChild(copyBtn);
-    actions.appendChild(tweetBtn);
-
-    row.appendChild(content);
-    row.appendChild(actions);
-
-    blogEntries.appendChild(row);
-  });
 }
 
 function renderDonate(ds) {
@@ -510,13 +449,11 @@ function renderDonate(ds) {
   donateSupporters.textContent = String(ds.supporters || 0);
 }
 
-// === MAIN RENDER ===
 function renderRecap(data) {
-  const { gamertag, profile, recap } = data;
+  const { gamertag, profile, recap, linked } = data;
 
   setText(gtName, gamertag);
 
-  // Presence fallback
   const lastPlayedName =
     recap?.lastPlayedGame ||
     recap?.titleHistory?.lastTitleName ||
@@ -535,15 +472,23 @@ function renderRecap(data) {
 
   setText(presence, profile?.presenceText || fallbackPresence);
 
-  // Card avatar with fallback
-  setAvatar(profilePic, profilePicFallback, profile?.displayPicRaw || "", gamertag);
+  if (profilePic) {
+    if (profile?.displayPicRaw) {
+      profilePic.src = profile.displayPicRaw;
+      profilePic.alt = `${gamertag} gamerpic`;
+    } else {
+      profilePic.removeAttribute("src");
+      profilePic.alt = "No gamerpic";
+    }
+  }
 
   setText(gamerscore, recap?.gamerscoreCurrent ?? profile?.gamerscore ?? "—");
+
   if (gamerscoreDelta) {
     gamerscoreDelta.textContent =
       recap?.gamerscoreDelta != null
         ? `+${recap.gamerscoreDelta} since tracking`
-        : "—";
+        : (linked ? "Delta unknown" : "Connect Xbox for delta");
   }
 
   setText(daysPlayed, recap?.daysPlayedCount ?? "—");
@@ -569,8 +514,8 @@ function renderRecap(data) {
   const mature = recap?.oneHitWondersIsMature ?? false;
   setText(oneHit, mature ? `${oneHitEff} one-hit wonders` : "—");
 
-  setText(peakDay, recap?.peakDay?.date ?? "—");
-  setText(peakDaySub, recap?.peakDay?.uniqueGames != null ? `${recap.peakDay.uniqueGames} unique games` : "—");
+  if (peakDay) setText(peakDay, recap?.peakDay?.date ?? "—");
+  if (peakDaySub) setText(peakDaySub, recap?.peakDay?.uniqueGames != null ? `${recap.peakDay.uniqueGames} unique games` : "—");
 
   setText(activeWeekday, recap?.mostActiveWeekdayName ?? "—");
   setText(activeWeekdaySub, recap?.mostActiveWeekdayDays != null ? `${recap.mostActiveWeekdayDays} days` : "—");
@@ -582,32 +527,23 @@ function renderRecap(data) {
     const observedLine = recap?.lastObservedAt
       ? `Observed play: ${fmtDateTime(recap.lastObservedAt)}`
       : `No play observed yet`;
-    trackingInfo.textContent =
-      `First seen: ${fmtDateTime(recap?.firstSeen)} • ${observedLine} • Lookups: ${recap?.lookupCount ?? 0}`;
+    trackingInfo.textContent = `First seen: ${fmtDateTime(recap?.firstSeen)} • ${observedLine} • Lookups: ${recap?.lookupCount ?? 0}`;
   }
 
-  setPillQuality(recap);
+  setPillQuality(recap, linked);
   setLastUpdated(recap);
 
   const urls = buildShareUrls(gamertag);
   if (liveLink) liveLink.value = urls.embed;
   if (bbcode) bbcode.value = `[url=${urls.embed}]Xbox Recap Card[/url]`;
   if (openEmbedLink) openEmbedLink.href = urls.embed;
-  if (openEmbedLink2) openEmbedLink2.href = urls.embed;
 
   renderAchievement(recap);
   showCard();
 
-  // ✅ IMPORTANT FIX:
-  // ONLY update header user area if this recap is for the signed-in account
-  if (authGamertag && gamertag.toLowerCase() === authGamertag.toLowerCase()) {
-    const quality =
-      recap?.dataQuality === "good" ? "Full" :
-      recap?.dataQuality === "limited" ? "Limited" :
-      "Connected";
-
-    setSignedInUiState(authGamertag, quality, profile?.displayPicRaw || "");
-  }
+  // IMPORTANT:
+  // We DO NOT touch the header user area here anymore.
+  // The header is ONLY refreshed on page load using localStorage signed-in gamertag.
 
   return recap;
 }
@@ -660,15 +596,12 @@ async function exportCardAsPng() {
 }
 
 // === MAIN FLOW ===
-let _runToken = 0;
-
 async function run(gamertag) {
-  const token = ++_runToken;
-
   try {
-    setLoading(true);
     clearStatus();
     hideCard();
+
+    if (!preflightReportMissingIds()) return;
 
     const gt = (gamertag || "").trim();
     if (!gt) {
@@ -676,7 +609,7 @@ async function run(gamertag) {
       return;
     }
 
-    // keep URL shareable (this is VIEW state, not AUTH state)
+    // keep URL shareable
     try {
       const u = new URL(window.location.href);
       u.searchParams.set("gamertag", gt);
@@ -685,27 +618,20 @@ async function run(gamertag) {
 
     setStatus("Loading recap…");
 
-    // 1) recap first for fast UI
-    const recapData = await fetchRecap(gt);
-    if (token !== _runToken) return;
-
-    const recap = renderRecap(recapData);
-    clearStatus();
-
-    // 2) enrich
-    const [blogRes, donateRes] = await Promise.allSettled([
+    const [recapData, blogData, donateData] = await Promise.all([
+      fetchRecap(gt),
       fetchBlog(gt),
       fetchDonateStats(),
     ]);
-    if (token !== _runToken) return;
 
-    if (blogRes.status === "fulfilled") renderBlog(blogRes.value);
-    if (donateRes.status === "fulfilled") renderDonate(donateRes.value);
+    const recap = renderRecap(recapData);
+    renderBlog(blogData, recap);
+    renderDonate(donateData);
+
+    clearStatus();
   } catch (err) {
     console.error(err);
-    setStatus(`Error: ${String(err?.message || err)}`);
-  } finally {
-    if (token === _runToken) setLoading(false);
+    setStatus(`JS crashed: ${String(err?.message || err)}\nOpen DevTools Console for the stack trace.`);
   }
 }
 
@@ -729,48 +655,55 @@ if (copyLinkBtn) {
 if (copyLiveLinkBtn && liveLink) copyLiveLinkBtn.addEventListener("click", () => copyToClipboard(liveLink.value || ""));
 if (copyBbBtn && bbcode) copyBbBtn.addEventListener("click", () => copyToClipboard(bbcode.value || ""));
 
-// Tweet latest
-if (tweetLatestBtn) {
-  tweetLatestBtn.addEventListener("click", () => {
-    const latest = lastRenderedJournalPlain?.[0] || "";
-    if (!latest) return;
-    window.open(buildTweetUrl(latest), "_blank", "noopener,noreferrer");
-  });
-}
-
-// ✅ CONNECT
+// ✅ CONNECT (reliable)
 if (signinBtn) {
   signinBtn.href = getOpenXblSigninUrl();
   signinBtn.addEventListener("click", (e) => {
+    // keep it simple: navigate
     e.preventDefault();
     window.location.href = getOpenXblSigninUrl();
   });
 }
 
-// Sign out
+// Sign out (SIGNED-IN USER ONLY)
 if (signoutBtn) {
   signoutBtn.addEventListener("click", async () => {
-    const gt = (localStorage.getItem(LS_AUTH_GT) || "").trim();
-    if (!gt) {
+    const signedIn = getSignedInGamertag();
+    if (!signedIn) {
       setSignedOutUiState();
+      setStatus("You’re not signed in.");
+      setTimeout(clearStatus, 1400);
       return;
     }
 
     setStatus("Signing out…");
 
     try {
-      await signOutWorker(gt);
-    } catch (e) {
-      // Even if Worker fails, user still wants to sign out locally
-      console.error(e);
+      await signOutWorker(signedIn);
+      clearSignedInGamertag();
+
+      // keep the current recap link visible if they’re viewing someone else.
+      // (We only remove gamertag param if it equals the signed-in one.)
+      try {
+        const u = new URL(window.location.href);
+        const currentGt = (u.searchParams.get("gamertag") || "").trim();
+        if (currentGt && currentGt.toLowerCase() === signedIn.toLowerCase()) {
+          u.searchParams.delete("gamertag");
+          u.searchParams.delete("embed");
+          window.history.replaceState({}, "", u);
+          if (gamertagInput) gamertagInput.value = "";
+          hideCard();
+        }
+      } catch {}
+
+      setSignedOutUiState();
+
+      setStatus("Signed out ✅");
+      setTimeout(clearStatus, 1400);
+    } catch (err) {
+      console.error(err);
+      setStatus(String(err?.message || "Sign out failed."));
     }
-
-    localStorage.removeItem(LS_AUTH_GT);
-    authGamertag = "";
-    setSignedOutUiState();
-
-    setStatus("Signed out ✅");
-    setTimeout(clearStatus, 1400);
   });
 }
 
@@ -778,17 +711,10 @@ if (signoutBtn) {
 (function init() {
   setEmbedModeIfNeeded();
 
-  // Auth UI: independent of what recap you view
-  refreshAuthUiFromStorageOnly();
+  // OPTION A refresh: user pill refreshes ON PAGE LOAD (signed-in gamertag only)
+  refreshUserAreaOnLoad();
 
-  // open embed default
-  if (openEmbedLink) {
-    openEmbedLink.href = `${window.location.origin}${window.location.pathname}?embed=1`;
-  }
-  if (openEmbedLink2) {
-    openEmbedLink2.href = `${window.location.origin}${window.location.pathname}?embed=1`;
-  }
-
+  // Normal recap load (whatever gamertag is in the URL)
   const params = new URLSearchParams(window.location.search);
   const gt = params.get("gamertag");
 
@@ -797,5 +723,8 @@ if (signoutBtn) {
     run(gt);
   } else {
     fetchDonateStats().then(renderDonate).catch(() => {});
+    if (openEmbedLink) {
+      openEmbedLink.href = `${window.location.origin}${window.location.pathname}?embed=1`;
+    }
   }
 })();
