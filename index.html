@@ -1,48 +1,33 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Xbox Recap 2026</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Xbox Recap 2026 — tracked, not guessed." />
-
-  <link rel="stylesheet" href="./style.css" />
-
-  <!-- Inter -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Xbox Recap</title>
+  <link rel="stylesheet" href="./style.css?v=2026.4" />
 </head>
-
 <body>
-  <div class="bg">
+  <div class="bg" aria-hidden="true">
     <div class="bgGlow"></div>
   </div>
 
   <header class="siteHeader" id="siteHeader">
     <div class="brand">
-      <div class="logo">X</div>
+      <div class="logo" aria-hidden="true">X</div>
       <div>
-        <h1>Xbox Recap <span class="year">2026</span></h1>
-        <p class="tagline">Tracked properly. No guesswork.</p>
+        <h1>Xbox Recap <span class="year">2025</span></h1>
+        <p class="tagline">Play. Track. Flex the clip.</p>
       </div>
     </div>
 
     <div class="headerActions">
-      <a class="chip" href="https://buymeacoffee.com/KeepXboxFree" target="_blank" rel="noreferrer">🍪 Support</a>
-      <a class="chip" id="openEmbedLink" href="#" title="Live signature card">🪪 Live Card</a>
-
-      <!-- NEW: User area (always visible) -->
       <div id="userArea" class="userArea">
         <img id="userAvatar" class="userAvatar" alt="Not connected" />
         <div class="userMeta">
           <div id="userName" class="userName">Not connected</div>
           <div id="userBadge" class="userBadge off">Not connected</div>
         </div>
-
-        <button id="signoutBtn" class="chipBtn hidden" type="button" title="Sign out">
-          Sign out
-        </button>
+        <button id="signoutBtn" class="btn ghost small" type="button" disabled>Sign out</button>
       </div>
     </div>
   </header>
@@ -53,7 +38,7 @@
         <label class="label" for="gamertagInput">Gamertag</label>
         <div class="searchInputRow">
           <input id="gamertagInput" type="text" placeholder="e.g. KirkIn1080p" autocomplete="off" />
-          <button id="generateBtn" class="btn primary">Generate</button>
+          <button id="generateBtn" class="btn primary" type="button">Generate</button>
         </div>
         <p class="hint">Tip: share the link after you generate. It will keep the gamertag in the URL.</p>
       </div>
@@ -67,187 +52,146 @@
           </div>
         </div>
 
-        <!-- One-click sign in (opens in new tab via JS) -->
         <a id="signinBtn" class="btn ghost ctaBtn" href="#">Connect Xbox</a>
-
         <p class="tiny">By generating a recap you agree to tracking from today onward. We don’t sell data.</p>
       </div>
     </section>
 
     <section id="status" class="status hidden"></section>
 
-    <!-- GamerCard -->
     <section id="gamerCardWrap" class="cardShell hidden">
-      <div class="cardTopBar">
-        <div class="cardTopLeft">
-          <span class="pill" id="dataQualityPill">Tracking</span>
-          <span class="pill subtle" id="lastUpdatedPill">Updated —</span>
-        </div>
-
-        <div class="cardTopRight">
-          <button id="exportBtn" class="btn small">Export PNG</button>
-          <button id="copyLinkBtn" class="btn small ghost">Copy link</button>
-        </div>
-      </div>
-
-      <div id="gamerCard" class="gamerCard">
-        <div class="gamerHeader">
-          <div class="pfpWrap">
-            <img id="profilePic" class="pfp" alt="Xbox gamerpic" />
-            <div class="pfpRing"></div>
-          </div>
-
-          <div class="who">
-            <h2 id="gtName" class="gtName">—</h2>
-            <p id="presence" class="presence muted">—</p>
-
-            <div class="miniRow">
-              <div class="mini">
-                <span class="miniLabel">Gamerscore</span>
-                <span class="miniValue" id="gamerscore">—</span>
-                <span class="miniSub" id="gamerscoreDelta"></span>
-              </div>
-
-              <div class="mini">
-                <span class="miniLabel">Days played</span>
-                <span class="miniValue" id="daysPlayed">—</span>
-                <span class="miniSub" id="playRange"></span>
-              </div>
-
-              <div class="mini">
-                <span class="miniLabel">Favourite</span>
-                <span class="miniValue" id="favGame">—</span>
-                <span class="miniSub" id="favGameSessions"></span>
-              </div>
+      <div id="gamerCard" class="card">
+        <div class="cardTop">
+          <div class="profileRow">
+            <img id="profilePic" class="pfp" alt="No gamerpic" />
+            <div class="profileCopy">
+              <div id="gtName" class="gtName">—</div>
+              <div id="presence" class="presence">—</div>
             </div>
           </div>
+
+          <div class="pillRow">
+            <span id="dataQualityPill" class="pill">Tracking</span>
+            <span id="lastUpdatedPill" class="pill mutedPill">Updated —</span>
+          </div>
         </div>
 
-        <!-- Stats grid -->
         <div class="grid">
           <div class="stat">
-            <div class="statLabel">Current streak</div>
-            <div class="statValue" id="currentStreak">—</div>
-            <div class="statSub" id="longestStreak">—</div>
+            <div class="k">Gamerscore</div>
+            <div class="v" id="gamerscore">—</div>
+            <div class="s" id="gamerscoreDelta">—</div>
           </div>
 
           <div class="stat">
-            <div class="statLabel">Longest break</div>
-            <div class="statValue" id="longestBreak">—</div>
-            <div class="statSub">days away</div>
+            <div class="k">Days played</div>
+            <div class="v" id="daysPlayed">—</div>
+            <div class="s" id="playRange">—</div>
           </div>
 
           <div class="stat">
-            <div class="statLabel">Unique games</div>
-            <div class="statValue" id="uniqueGames">—</div>
-            <div class="statSub" id="oneHit">—</div>
+            <div class="k">Favourite</div>
+            <div class="v" id="favGame">—</div>
+            <div class="s" id="favGameSessions">—</div>
           </div>
 
           <div class="stat">
-            <div class="statLabel">Peak day</div>
-            <div class="statValue" id="peakDay">—</div>
-            <div class="statSub" id="peakDaySub">—</div>
+            <div class="k">Unique games</div>
+            <div class="v" id="uniqueGames">—</div>
+            <div class="s" id="oneHit">—</div>
           </div>
 
           <div class="stat">
-            <div class="statLabel">Most active weekday</div>
-            <div class="statValue" id="activeWeekday">—</div>
-            <div class="statSub" id="activeWeekdaySub">—</div>
+            <div class="k">Current streak</div>
+            <div class="v" id="currentStreak">—</div>
+            <div class="s" id="longestStreak">—</div>
           </div>
 
           <div class="stat">
-            <div class="statLabel">Most active month</div>
-            <div class="statValue" id="activeMonth">—</div>
-            <div class="statSub" id="activeMonthSub">—</div>
+            <div class="k">Longest break</div>
+            <div class="v" id="longestBreak">—</div>
+            <div class="s">days</div>
+          </div>
+
+          <div class="stat">
+            <div class="k">Peak day</div>
+            <div class="v" id="peakDay">—</div>
+            <div class="s" id="peakDaySub">—</div>
+          </div>
+
+          <div class="stat">
+            <div class="k">Most active weekday</div>
+            <div class="v" id="activeWeekday">—</div>
+            <div class="s" id="activeWeekdaySub">—</div>
+          </div>
+
+          <div class="stat">
+            <div class="k">Most active month</div>
+            <div class="v" id="activeMonth">—</div>
+            <div class="s" id="activeMonthSub">—</div>
           </div>
         </div>
 
-        <!-- Achievement -->
-        <div id="achievementBlock" class="achBlock hidden">
-          <img id="achievementIcon" class="achIcon hidden" alt="Achievement icon" />
-          <div class="achMeta">
-            <div id="achievementName" class="achName">—</div>
-            <div id="achievementPercent" class="achPercent muted">—</div>
-            <div id="achievementContext" class="achContext muted">—</div>
+        <div id="achievementBlock" class="achievement hidden">
+          <img id="achievementIcon" class="achievementIcon hidden" alt="Achievement icon" />
+          <div class="achievementCopy">
+            <div id="achievementName" class="achievementName">—</div>
+            <div id="achievementPercent" class="achievementPercent">—</div>
+            <div id="achievementContext" class="achievementContext">—</div>
           </div>
         </div>
 
-        <!-- Journal -->
-        <div class="blogBox">
-          <div class="blogTitle">Xbox Journal</div>
+        <div class="trackingLine" id="trackingInfo">—</div>
+
+        <div class="share">
+          <div class="shareRow">
+            <button id="exportBtn" class="btn" type="button">Export PNG</button>
+            <button id="copyLinkBtn" class="btn ghost" type="button">Copy link</button>
+            <a id="openEmbedLink" class="btn ghost" href="#" target="_blank" rel="noopener noreferrer">Open embed</a>
+          </div>
+
+          <div class="embedRow">
+            <div class="embedCol">
+              <label class="label" for="liveLink">Embed link</label>
+              <div class="embedInputRow">
+                <input id="liveLink" type="text" readonly />
+                <button id="copyLiveLinkBtn" class="btn ghost" type="button">Copy</button>
+              </div>
+            </div>
+
+            <div class="embedCol">
+              <label class="label" for="bbcode">BBCode</label>
+              <div class="embedInputRow">
+                <input id="bbcode" type="text" readonly />
+                <button id="copyBbBtn" class="btn ghost" type="button">Copy</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="journal">
+          <div class="journalTitle">Xbox Journal</div>
           <div id="blogEntries" class="blogEntries"></div>
-        </div>
-
-        <div class="cardFooter">
-          <div class="footerLeft">
-            <div class="tiny muted" id="trackingInfo">—</div>
-          </div>
-
-          <div class="footerRight">
-            <div class="signature muted">xboxrecap • live card</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Share/Embed -->
-      <div class="shareBox">
-        <div class="shareTitle">Signature / Embed</div>
-        <div class="shareGrid">
-          <div class="shareItem">
-            <div class="shareLabel">Live card link</div>
-            <div class="shareRow">
-              <input id="liveLink" readonly />
-              <button id="copyLiveLinkBtn" class="btn small ghost">Copy</button>
-            </div>
-            <div class="tiny muted">Responsive “signature card” page.</div>
-          </div>
-
-          <div class="shareItem">
-            <div class="shareLabel">BBCode (forums)</div>
-            <div class="shareRow">
-              <input id="bbcode" readonly />
-              <button id="copyBbBtn" class="btn small ghost">Copy</button>
-            </div>
-            <div class="tiny muted">Paste into signature settings.</div>
-          </div>
         </div>
       </div>
     </section>
 
-    <!-- Donate section -->
     <section class="donate" id="donate">
-      <div class="donateLeft">
-        <h3>Keep it free</h3>
-        <p class="muted">
-          Donations help keep Xbox Recap online and fund improvements (better stats, better visuals, better everything).
-        </p>
-        <div class="donateStats">
+      <div class="donateCard">
+        <div class="donateLeft">
+          <div class="donateTitle">Support the project</div>
+          <div class="donateSub muted">Keeps the worker running and the recap improving.</div>
+        </div>
+        <div class="donateRight">
           <div class="donateStat">
-            <div class="donateNum" id="donateTotal">—</div>
-            <div class="donateLab muted">Raised</div>
+            <div class="k">Raised</div>
+            <div class="v" id="donateTotal">£0</div>
           </div>
           <div class="donateStat">
-            <div class="donateNum" id="donateSupporters">—</div>
-            <div class="donateLab muted">Support events</div>
+            <div class="k">Supporters</div>
+            <div class="v" id="donateSupporters">0</div>
           </div>
         </div>
-      </div>
-
-      <div class="donateRight">
-        <!-- Buy Me a Coffee button -->
-        <script
-          type="text/javascript"
-          src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js"
-          data-name="bmc-button"
-          data-slug="KeepXboxFree"
-          data-color="#0ecd11"
-          data-emoji="🍪"
-          data-font="Inter"
-          data-text="Buy me a cookie"
-          data-outline-color="#000000"
-          data-font-color="#000000"
-          data-coffee-color="#FFDD00">
-        </script>
       </div>
     </section>
 
@@ -258,9 +202,7 @@
     </footer>
   </main>
 
-  <!-- html2canvas for export-to-PNG -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
-
-  <script src="./script.js?v=2026.3"></script>
+  <script src="./script.js?v=2026.4"></script>
 </body>
 </html>
