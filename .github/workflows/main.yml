@@ -1,0 +1,54 @@
+name: Inject secrets into script.js (test)
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  inject:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Inject WORKER_BASE and PUBLIC_KEY into script.js
+        shell: bash
+        env:
+          WORKER_BASE: ${{ secrets.WORKER_BASE }}
+          PUBLIC_KEY: ${{ secrets.PUBLIC_KEY }}
+        run: |
+          node - <<'NODE'
+          const fs = require("fs");
+
+          const wb = process.env.WORKER_BASE;
+          const pk = process.env.PUBLIC_KEY;
+
+          if (!wb || !pk) {
+            console.error("Missing WORKER_BASE or PUBLIC_KEY secrets.");
+            process.exit(1);
+          }
+
+          const path = "script.js";
+          let s = fs.readFileSync(path, "utf8");
+
+          if (!s.includes("__WORKER_BASE__") || !s.includes("__PUBLIC_KEY__")) {
+            console.error("Placeholders not found in script.js. Expected __WORKER_BASE__ and __PUBLIC_KEY__");
+            process.exit(1);
+          }
+
+          s = s.replaceAll("__WORKER_BASE__", wb);
+          s = s.replaceAll("__PUBLIC_KEY__", pk);
+
+          fs.writeFileSync(path, s, "utf8");
+          console.log("Injected secrets into script.js");
+          NODE
+
+      - name: Upload injected files (for verification)
+        uses: actions/upload-artifact@v4
+        with:
+          name: injected-site
+          path: |
+            script.js
+            index.html
+            style.css
