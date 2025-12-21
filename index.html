@@ -2,185 +2,174 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Xbox Recap 2026</title>
-  <link rel="stylesheet" href="./style.css" />
-  <!-- html2canvas for export -->
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
-  <script src="./script.js" defer></script>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Xbox Recap</title>
+  <link rel="stylesheet" href="./style.css?v=2026.4" />
 </head>
-
 <body>
-  <header class="topbar">
+  <div class="bg" aria-hidden="true">
+    <div class="bgGlow"></div>
+  </div>
+
+  <header class="siteHeader" id="siteHeader">
     <div class="brand">
-      <div class="brandIcon">X</div>
-      <div class="brandText">
-        <div class="brandTitle">Xbox Recap 2026</div>
-        <div class="brandSub">Tracked properly. No guesswork.</div>
+      <div class="logo" aria-hidden="true">X</div>
+      <div>
+        <h1>Xbox Recap <span class="year">2025</span></h1>
+        <p class="tagline">Play. Track. Flex the clip.</p>
       </div>
     </div>
 
-    <div class="topActions">
-      <a class="pillBtn" href="#" id="supportBtn">🍪 Support</a>
-      <a class="pillBtn" href="#" id="openEmbedLink" target="_blank" rel="noreferrer">🧩 Live Card</a>
-
-      <!-- User area ALWAYS visible -->
-      <div class="userArea" id="userArea">
-        <div class="userAvatarWrap">
-          <img id="userAvatar" class="avatarImg" alt="User gamerpic" />
-          <div id="userAvatarFallback" class="avatarFallback" aria-hidden="true"></div>
-        </div>
-
+    <div class="headerActions">
+      <div id="userArea" class="userArea">
+        <img id="userAvatar" class="userAvatar" alt="Not connected" />
         <div class="userMeta">
-          <div class="userTopRow">
-            <div id="userName" class="userName">Not connected</div>
-            <div id="userBadge" class="userBadge off">Not connected</div>
-          </div>
-
-          <div class="userSubRow">
-            <span class="muted">Sign in to lock your profile</span>
-          </div>
+          <div id="userName" class="userName">Not connected</div>
+          <div id="userBadge" class="userBadge off">Not connected</div>
         </div>
-
-        <button id="signoutBtn" class="signoutBtn hidden" type="button">Sign out</button>
+        <button id="signoutBtn" class="btn ghost small" type="button" disabled>Sign out</button>
       </div>
     </div>
   </header>
 
   <main class="wrap">
-    <section class="hero">
-      <div class="inputCard">
+    <section class="searchRow" id="searchRow">
+      <div class="searchBox">
         <label class="label" for="gamertagInput">Gamertag</label>
-        <div class="inputRow">
-          <input id="gamertagInput" class="input" placeholder="Enter gamertag..." />
-          <button id="generateBtn" class="btnPrimary" type="button">Generate</button>
+        <div class="searchInputRow">
+          <input id="gamertagInput" type="text" placeholder="e.g. KirkIn1080p" autocomplete="off" />
+          <button id="generateBtn" class="btn primary" type="button">Generate</button>
         </div>
-        <div class="tip muted">Tip: share the link after you generate. It will keep the gamertag in the URL.</div>
-        <div id="status" class="status hidden"></div>
+        <p class="hint">Tip: share the link after you generate. It will keep the gamertag in the URL.</p>
+      </div>
 
-        <div id="signinPrompt" class="signinPrompt">
-          <a id="signinBtn" class="btnSecondary" href="#">Connect Xbox</a>
-          <div class="muted small">This links your account via OpenXBL so we can fetch your real Title History.</div>
+      <div class="ctaBox" id="signinPrompt">
+        <div class="ctaTop">
+          <div class="ctaIcon">🔐</div>
+          <div class="ctaCopy">
+            <p class="ctaTitle">Want the best version?</p>
+            <p class="ctaText">Connect Xbox to unlock richer stats, achievements & images.</p>
+          </div>
         </div>
+
+        <a id="signinBtn" class="btn ghost ctaBtn" href="#">Connect Xbox</a>
+        <p class="tiny">By generating a recap you agree to tracking from today onward. We don’t sell data.</p>
       </div>
     </section>
 
-    <!-- Recap card -->
-    <section id="gamerCardWrap" class="cardWrap hidden">
+    <section id="status" class="status hidden"></section>
+
+    <section id="gamerCardWrap" class="cardShell hidden">
       <div id="gamerCard" class="card">
         <div class="cardTop">
-          <div class="cardIdentity">
-            <div class="pfpWrap">
-              <img id="profilePic" class="pfpImg" alt="Gamerpic" />
-              <div id="profilePicFallback" class="pfpFallback" aria-hidden="true"></div>
-            </div>
-
-            <div class="identityText">
+          <div class="profileRow">
+            <img id="profilePic" class="pfp" alt="No gamerpic" />
+            <div class="profileCopy">
               <div id="gtName" class="gtName">—</div>
 
-              <!-- Live presence line -->
-              <div id="nowPlaying" class="subline muted">—</div>
+              <!-- ✅ NEW: "Now playing" line (live presence) -->
+              <div id="nowPlaying" class="presence muted">—</div>
 
-              <!-- Confirmed line -->
-              <div id="presence" class="subline">—</div>
+              <!-- Existing line (kept) -->
+              <div id="presence" class="presence">—</div>
             </div>
           </div>
 
-          <div class="cardPills">
-            <div id="dataQualityPill" class="pill">Tracking</div>
-            <div id="lastUpdatedPill" class="pill muted">Refreshed — • Last confirmed play —</div>
+          <div class="pillRow">
+            <span id="dataQualityPill" class="pill">Tracking</span>
+            <span id="lastUpdatedPill" class="pill mutedPill">Updated —</span>
           </div>
         </div>
 
         <div class="grid">
-          <div class="tile">
-            <div class="tileLabel">Gamerscore</div>
-            <div class="tileValue" id="gamerscore">—</div>
-            <div class="tileSub muted" id="gamerscoreDelta">—</div>
+          <div class="stat">
+            <div class="k">Gamerscore</div>
+            <div class="v" id="gamerscore">—</div>
+            <div class="s" id="gamerscoreDelta">—</div>
           </div>
 
-          <div class="tile">
-            <div class="tileLabel">Days played</div>
-            <div class="tileValue" id="daysPlayed">—</div>
-            <div class="tileSub muted" id="playRange">—</div>
+          <div class="stat">
+            <div class="k">Days played</div>
+            <div class="v" id="daysPlayed">—</div>
+            <div class="s" id="playRange">—</div>
           </div>
 
-          <div class="tile">
-            <div class="tileLabel">Favourite</div>
-            <div class="tileValue" id="favGame">—</div>
-            <div class="tileSub muted" id="favGameSessions">—</div>
+          <div class="stat">
+            <div class="k">Favourite</div>
+            <div class="v" id="favGame">—</div>
+            <div class="s" id="favGameSessions">—</div>
           </div>
 
-          <div class="tile">
-            <div class="tileLabel">Current streak</div>
-            <div class="tileValue" id="currentStreak">—</div>
-            <div class="tileSub muted" id="longestStreak">—</div>
+          <div class="stat">
+            <div class="k">Unique games</div>
+            <div class="v" id="uniqueGames">—</div>
+            <div class="s" id="oneHit">—</div>
           </div>
 
-          <div class="tile">
-            <div class="tileLabel">Longest break</div>
-            <div class="tileValue" id="longestBreak">—</div>
-            <div class="tileSub muted">days</div>
+          <div class="stat">
+            <div class="k">Current streak</div>
+            <div class="v" id="currentStreak">—</div>
+            <div class="s" id="longestStreak">—</div>
           </div>
 
-          <div class="tile">
-            <div class="tileLabel">Unique games</div>
-            <div class="tileValue" id="uniqueGames">—</div>
-            <div class="tileSub muted" id="oneHit">—</div>
+          <div class="stat">
+            <div class="k">Longest break</div>
+            <div class="v" id="longestBreak">—</div>
+            <div class="s">days</div>
           </div>
 
-          <div class="tile">
-            <div class="tileLabel">Peak day</div>
-            <div class="tileValue" id="peakDay">—</div>
-            <div class="tileSub muted" id="peakDaySub">—</div>
+          <div class="stat">
+            <div class="k">Peak day</div>
+            <div class="v" id="peakDay">—</div>
+            <div class="s" id="peakDaySub">—</div>
           </div>
 
-          <div class="tile">
-            <div class="tileLabel">Most active weekday</div>
-            <div class="tileValue" id="activeWeekday">—</div>
-            <div class="tileSub muted" id="activeWeekdaySub">—</div>
+          <div class="stat">
+            <div class="k">Most active weekday</div>
+            <div class="v" id="activeWeekday">—</div>
+            <div class="s" id="activeWeekdaySub">—</div>
           </div>
 
-          <div class="tile">
-            <div class="tileLabel">Most active month</div>
-            <div class="tileValue" id="activeMonth">—</div>
-            <div class="tileSub muted" id="activeMonthSub">—</div>
+          <div class="stat">
+            <div class="k">Most active month</div>
+            <div class="v" id="activeMonth">—</div>
+            <div class="s" id="activeMonthSub">—</div>
           </div>
         </div>
 
         <div id="achievementBlock" class="achievement hidden">
-          <div class="achLeft">
-            <img id="achievementIcon" class="achievementIcon" alt="Achievement icon" />
+          <img id="achievementIcon" class="achievementIcon hidden" alt="Achievement icon" />
+          <div class="achievementCopy">
+            <div id="achievementName" class="achievementName">—</div>
+            <div id="achievementPercent" class="achievementPercent">—</div>
+            <div id="achievementContext" class="achievementContext">—</div>
           </div>
-          <div class="achMid">
-            <div id="achievementName" class="achName">—</div>
-            <div id="achievementPercent" class="achPercent muted">—</div>
-          </div>
-          <div id="achievementContext" class="achRight muted">—</div>
         </div>
 
-        <div class="trackingLine muted" id="trackingInfo">—</div>
+        <div class="trackingLine" id="trackingInfo">—</div>
 
-        <div class="actions">
-          <button id="exportBtn" class="btnSecondary" type="button">Export PNG</button>
-          <button id="copyLinkBtn" class="btnSecondary" type="button">Copy link</button>
-          <a id="openEmbedLink2" class="btnSecondary" href="#" target="_blank" rel="noreferrer">Open embed</a>
-        </div>
+        <div class="share">
+          <div class="shareRow">
+            <button id="exportBtn" class="btn" type="button">Export PNG</button>
+            <button id="copyLinkBtn" class="btn ghost" type="button">Copy link</button>
+            <a id="openEmbedLink" class="btn ghost" href="#" target="_blank" rel="noopener noreferrer">Open embed</a>
+          </div>
 
-        <div class="embedRow">
-          <div class="embedCol">
-            <div class="embedLabel">Embed link</div>
-            <div class="embedInputRow">
-              <input id="liveLink" class="input" readonly />
-              <button id="copyLiveLinkBtn" class="btnSecondary" type="button">Copy</button>
+          <div class="embedRow">
+            <div class="embedCol">
+              <label class="label" for="liveLink">Embed link</label>
+              <div class="embedInputRow">
+                <input id="liveLink" type="text" readonly />
+                <button id="copyLiveLinkBtn" class="btn ghost" type="button">Copy</button>
+              </div>
             </div>
-          </div>
 
-          <div class="embedCol">
-            <div class="embedLabel">BBCode</div>
-            <div class="embedInputRow">
-              <input id="bbcode" class="input" readonly />
-              <button id="copyBbBtn" class="btnSecondary" type="button">Copy</button>
+            <div class="embedCol">
+              <label class="label" for="bbcode">BBCode</label>
+              <div class="embedInputRow">
+                <input id="bbcode" type="text" readonly />
+                <button id="copyBbBtn" class="btn ghost" type="button">Copy</button>
+              </div>
             </div>
           </div>
         </div>
@@ -191,6 +180,34 @@
         </div>
       </div>
     </section>
+
+    <section class="donate" id="donate">
+      <div class="donateCard">
+        <div class="donateLeft">
+          <div class="donateTitle">Support the project</div>
+          <div class="donateSub muted">Keeps the worker running and the recap improving.</div>
+        </div>
+        <div class="donateRight">
+          <div class="donateStat">
+            <div class="k">Raised</div>
+            <div class="v" id="donateTotal">£0</div>
+          </div>
+          <div class="donateStat">
+            <div class="k">Supporters</div>
+            <div class="v" id="donateSupporters">0</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="siteFooter" id="siteFooter">
+      <p class="muted">
+        Xbox Recap tracks activity from the moment you use it. Some Xbox data depends on account privacy and sign-in.
+      </p>
+    </footer>
   </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
+  <script src="./script.js?v=2026.4"></script>
 </body>
 </html>
