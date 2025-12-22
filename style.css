@@ -443,53 +443,109 @@ input:focus{ border-color: rgba(14,205,17,.45); box-shadow: 0 0 0 4px rgba(14,20
 .shareRow{ display:flex; gap:8px; align-items:center; }
 .shareRow input{ flex:1; padding: 11px 12px; border-radius: 14px; font-size: 12px; }
 
+/* Donate section shell */
 .donate{
   margin-top: 16px;
-  display:flex;
-  align-items:center;
-  gap:18px;
   border-radius: 20px;
   border: 1px solid rgba(255,255,255,.10);
   background: rgba(255,255,255,.04);
-  padding: 16px 18px;
+  padding: 14px;
 }
 
+/* 3-column layout: left / center / right */
+.donateCard{
+  display:grid;
+  grid-template-columns: 1.2fr auto 1fr;
+  align-items:center;
+  gap:16px;
+}
+
+/* LEFT */
 .donateLeft{
   display:flex;
   flex-direction:column;
   gap:4px;
   min-width:0;
 }
+.donateTitle{ font-weight:800; }
+.donateSub{ line-height:1.3; }
 
+/* CENTER (social) */
+.donateCenter{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.18);
+}
+
+.socialBtn{
+  width:36px;
+  height:36px;
+  border-radius: 12px;
+  display:grid;
+  place-items:center;
+  text-decoration:none;
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  font-weight:800;
+  line-height:1;
+}
+.socialBtn:hover{
+  border-color: rgba(255,255,255,.22);
+}
+
+/* RIGHT */
 .donateRight{
-  margin-left:auto;
   display:flex;
   align-items:center;
   justify-content:flex-end;
-  gap:16px;
+  gap:14px;
 }
 
 .donateStats{
   display:flex;
-  gap:16px;
-  margin-top:0;
   align-items:center;
+  gap:14px;
 }
 
-.donateNum{ font-weight: 800; font-size: 18px; line-height:1.1; }
-.donateLab{ font-size: 12px; color: var(--muted2); }
+.donateStat{
+  text-align:right;
+  min-width:84px;
+}
+.donateStat .k{
+  font-size:11px;
+  color: var(--muted2);
+}
+.donateStat .v{
+  font-size:16px;
+  font-weight:800;
+  line-height:1.1;
+}
 
+.donateBtn{
+  min-height: 38px;
+  padding: 10px 14px;
+  border-radius: 12px;
+}
+
+/* Mobile: stack (copy -> social -> right group) */
 @media (max-width: 900px){
-  .donate{
-    flex-direction:column;
-    align-items:stretch;
-    gap:14px;
+  .donateCard{
+    grid-template-columns: 1fr;
+    gap:12px;
   }
+  .donateCenter{ justify-content:flex-start; width:fit-content; }
   .donateRight{
-    margin-left:0;
     justify-content:space-between;
   }
+  .donateStat{ text-align:left; }
 }
+
 
 
 .siteFooter{
