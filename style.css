@@ -916,7 +916,7 @@ body.embed .cardShell{ margin-top: 0; }
 /* .badgeBox.hidden{ display:block !important; } */
 
 .badgeBox{
-  max-height: 180px;          /* adjust 170–210 to taste */
+  max-height: 190px;          /* adjust 170–210 to taste */
   overflow: hidden;
   padding: 12px !important;
 }
