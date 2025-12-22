@@ -72,7 +72,10 @@ const lastUpdatedPill = el("lastUpdatedPill");
 
 const signinPrompt = el("signinPrompt");
 const signinBtn = el("signinBtn");
-const badgeBox = el("badgeBox"); // ✅ NEW: Badges & Milestones placeholder panel
+const badgeBox = el("badgeBox");
+const badgeRow = el("badgeRow");
+const milestoneRow = el("milestoneRow");
+
 const openEmbedLink = el("openEmbedLink");
 
 const exportBtn = el("exportBtn");
@@ -130,11 +133,10 @@ const REQUIRED_IDS = [
   "donateTotal", "donateSupporters",
   "liveLink", "bbcode",
   "exportBtn", "copyLinkBtn", "copyLiveLinkBtn", "copyBbBtn",
-  // user area ids (safe to require; your UI expects them)
   "userArea", "userAvatar", "userAvatarFallback", "userName", "userBadge", "signoutBtn",
   "signinPrompt", "signinBtn",
-  // ✅ NEW
-  "badgeBox"
+  // badges area (required for your new UI)
+  "badgeBox", "badgeRow", "milestoneRow"
 ];
 
 function preflightReportMissingIds() {
@@ -217,7 +219,6 @@ function sanitizeXboxPicUrl(url) {
   if (!url) return null;
   try {
     const u = new URL(url);
-    // Known offender on some legacy endpoints
     u.searchParams.delete("mode");
     return u.toString();
   } catch {
@@ -285,11 +286,42 @@ function setSignedInGamertag(gt) {
   } catch {}
 }
 
+// === BADGE RENDERING ===
+function badgeChip(b, cls = "miniBadge") {
+  const locked = b?.unlocked ? "" : " locked";
+  const title = esc(b?.desc || b?.name || "");
+  const icon = esc(b?.icon || "🏷️");
+  const name = esc(b?.name || "Badge");
+  return `<span class="${cls}${locked}" title="${title}">${icon} ${name}</span>`;
+}
+
+function renderBadgesPanel(recap) {
+  if (!badgeBox || !badgeRow || !milestoneRow) return;
+
+  const pack = recap?.badges || null;
+  const badges = Array.isArray(pack?.list) ? pack.list : [];
+  const miles = Array.isArray(pack?.milestones) ? pack.milestones : [];
+
+  // Top 5 unlocked badges, else top 5 overall
+  const unlockedBadges = badges.filter((b) => b.unlocked);
+  const topBadges = (unlockedBadges.length ? unlockedBadges : badges).slice(0, 5);
+
+  // Top 5 unlocked milestones, else top 5 overall
+  const unlockedMiles = miles.filter((m) => m.unlocked);
+  const topMiles = (unlockedMiles.length ? unlockedMiles : miles).slice(0, 5);
+
+  badgeRow.innerHTML = topBadges.length
+    ? topBadges.map((b) => badgeChip(b, "miniBadge")).join("")
+    : `<span class="miniBadge locked" title="No badges yet.">🏷️ No badges yet</span>`;
+
+  milestoneRow.innerHTML = topMiles.length
+    ? topMiles.map((m) => badgeChip(m, "miniMilestone")).join("")
+    : `<span class="miniMilestone locked" title="No milestones yet.">🎯 No milestones yet</span>`;
+}
+
 // === USER AREA STATES ===
 function setSignedInUiState({ gamertag, avatarUrl, qualityLabel }) {
   show(userArea);
-
-  // ✅ When signed in: hide connect prompt, show badges panel
   hide(signinPrompt);
   show(badgeBox);
 
@@ -336,7 +368,6 @@ function setSignedOutUiState() {
   hide(signoutBtn);
   if (signoutBtn) signoutBtn.disabled = true;
 
-  // ✅ When signed out: show connect prompt, hide badges panel
   show(signinPrompt);
   hide(badgeBox);
 }
@@ -350,14 +381,12 @@ async function renderUserAreaFromSignedIn() {
     return;
   }
 
-  // Immediate UI (fast) while we fetch better details
   setSignedInUiState({
     gamertag: signedInGt,
     avatarUrl: null,
     qualityLabel: "Connected",
   });
 
-  // Fetch profile/quality for signed-in gamertag ONLY
   try {
     const data = await fetchRecap(signedInGt);
     const profile = data?.profile || null;
@@ -374,8 +403,10 @@ async function renderUserAreaFromSignedIn() {
       avatarUrl: profile?.displayPicRaw || null,
       qualityLabel: quality,
     });
+
+    // ✅ render badges for signed-in user immediately
+    renderBadgesPanel(recap);
   } catch {
-    // Keep the basic signed-in state even if fetch fails
     setSignedInUiState({
       gamertag: signedInGt,
       avatarUrl: null,
@@ -454,7 +485,6 @@ Generate yours: ${shareUrl}
   let t = base.trim();
   if (t.length <= 280) return t;
 
-  // Trim body first
   const head = `Xbox Journal ${date ? "• " + date : ""}\n\n`;
   const tail = `\n\nGenerate yours: ${shareUrl}\n\n#Xbox #Gaming`;
   const maxBody = 280 - head.length - tail.length;
@@ -542,7 +572,6 @@ function renderBlog(blog, recap, gamertag, shareUrl) {
     return;
   }
 
-  // Render latest entries with per-entry Tweet button
   for (const e of entries.slice(0, 4)) {
     const date = e?.date ? esc(e.date) : "—";
     const text = e?.text ? esc(e.text) : "—";
@@ -599,7 +628,6 @@ function renderRecap(data) {
 
   setText(presence, profile?.presenceText || fallbackPresence);
 
-  // ✅ PFP: proxy + fallback
   setAvatar({
     imgEl: profilePic,
     fallbackEl: profilePicFallback,
@@ -677,12 +705,11 @@ function renderRecap(data) {
   if (openEmbedLink) openEmbedLink.href = urls.embed;
 
   renderAchievement(recap);
+
+  // ✅ render badges into the badges panel
+  renderBadgesPanel(recap);
+
   showCard();
-
-  // IMPORTANT:
-  // Do NOT touch the user area here.
-  // User area is authoritative from localStorage SIGNED_IN_KEY only.
-
   return recap;
 }
 
@@ -701,7 +728,6 @@ async function exportCardAsPng() {
 
   setStatus("Rendering PNG…");
 
-  // Wait for images to load/fail
   const imgs = gamerCard.querySelectorAll("img");
   await Promise.all(
     [...imgs].map((img) => {
@@ -745,7 +771,6 @@ async function run(gamertag) {
     const gt = (gamertag || "").trim();
     if (!gt) { setStatus("Enter a gamertag first."); return; }
 
-    // Keep URL in sync
     try {
       const u = new URL(window.location.href);
       u.searchParams.set("gamertag", gt);
@@ -792,7 +817,6 @@ if (copyLinkBtn) {
 if (copyLiveLinkBtn && liveLink) copyLiveLinkBtn.addEventListener("click", () => copyToClipboard(liveLink.value || ""));
 if (copyBbBtn && bbcode) copyBbBtn.addEventListener("click", () => copyToClipboard(bbcode.value || ""));
 
-// Copy tweet per entry (delegated)
 document.addEventListener("click", (e) => {
   const btn = e.target.closest(".copyTweetBtn");
   if (!btn) return;
@@ -827,13 +851,8 @@ if (signoutBtn) {
     setStatus("Signing out…");
 
     try {
-      // Tell worker to forget auth for this signed-in identity
       await signOutWorker(signedInGt);
-
-      // Clear local identity
       setSignedInGamertag(null);
-
-      // Reset UI state
       setSignedOutUiState();
 
       setStatus("Signed out ✅");
@@ -849,8 +868,6 @@ if (signoutBtn) {
 (function init() {
   setEmbedModeIfNeeded();
 
-  // User area should ONLY ever reflect localStorage SIGNED_IN_KEY
-  // and should NOT be changed by generating recaps.
   if (!preflightReportMissingIds()) return;
   renderUserAreaFromSignedIn();
 
