@@ -186,6 +186,21 @@ body{
 /* =========================
    Badges & Milestones panel
    ========================= */
+/* TEMP: keep badges card visually aligned with search box */
+.badgePanel{
+  max-height: 210px; /* adjust if needed */
+  overflow: hidden;
+  padding: 12px;
+}
+
+.badgePanelHead{
+  margin-bottom: 6px;
+}
+
+.badgeSectionTitle{
+  margin-top: 8px;
+  margin-bottom: 6px;
+}
 
 .badgeTop{
   display:flex;
