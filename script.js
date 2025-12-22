@@ -72,6 +72,7 @@ const lastUpdatedPill = el("lastUpdatedPill");
 
 const signinPrompt = el("signinPrompt");
 const signinBtn = el("signinBtn");
+const badgeBox = el("badgeBox"); // ✅ NEW: Badges & Milestones placeholder panel
 const openEmbedLink = el("openEmbedLink");
 
 const exportBtn = el("exportBtn");
@@ -131,7 +132,9 @@ const REQUIRED_IDS = [
   "exportBtn", "copyLinkBtn", "copyLiveLinkBtn", "copyBbBtn",
   // user area ids (safe to require; your UI expects them)
   "userArea", "userAvatar", "userAvatarFallback", "userName", "userBadge", "signoutBtn",
-  "signinPrompt", "signinBtn"
+  "signinPrompt", "signinBtn",
+  // ✅ NEW
+  "badgeBox"
 ];
 
 function preflightReportMissingIds() {
@@ -285,7 +288,10 @@ function setSignedInGamertag(gt) {
 // === USER AREA STATES ===
 function setSignedInUiState({ gamertag, avatarUrl, qualityLabel }) {
   show(userArea);
+
+  // ✅ When signed in: hide connect prompt, show badges panel
   hide(signinPrompt);
+  show(badgeBox);
 
   setText(userName, gamertag, "—");
 
@@ -330,7 +336,9 @@ function setSignedOutUiState() {
   hide(signoutBtn);
   if (signoutBtn) signoutBtn.disabled = true;
 
+  // ✅ When signed out: show connect prompt, hide badges panel
   show(signinPrompt);
+  hide(badgeBox);
 }
 
 // Render user area ONLY from signed-in identity (never from generated gamertag)
