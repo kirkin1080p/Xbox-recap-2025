@@ -201,7 +201,7 @@ body{
   margin-top: 8px;
   margin-bottom: 6px;
 }
-
+#milestoneGrid{ display:none; }
 .badgeTop{
   display:flex;
   align-items:flex-start;
