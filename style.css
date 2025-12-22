@@ -188,9 +188,9 @@ body{
    ========================= */
 /* TEMP: keep badges card visually aligned with search box */
 .badgePanel{
-  max-height: 210px; /* adjust if needed */
+  max-height: 198px; /* adjust if needed */
   overflow: hidden;
-  padding: 12px;
+  padding: 14px !important;
 }
 
 .badgePanelHead{
