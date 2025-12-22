@@ -905,3 +905,48 @@ body.embed .cardShell{ margin-top: 0; }
 
 /* Donate button alignment */
 .donateBtn{ text-decoration:none; }
+
+/* =========================
+   TEMP: Fix the big gap
+   - Make badges card match the search card height
+   - Hide milestones for now
+   ========================= */
+
+/* make sure it shows when you want (remove if you still want it hidden by default) */
+/* .badgeBox.hidden{ display:block !important; } */
+
+.badgeBox{
+  max-height: 180px;          /* adjust 170–210 to taste */
+  overflow: hidden;
+  padding: 12px !important;
+}
+
+/* tighten header spacing */
+.badgeTop{
+  gap: 10px;
+  margin-bottom: 8px !important;
+}
+.badgeTitle{ margin: 0; }
+.badgeText{ margin: 2px 0 0 !important; }
+
+/* hide milestones block entirely for now */
+.badgeGrid .badgeGroup:nth-child(2){
+  display: none !important;
+}
+
+/* tighten badge rows so they don’t inflate height */
+.badgeGrid{
+  gap: 10px !important;
+}
+.badgeGroupTitle{
+  margin-bottom: 6px !important;
+}
+.badgeRow{
+  gap: 8px !important;
+}
+
+/* hide the footer tip for now (it adds height + isn’t needed today) */
+.badgeFoot{
+  display: none !important;
+}
+
