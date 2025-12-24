@@ -519,220 +519,105 @@ function renderAchievement(recap) {
 
   show(achievementBlock);
 
-  // Hero (rarest)
   if (achievementIcon) {
     if (icon) {
       const cleanIcon = sanitizeXboxPicUrl(icon);
       const prox = proxifyImage(cleanIcon);
       achievementIcon.src = prox ? `${prox}&_=${Date.now()}` : cleanIcon;
-      show(achievementIcon);
-      if (achievementIconFallback) hide(achievementIconFallback);
+      achievementIcon.style.display = "block";
+      if (achievementIconFallback) achievementIconFallback.style.display = "none";
     } else {
-      hide(achievementIcon);
-      if (achievementIconFallback) show(achievementIconFallback);
+      achievementIcon.removeAttribute("src");
+      achievementIcon.style.display = "none";
+      if (achievementIconFallback) achievementIconFallback.style.display = "grid";
     }
   }
 
-  setText(achievementName, name || "Rarest achievement");
-  setText(achievementPercent, pct != null ? `${pct}% unlocked` : "Rarity unknown");
-  setText(achievementContext, title ? `From ${title}` : "From recent play");
+  setText(achievementName, name);
+  setText(achievementPercent, pct != null ? `${Number(pct).toFixed(2)}%` : "—");
+  setText(achievementContext, title ? `Unlocked in ${title}` : "Unlocked in —");
 
-  // Secondary list (5 items): prefer "recent unlocked" if provided, else show 5 rarest.
-  if (!achievementList) return;
+  // Optional: recent achievements list
+  const recent = Array.isArray(recap?.achievements?.recent) ? recap.achievements.recent : [];
+  if (achievementList && achievementListTitle && achievementListSub) {
+    if (!recent.length) {
+      hide(achievementList);
+    } else {
+      show(achievementList);
+      achievementListTitle.textContent = "Recent achievements";
+      achievementListSub.textContent = `${recent.length} latest unlock${recent.length === 1 ? "" : "s"}`;
 
-  const recent = Array.isArray(recap?.achievements?.recentUnlocked) ? recap.achievements.recentUnlocked : [];
-  const rare5 = Array.isArray(recap?.achievements?.rarestTop) ? recap.achievements.rarestTop : [];
-
-  const list = (recent && recent.length) ? recent.slice(0, 5) : rare5.slice(0, 5);
-  const mode = (recent && recent.length) ? "recent" : "rarest";
-
-  if (!list.length) {
-    achievementList.innerHTML = `<div class="muted" style="font-size:12px;">No extra achievement data yet — connect Xbox or generate again later.</div>`;
-    setText(achievementListTitle, "Also rare…");
-    setText(achievementListSub, "");
-    return;
-  }
-
-  setText(achievementListTitle, mode === "recent" ? "Last 5 unlocked" : "5 rarest unlocked");
-  setText(achievementListSub, mode === "recent" ? "Newest trophies detected" : "Sorted by lowest %" );
-
-  achievementList.innerHTML = list.map((a) => {
-    const nm = esc(a?.name || "—");
-    const p = (a?.percent != null) ? `${Number(a.percent).toFixed(2).replace(/\.00$/, "")}%` : "—";
-    const sub = mode === "recent" ? (a?.unlockedAt ? `Unlocked ${fmtDateTime(a.unlockedAt)}` : (a?.titleName ? `From ${a.titleName}` : "")) : (a?.titleName ? `From ${a.titleName}` : "");
-    const iconUrl = a?.icon ? proxifyImage(sanitizeXboxPicUrl(a.icon)) : null;
-    const iconHtml = iconUrl
-      ? `<img class="achItemIcon" alt="" crossorigin="anonymous" referrerpolicy="no-referrer" src="${esc(iconUrl)}&_=${Date.now()}" />`
-      : `<div class="achItemIcon" style="display:grid;place-items:center;">🏆</div>`;
-
-    return `
-      <div class="achItem">
-        ${iconHtml}
-        <div>
-          <div class="achItemName">${nm}</div>
-          <div class="achItemSub">${esc(sub || "")}</div>
-        </div>
-        <div class="achItemPct">${esc(p)}</div>
-      </div>
-    `;
-  }).join("");
-}
-
-function renderDonate(ds) {
-  if (!ds || !donateTotal || !donateSupporters) return;
-
-  const cur = ds.currency || "GBP";
-  const symbol = cur === "GBP" ? "£" : cur === "USD" ? "$" : cur === "EUR" ? "€" : "";
-  donateTotal.textContent = `${symbol}${Number(ds.totalRaised || 0).toFixed(0)}`;
-  donateSupporters.textContent = String(ds.supporters || 0);
-}
-
-function renderBlog(blog, recap, gamertag, shareUrl) {
-  if (!blogEntries) return;
-
-  blogEntries.innerHTML = "";
-
-  const entries = blog?.entries || [];
-  if (!entries.length) {
-    blogEntries.innerHTML =
-      `<div class="journalEntry"><div class="journalBody muted">No journal entries yet — generate again tomorrow and it’ll start writing daily.</div></div>`;
-    return;
-  }
-
-  // Render latest entries with per-entry Tweet button
-  for (const e of entries.slice(0, 4)) {
-    const date = e?.date ? esc(e.date) : "—";
-    const text = e?.text ? formatJournalText(e.text) : "—";
-    const chip = e?.type ? esc(e.type) : "Journal";
-
-    const tweetText = buildTweet({ gamertag, entry: e, shareUrl });
-    const encoded = encodeURIComponent(tweetText);
-
-    const html = `
-      <div class="journalEntry">
-        <div class="journalMeta">
-          <span class="journalDate">${date}</span>
-          <span class="journalChip">${chip}</span>
-        </div>
-        <div class="journalBody">${text}</div>
-
-        <div class="journalActions">
-          <button class="btn ghost small copyTweetBtn" type="button" data-tweet="${encoded}">Copy</button>
-          <a class="btn small tweetEntryLink" href="https://twitter.com/intent/tweet?text=${encoded}" target="_blank" rel="noopener noreferrer">Tweet</a>
-        </div>
-      </div>
-    `;
-    blogEntries.insertAdjacentHTML("beforeend", html);
-  }
-
-  if (recap?.journal?.policy) {
-    blogEntries.insertAdjacentHTML(
-      "beforeend",
-      `<div class="journalEntry"><div class="journalBody muted">${formatJournalText(recap.journal.policy)}</div></div>`
-    );
+      achievementList.innerHTML = recent.slice(0, 5).map((a) => {
+        const an = esc(a?.name || "Achievement");
+        const at = esc(a?.titleName || "Unknown title");
+        const ap = a?.percent != null ? `${Number(a.percent).toFixed(2)}%` : "—";
+        return `<div class="achRow"><div class="achRowTitle">${an}</div><div class="achRowSub">${at} • ${ap}</div></div>`;
+      }).join("");
+    }
   }
 }
 
 function renderRecap(data) {
-  const { gamertag, profile, recap, linked } = data;
+  const profile = data?.profile || null;
+  const recap = data?.recap || null;
+  const linked = !!data?.linked;
 
-  setText(gtName, gamertag);
+  if (!recap) throw new Error("Malformed recap payload (missing recap).");
 
-  const lastPlayedName =
-    recap?.lastPlayedGame ||
-    recap?.titleHistory?.lastTitleName ||
-    recap?.lastObservedGame ||
-    null;
+  // Basic header identity
+  setText(gtName, recap.gamertag || "—");
+  setText(presence, profile?.presenceText || "—");
 
-  const lastPlayedAt =
-    recap?.lastPlayedAt ||
-    recap?.titleHistory?.lastTimePlayed ||
-    null;
-
-  const fallbackPresence =
-    lastPlayedName
-      ? `Last played: ${lastPlayedName} • ${fmtDateTime(lastPlayedAt)}`
-      : "No recent activity observed yet.";
-
-  setText(presence, profile?.presenceText || fallbackPresence);
-
-  // ✅ PFP: proxy + fallback
+  // Gamerpic + fallback
   setAvatar({
     imgEl: profilePic,
     fallbackEl: profilePicFallback,
     url: profile?.displayPicRaw || null,
-    labelText: gamertag,
+    labelText: recap.gamertag || "Player",
   });
 
-  setText(gamerscore, recap?.gamerscoreCurrent ?? profile?.gamerscore ?? "—");
+  // Stats
+  setText(gamerscore, recap.gamerscoreCurrent);
+  setText(gamerscoreDelta, recap.gamerscoreDelta != null ? `+${recap.gamerscoreDelta}` : "—");
+  setText(daysPlayed, recap.daysPlayedCount);
+  setText(playRange, (recap.firstPlayDay && recap.lastPlayDay) ? `${recap.firstPlayDay} → ${recap.lastPlayDay}` : "—");
 
-  if (gamerscoreDelta) {
-    gamerscoreDelta.textContent =
-      recap?.gamerscoreDelta != null
-        ? `+${recap.gamerscoreDelta} since tracking`
-        : (linked ? "Delta unknown" : "Connect Xbox for delta");
-  }
+  setText(favGame, recap.favouriteGame?.name || "—");
+  setText(favGameSessions, recap.favouriteGame?.sessions != null ? `${recap.favouriteGame.sessions} sessions` : "—");
 
-  setText(daysPlayed, recap?.daysPlayedCount ?? "—");
+  setText(currentStreak, recap.currentStreak);
+  setText(longestStreak, recap.longestStreak);
+  setText(longestBreak, recap.longestBreakDays);
+  setText(uniqueGames, recap.uniqueGamesObserved);
+  setText(oneHit, recap.oneHitWondersCount);
 
-  const range =
-    recap?.firstPlayDay && recap?.lastPlayDay
-      ? `${recap.firstPlayDay} → ${recap.lastPlayDay}`
-      : recap?.firstSeen
-      ? `Tracking since ${fmtDateTime(recap.firstSeen)}`
-      : "—";
-  setText(playRange, range);
+  setText(peakDay, recap.peakDay || "—");
+  setText(peakDaySub, recap.peakDayCount != null ? `${recap.peakDayCount} games` : "—");
 
-  setText(favGame, recap?.favouriteGame ?? "—");
-  setText(
-    favGameSessions,
-    recap?.favouriteGameSessions ? `${recap.favouriteGameSessions} sessions` : "—"
-  );
+  setText(activeWeekday, recap.mostActiveWeekday || "—");
+  setText(activeWeekdaySub, recap.mostActiveWeekdayCount != null ? `${recap.mostActiveWeekdayCount} days` : "—");
 
-  setText(currentStreak, recap?.currentStreak ?? "—");
-  setText(longestStreak, recap?.longestStreak ? `Best: ${recap.longestStreak} days` : "—");
-  setText(longestBreak, recap?.longestBreakDays ?? 0);
+  setText(activeMonth, recap.mostActiveMonth || "—");
+  setText(activeMonthSub, recap.mostActiveMonthCount != null ? `${recap.mostActiveMonthCount} days` : "—");
 
-  setText(uniqueGames, recap?.uniqueGamesObserved ?? "—");
-
-  const oneHitEff = recap?.oneHitWondersEffective ?? recap?.oneHitWondersCount ?? 0;
-  const mature = recap?.oneHitWondersIsMature ?? false;
-  setText(oneHit, mature ? `${oneHitEff} one-hit wonders` : "—");
-
-  setText(peakDay, recap?.peakDay?.date ?? "—");
-  setText(
-    peakDaySub,
-    recap?.peakDay?.uniqueGames != null ? `${recap.peakDay.uniqueGames} unique games` : "—"
-  );
-
-  setText(activeWeekday, recap?.mostActiveWeekdayName ?? "—");
-  setText(
-    activeWeekdaySub,
-    recap?.mostActiveWeekdayDays != null ? `${recap.mostActiveWeekdayDays} days` : "—"
-  );
-
-  setText(activeMonth, recap?.mostActiveMonthName ?? "—");
-  setText(
-    activeMonthSub,
-    recap?.mostActiveMonthDays != null ? `${recap.mostActiveMonthDays} days` : "—"
-  );
-
-  if (trackingInfo) {
-    const observedLine = recap?.lastObservedAt
-      ? `Observed play: ${fmtDateTime(recap.lastObservedAt)}`
-      : `No play observed yet`;
-    trackingInfo.textContent =
-      `First seen: ${fmtDateTime(recap?.firstSeen)} • ${observedLine} • Lookups: ${recap?.lookupCount ?? 0}`;
-  }
-
+  // Pills
   setPillQuality(recap, linked);
   setLastUpdated(recap);
 
-  const urls = buildShareUrls(gamertag);
-  if (liveLink) liveLink.value = urls.embed;
-  if (bbcode) bbcode.value = `[url=${urls.embed}]Xbox Recap Card[/url]`;
-  if (openEmbedLink) openEmbedLink.href = urls.embed;
+  // Tracking note
+  if (trackingInfo) {
+    trackingInfo.textContent =
+      linked
+        ? "Connected: pulls richer profile + presence when available."
+        : "Not connected: tracking is limited (connect for richer stats).";
+  }
 
+  // Share links
+  const urls = buildShareUrls(recap.gamertag || "");
+  if (liveLink) liveLink.value = urls.embed;
+  if (bbcode) bbcode.value = `[url=${urls.normal}]Xbox Recap[/url]`;
+
+  // Achievement block
   renderAchievement(recap);
   showCard();
 
@@ -741,6 +626,38 @@ function renderRecap(data) {
   // User area is authoritative from localStorage SIGNED_IN_KEY only.
 
   return recap;
+}
+
+function renderDonate(d) {
+  if (!d) return;
+  setText(donateTotal, d.total, "0");
+  setText(donateSupporters, d.supporters, "0");
+}
+
+function renderBlog(blogData, recap, gamertag, shareUrl) {
+  if (!blogEntries) return;
+  const entries = Array.isArray(blogData?.entries) ? blogData.entries : [];
+
+  if (!entries.length) {
+    blogEntries.innerHTML = `<div class="muted">No journal entries yet — check back later.</div>`;
+    return;
+  }
+
+  blogEntries.innerHTML = entries.map((e) => {
+    const date = esc(e?.date || "");
+    const htmlText = formatJournalText(e?.text || "");
+    const tweet = encodeURIComponent(buildTweet({ gamertag, entry: e, shareUrl }));
+
+    return `
+      <div class="entry">
+        <div class="entryTop">
+          <div class="entryDate">${date}</div>
+          <button class="btn chipBtn copyTweetBtn" data-tweet="${tweet}">Copy tweet</button>
+        </div>
+        <div class="entryText">${htmlText}</div>
+      </div>
+    `;
+  }).join("");
 }
 
 // === EXPORT PNG ===
@@ -918,6 +835,16 @@ if (signoutBtn) {
     gamertagInput.value = gt;
     run(gt);
   } else {
+    // ✅ Improve login UX:
+    // If the visitor has already connected their Xbox (localStorage SIGNED_IN_KEY),
+    // auto-generate their recap on load without removing manual lookup for others.
+    const signedInGt = getSignedInGamertag();
+    if (signedInGt) {
+      if (gamertagInput && !gamertagInput.value) gamertagInput.value = signedInGt;
+      run(signedInGt);
+      return;
+    }
+
     fetchDonateStats().then(renderDonate).catch(() => {});
     if (openEmbedLink) {
       openEmbedLink.href = `${window.location.origin}${window.location.pathname}?embed=1`;
