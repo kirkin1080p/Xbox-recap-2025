@@ -301,7 +301,7 @@ body{
   font-size: 16px; 
   color: var(--muted);
   margin-bottom: 8px; 
-  text-transform: capitalize;
+  text-transform: capitalize !important;
   font-weight: bold;
 }
 .searchInputRow{ display:flex; gap:10px; }
