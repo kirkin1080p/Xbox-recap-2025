@@ -32,6 +32,16 @@ function esc(s) {
     .replaceAll("'", "&#39;");
 }
 
+// Minimal, safe inline formatting for journal text.
+// - Escapes all HTML first (prevents injection)
+// - Then converts **bold** to <strong>bold</strong>
+// This intentionally does NOT implement full markdown.
+function formatJournalText(raw) {
+  const safe = esc(raw ?? "");
+  // Support **bold** spanning across words/newlines (lazy match).
+  return safe.replace(/\*\*([\s\S]+?)\*\*/g, "<strong>$1</strong>");
+}
+
 // === DOM ===
 const gamertagInput = el("gamertagInput");
 const generateBtn = el("generateBtn");
@@ -545,7 +555,7 @@ function renderBlog(blog, recap, gamertag, shareUrl) {
   // Render latest entries with per-entry Tweet button
   for (const e of entries.slice(0, 4)) {
     const date = e?.date ? esc(e.date) : "—";
-    const text = e?.text ? esc(e.text) : "—";
+    const text = e?.text ? formatJournalText(e.text) : "—";
     const chip = e?.type ? esc(e.type) : "Journal";
 
     const tweetText = buildTweet({ gamertag, entry: e, shareUrl });
@@ -571,7 +581,7 @@ function renderBlog(blog, recap, gamertag, shareUrl) {
   if (recap?.journal?.policy) {
     blogEntries.insertAdjacentHTML(
       "beforeend",
-      `<div class="journalEntry"><div class="journalBody muted">${esc(recap.journal.policy)}</div></div>`
+      `<div class="journalEntry"><div class="journalBody muted">${formatJournalText(recap.journal.policy)}</div></div>`
     );
   }
 }
@@ -685,6 +695,7 @@ function renderRecap(data) {
 
   return recap;
 }
+
 // === EXPORT PNG ===
 async function exportCardAsPng() {
   clearStatus();
@@ -855,201 +866,10 @@ if (signoutBtn) {
 
   const params = new URLSearchParams(window.location.search);
   const gt = params.get("gamertag");
-  const signedInGt = getSignedInGamertag();
 
   if (gt && gamertagInput) {
     gamertagInput.value = gt;
     run(gt);
-  } else if (signedInGt) {
-    // ✅ UX: if the user is already signed in, auto-generate their recap on load
-    if (gamertagInput) gamertagInput.value = signedInGt;
-    run(signedInGt);
-  } else {
-    fetchDonateStats().then(renderDonate).catch(() => {});
-    if (openEmbedLink) {
-      openEmbedLink.href = `${window.location.origin}${window.location.pathname}?embed=1`;
-    }
-  }
-})();
-// === EXPORT PNG ===
-async function exportCardAsPng() {
-  clearStatus();
-
-  if (!window.html2canvas) {
-    setStatus("PNG export library failed to load.");
-    return;
-  }
-  if (!gamerCard) {
-    setStatus("Card element missing (gamerCard).");
-    return;
-  }
-
-  setStatus("Rendering PNG…");
-
-  // Wait for images to load/fail
-  const imgs = gamerCard.querySelectorAll("img");
-  await Promise.all(
-    [...imgs].map((img) => {
-      if (!img.src) return Promise.resolve();
-      if (img.complete) return Promise.resolve();
-      return new Promise((res) => {
-        img.onload = () => res();
-        img.onerror = () => res();
-      });
-    })
-  );
-
-  const canvas = await window.html2canvas(gamerCard, {
-    backgroundColor: null,
-    scale: 2,
-    useCORS: true,
-    allowTaint: true,
-    logging: false,
-  });
-
-  const dataUrl = canvas.toDataURL("image/png");
-  const a = document.createElement("a");
-  a.href = dataUrl;
-  a.download = `xbox-recap-${(gtName?.textContent || "player").replace(/\s+/g, "-")}.png`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-
-  setStatus("PNG exported ✅");
-  setTimeout(clearStatus, 1600);
-}
-
-// === MAIN FLOW ===
-async function run(gamertag) {
-  try {
-    clearStatus();
-    hideCard();
-
-    if (!preflightReportMissingIds()) return;
-
-    const gt = (gamertag || "").trim();
-    if (!gt) { setStatus("Enter a gamertag first."); return; }
-
-    // Keep URL in sync
-    try {
-      const u = new URL(window.location.href);
-      u.searchParams.set("gamertag", gt);
-      window.history.replaceState({}, "", u);
-    } catch {}
-
-    setStatus("Loading recap…");
-
-    const [recapData, blogData, donateData] = await Promise.all([
-      fetchRecap(gt),
-      fetchBlog(gt),
-      fetchDonateStats(),
-    ]);
-
-    const recap = renderRecap(recapData);
-
-    const urls = buildShareUrls(gt);
-    renderBlog(blogData, recap, gt, urls.normal);
-
-    renderDonate(donateData);
-
-    clearStatus();
-  } catch (err) {
-    console.error(err);
-    setStatus(`JS crashed: ${String(err?.message || err)}\nOpen DevTools Console for the stack trace.`);
-  }
-}
-
-// === EVENTS ===
-if (generateBtn) generateBtn.addEventListener("click", () => run(gamertagInput?.value || ""));
-if (gamertagInput) {
-  gamertagInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") run(gamertagInput.value);
-  });
-}
-if (exportBtn) exportBtn.addEventListener("click", exportCardAsPng);
-
-if (copyLinkBtn) {
-  copyLinkBtn.addEventListener("click", () => {
-    const url = new URL(window.location.href);
-    copyToClipboard(url.toString());
-  });
-}
-if (copyLiveLinkBtn && liveLink) copyLiveLinkBtn.addEventListener("click", () => copyToClipboard(liveLink.value || ""));
-if (copyBbBtn && bbcode) copyBbBtn.addEventListener("click", () => copyToClipboard(bbcode.value || ""));
-
-// Copy tweet per entry (delegated)
-document.addEventListener("click", (e) => {
-  const btn = e.target.closest(".copyTweetBtn");
-  if (!btn) return;
-
-  const t = btn.getAttribute("data-tweet");
-  if (!t) return;
-
-  copyToClipboard(decodeURIComponent(t));
-});
-
-// ✅ CONNECT
-if (signinBtn) {
-  signinBtn.href = getOpenXblSigninUrl();
-  signinBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    window.location.href = getOpenXblSigninUrl();
-  });
-}
-
-// Sign out (SIGNED-IN USER ONLY)
-if (signoutBtn) {
-  signoutBtn.addEventListener("click", async () => {
-    const signedInGt = getSignedInGamertag();
-
-    if (!signedInGt) {
-      setStatus("Not signed in.");
-      setTimeout(clearStatus, 1400);
-      setSignedOutUiState();
-      return;
-    }
-
-    setStatus("Signing out…");
-
-    try {
-      // Tell worker to forget auth for this signed-in identity
-      await signOutWorker(signedInGt);
-
-      // Clear local identity
-      setSignedInGamertag(null);
-
-      // Reset UI state
-      setSignedOutUiState();
-
-      setStatus("Signed out ✅");
-      setTimeout(clearStatus, 1400);
-    } catch (err) {
-      console.error(err);
-      setStatus(String(err?.message || "Sign out failed."));
-    }
-  });
-}
-
-// === INIT ===
-(function init() {
-  setEmbedModeIfNeeded();
-
-  // User area should ONLY ever reflect localStorage SIGNED_IN_KEY
-  // and should NOT be changed by generating recaps.
-  if (!preflightReportMissingIds()) return;
-  renderUserAreaFromSignedIn();
-
-  const params = new URLSearchParams(window.location.search);
-  const gt = params.get("gamertag");
-  const signedInGt = getSignedInGamertag();
-
-  if (gt && gamertagInput) {
-    gamertagInput.value = gt;
-    run(gt);
-  } else if (signedInGt) {
-    // ✅ UX: if the user is already signed in, auto-generate their recap on load
-    if (gamertagInput) gamertagInput.value = signedInGt;
-    run(signedInGt);
   } else {
     fetchDonateStats().then(renderDonate).catch(() => {});
     if (openEmbedLink) {
