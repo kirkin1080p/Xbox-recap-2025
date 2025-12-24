@@ -76,7 +76,6 @@ body{
 .tagline{ margin: 3px 0 0; color: var(--muted); font-size: 13px; }
 
 .headerActions{ display:flex; gap:8px; align-items:center; }
-
 /* NEW: User area */
 .userArea{
   display:flex;
@@ -183,6 +182,18 @@ body{
   backdrop-filter: blur(14px);
 }
 
+/* Keep left lookup card feeling as "substantial" as the right column without forcing a fixed height */
+.searchBox{ padding-bottom: 16px; }
+
+/* Small, readable, italic expectations note under the lookup input */
+.lookupNote{
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--muted2);
+  font-style: italic;
+}
+
 /* =========================
    Badges & Milestones panel
    ========================= */
@@ -285,7 +296,14 @@ body{
   font-size: 11px;
 }
 
-.label{ display:block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+.label { 
+  display:block; 
+  font-size: 16px; 
+  color: var(--muted);
+  margin-bottom: 8px; 
+  text-transform: capitalize !important;
+  font-weight: bold;
+}
 .searchInputRow{ display:flex; gap:10px; }
 
 input{
@@ -412,59 +430,6 @@ input:focus{ border-color: rgba(14,205,17,.45); box-shadow: 0 0 0 4px rgba(14,20
 }
 .gamerCard > *{ position:relative; }
 
-/* =========================
-   Gamer card header layout
-   ========================= */
-.profileRow{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:14px;
-}
-.profileLeft{
-  display:flex;
-  align-items:flex-start;
-  gap:14px;
-  min-width: 0;
-  flex: 1 1 auto;
-}
-.profileCopy{ min-width:0; }
-
-/* Capitalise gamertag display (visual only) */
-#gtName{ text-transform: capitalize; }
-
-.profileRight{
-  display:flex;
-  flex-direction:column;
-  align-items:flex-end;
-  gap:8px;
-  padding-left: 12px;
-}
-.profileRight .metaRow{
-  display:flex;
-  gap:8px;
-  align-items:center;
-  justify-content:flex-end;
-  flex-wrap:wrap;
-}
-
-/* Keep recap detail lines aligned right under Last played */
-.profileRight .trackingLine{
-  margin: 0;
-  text-align:right;
-  font-size: 12px;
-  line-height: 1.35;
-  color: var(--muted2);
-}
-
-@media (max-width: 760px){
-  .profileRow{ flex-direction:column; }
-  .profileRight{ align-items:flex-start; padding-left: 0; }
-  .profileRight .trackingLine{ text-align:left; }
-}
-
-/* --- existing styles continue --- */
-
 .gamerHeader{ display:flex; gap:14px; align-items:flex-start; }
 .pfpWrap{
   width:86px;
@@ -492,17 +457,517 @@ input:focus{ border-color: rgba(14,205,17,.45); box-shadow: 0 0 0 4px rgba(14,20
 }
 
 .who{ flex: 1 1 auto; min-width: 0; }
+
+/* =========================
+   Gamer card header refinement (layout only)
+   - Gamertag stays left (next to gamerpic)
+   - Meta (recap detail + last observed + first seen) aligns right
+   ========================= */
+
+.whoTop{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.whoLeft{ min-width:0; }
+
+.whoRight{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:6px;
+  padding-left:12px;
+}
+
+.whoRight .metaRow{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+}
+
+.whoMeta{
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: right;
+  color: var(--muted2);
+}
+
+/* Visual-only capitalization (does not change stored data) */
+#gtName{ text-transform: capitalize; }
+
+/* Mobile: keep order, stack neatly */
+@media (max-width: 760px){
+  .whoTop{ flex-direction:column; }
+  .whoRight{
+    align-items:flex-start;
+    padding-left:0;
+  }
+  .whoMeta{ text-align:left; }
+}
+
 .gtName{ margin: 2px 0 0; font-size: 22px; letter-spacing: .2px; font-weight: 800; }
 .presence{ margin: 6px 0 0; font-size: 13px; }
 .muted{ color: var(--muted); }
 
-/* ... rest of your file unchanged (kept as-is below) ... */
-
-/* Share / export controls: tiny baseline nudge so buttons line up nicer */
-.shareActions{
-  padding-bottom: 6px;
-  align-items: flex-end;
+.miniRow{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap:10px;
+  margin-top: 12px;
 }
+@media (max-width: 760px){
+  .miniRow{ grid-template-columns:1fr; }
+}
+.mini{
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.18);
+}
+.miniLabel{ display:block; font-size: 11px; color: var(--muted2); }
+.miniValue{ display:block; margin-top: 4px; font-size: 16px; font-weight:800; }
+.miniSub{ display:block; margin-top: 2px; font-size: 11px; color: rgba(245,246,247,.60); }
+
+.grid{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap:10px;
+  margin-top: 14px;
+}
+@media (max-width: 900px){
+  .grid{ grid-template-columns:1fr; }
+}
+.stat{
+  padding: 12px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.18);
+}
+.statLabel{ font-size: 11px; color: var(--muted2); }
+.statValue{ margin-top: 6px; font-size: 18px; font-weight: 800; }
+.statSub{ margin-top: 4px; font-size: 12px; color: rgba(245,246,247,.60); }
+
+.feature{
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.18);
+}
+.featureHead{ display:flex; gap:10px; align-items:center; margin-bottom: 10px; }
+.featureIcon{
+  width:34px;height:34px;
+  border-radius: 14px;
+  display:grid;
+  place-items:center;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.10);
+}
+.featureTitle{ font-weight: 800; }
+.featureSub{ font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+.achievementRow{ display:flex; gap:10px; align-items:center; }
+.achievementIcon{
+  width: 44px;
+  height: 44px;
+  max-width: 44px;
+  max-height: 44px;
+  border-radius: 14px;
+  object-fit: cover;
+  object-position: center center;
+  display: block;
+  background: rgba(0,0,0,.25);
+  border: 1px solid rgba(255,255,255,.12);
+}
+.achievementName{ font-weight: 800; }
+.achievementMeta{ font-size: 12px; }
+
+.blogEntries{ display:flex; flex-direction:column; gap:8px; }
+.blogLine{
+  padding: 10px 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.04);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.cardFooter{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:12px;
+  padding-top: 12px;
+}
+.signature{ font-size: 11px; opacity:.65; }
+
+.shareBox{
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+  backdrop-filter: blur(12px);
+}
+.shareTitle{ font-weight: 800; margin-bottom: 10px; }
+.shareGrid{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap:12px;
+}
+@media (max-width: 900px){
+  .shareGrid{ grid-template-columns:1fr; }
+}
+.shareLabel{ font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.shareRow{ display:flex; gap:8px; align-items:center; }
+.shareRow input{ flex:1; padding: 11px 12px; border-radius: 14px; font-size: 12px; }
+
+/* Donate section shell */
+.donate{
+  margin-top: 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+  padding: 14px;
+}
+
+/* 3-column layout: left / center / right */
+.donateCard{
+  display:grid;
+  grid-template-columns: 1.2fr auto 1fr;
+  align-items:center;
+  gap:16px;
+}
+
+/* LEFT */
+.donateLeft{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  min-width:0;
+}
+.donateTitle{ font-weight:800; }
+.donateSub{ line-height:1.3; }
+
+/* CENTER (social) */
+.donateCenter{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.18);
+}
+
+.socialBtn{
+  width:36px;
+  height:36px;
+  border-radius: 12px;
+  display:grid;
+  place-items:center;
+  text-decoration:none;
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  font-weight:800;
+  line-height:1;
+}
+.socialBtn:hover{
+  border-color: rgba(255,255,255,.22);
+}
+
+/* RIGHT */
+.donateRight{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:14px;
+}
+
+.donateStats{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+
+.donateStat{
+  text-align:right;
+  min-width:84px;
+}
+.donateStat .k{
+  font-size:11px;
+  color: var(--muted2);
+}
+.donateStat .v{
+  font-size:16px;
+  font-weight:800;
+  line-height:1.1;
+}
+
+.donateBtn{
+  min-height: 38px;
+  padding: 10px 14px;
+  border-radius: 12px;
+}
+
+/* Mobile: stack (copy -> social -> right group) */
+@media (max-width: 900px){
+  .donateCard{
+    grid-template-columns: 1fr;
+    gap:12px;
+  }
+  .donateCenter{ justify-content:flex-start; width:fit-content; }
+  .donateRight{
+    justify-content:space-between;
+  }
+  .donateStat{ text-align:left; }
+}
+
+.siteFooter{
+  margin-top: 18px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,.10);
+}
+
+/* EMBED MODE (signature card) */
+body.embed #siteHeader,
+body.embed #searchRow,
+body.embed #donate,
+body.embed #siteFooter,
+body.embed .shareBox,
+body.embed .cardTopBar{
+  display:none !important;
+}
+body.embed .wrap{ max-width: 720px; padding: 10px; }
+body.embed .cardShell{ margin-top: 0; }
+
+/* =========================
+   Header User Area
+   ========================= */
+
+.userArea {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(6px);
+}
+
+.userAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.userMeta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.userName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.userBadge {
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 2px;
+  width: fit-content;
+  padding: 2px 6px;
+  border-radius: 999px;
+}
+
+.userBadge.good {
+  background: rgba(14, 205, 17, 0.18);
+  color: #0ecd11;
+}
+
+.userBadge.limited {
+  background: rgba(255, 170, 0, 0.2);
+  color: #ffaa00;
+}
+
+.userBadge.off {
+  background: rgba(255, 255, 255, 0.12);
+  color: #bbbbbb;
+}
+
+.chipBtn {
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.chipBtn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.chipBtn:active {
+  transform: scale(0.97);
+}
+
+@media (max-width: 700px) {
+  .userName {
+    display: none;
+  }
+}
+
+/* === Avatar fallback system (restored) === */
+.avatarWrap{
+  width: 86px;
+  height: 86px;
+  position: relative;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+.avatarWrap.sm{ width: 36px; height: 36px; }
+
+.avatarRing{
+  position:absolute;
+  inset:-2px;
+  border-radius: 999px;
+  border: 2px solid rgba(14,205,17,.55);
+  opacity:.45;
+  pointer-events:none;
+}
+.avatarRing.sm{ inset:-1px; opacity:.35; }
+
+.avatarFallback{
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  border-radius: 999px;
+  font-weight: 900;
+  letter-spacing: .2px;
+  border: 1px solid rgba(255,255,255,.16);
+  background:
+    radial-gradient(80% 80% at 20% 20%, rgba(14,205,17,.18), transparent 60%),
+    radial-gradient(80% 80% at 80% 20%, rgba(0,153,255,.12), transparent 55%),
+    rgba(0,0,0,.25);
+}
+.avatarFallback.sm{ font-size: 13px; }
+
+.pfp{
+  width:86px;
+  height:86px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(0,0,0,.25);
+  display:block;
+}
+.userAvatar{
+  width:36px;
+  height:36px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.25);
+  display:block;
+}
+
+/* === Journal formatting (prettier) === */
+.journalHead{ display:flex; justify-content:space-between; gap:10px; align-items:flex-end; flex-wrap:wrap; }
+.journalHint{ font-size: 12px; }
+
+.blogEntries{ display:flex; flex-direction:column; gap:10px; margin-top: 10px; }
+.journalEntry{
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.18);
+  padding: 12px;
+}
+.journalMeta{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin-bottom: 8px;
+}
+.journalDate{
+  font-size: 11px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.10);
+  color: rgba(245,246,247,.85);
+}
+.journalChip{
+  font-size: 11px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(14,205,17,.10);
+  border: 1px solid rgba(14,205,17,.25);
+  color: rgba(245,246,247,.90);
+}
+.journalBody{
+  font-size: 13px;
+  line-height: 1.35;
+  color: rgba(245,246,247,.82);
+  white-space: pre-wrap;
+}
+
+/* === Tweet box === */
+.tweetBox{
+  margin-top: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+  padding: 12px;
+}
+.tweetTop{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-bottom: 8px;
+}
+.tweetTitle{ font-weight: 900; }
+.tweetCount{ font-size: 12px; color: rgba(245,246,247,.65); }
+
+.tweetText{
+  width:100%;
+  min-height: 96px;
+  resize:none;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.22);
+  color: rgba(245,246,247,.9);
+  font-size: 13px;
+  line-height: 1.3;
+}
+.tweetActions{
+  display:flex;
+  gap:8px;
+  justify-content:flex-end;
+  margin-top: 10px;
+  flex-wrap:wrap;
+}
+
+/* Donate button alignment */
+.donateBtn{ text-decoration:none; }
 
 /* =========================
    TEMP: Fix the big gap
@@ -516,6 +981,7 @@ input:focus{ border-color: rgba(14,205,17,.45); box-shadow: 0 0 0 4px rgba(14,20
   padding: 12px !important;
 }
 
+/* tighten header spacing */
 .badgeTop{
   gap: 10px;
   margin-bottom: 8px !important;
@@ -523,10 +989,12 @@ input:focus{ border-color: rgba(14,205,17,.45); box-shadow: 0 0 0 4px rgba(14,20
 .badgeTitle{ margin: 0; }
 .badgeText{ margin: 2px 0 0 !important; }
 
+/* hide milestones block entirely for now */
 .badgeGrid .badgeGroup:nth-child(2){
   display: none !important;
 }
 
+/* tighten badge rows so they don’t inflate height */
 .badgeGrid{
   gap: 10px !important;
 }
@@ -537,6 +1005,7 @@ input:focus{ border-color: rgba(14,205,17,.45); box-shadow: 0 0 0 4px rgba(14,20
   gap: 8px !important;
 }
 
+/* hide the footer tip for now (it adds height + isn’t needed today) */
 .badgeFoot{
   display: none !important;
 }
