@@ -632,7 +632,7 @@ input:focus{ border-color: rgba(14,205,17,.45); box-shadow: 0 0 0 4px rgba(14,20
 @media (min-width: 720px){
   .shareActions{
     display:grid;
-    grid-template-columns: minmax(240px, 1fr) minmax(240px, 1fr) auto auto auto;
+    grid-template-columns: minmax(160px, 1fr) minmax(160px, 1fr) auto auto auto;
     align-items:end;
     gap: 10px;
   }
@@ -642,7 +642,7 @@ input:focus{ border-color: rgba(14,205,17,.45); box-shadow: 0 0 0 4px rgba(14,20
 
 .shareField{
   flex: 1 1 280px;
-  min-width: 220px;
+  min-width: 160px;
 }
 
 .shareFieldLabel{
