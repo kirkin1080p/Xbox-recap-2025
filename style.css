@@ -183,29 +183,16 @@ body{
   backdrop-filter: blur(14px);
 }
 
-/* ✅ UPDATED: pad the Generate / Lookup box to visually match the right column cards */
-.searchBox{
-  min-height: 190px;      /* matches the current badgeBox max-height target */
-  padding-bottom: 18px;   /* adds a touch of visual “weight” */
-}
+/* Keep left lookup card feeling as "substantial" as the right column without forcing a fixed height */
+.searchBox{ padding-bottom: 16px; }
 
-/* ✅ NEW: explanatory copy under the input */
+/* Small, readable, italic expectations note under the lookup input */
 .lookupNote{
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255,255,255,.08);
+  margin: 10px 0 0;
   font-size: 12px;
   line-height: 1.35;
-  color: rgba(245,246,247,.82);
-}
-.lookupNote p{
-  margin: 0 0 6px;
-}
-.lookupNote p:last-child{
-  margin-bottom: 0;
-}
-.lookupNote .mutedLine{
   color: var(--muted2);
+  font-style: italic;
 }
 
 /* =========================
