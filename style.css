@@ -76,7 +76,6 @@ body{
 .tagline{ margin: 3px 0 0; color: var(--muted); font-size: 13px; }
 
 .headerActions{ display:flex; gap:8px; align-items:center; }
-
 /* NEW: User area */
 .userArea{
   display:flex;
@@ -181,6 +180,18 @@ body{
   padding: 14px;
   box-shadow: var(--shadow);
   backdrop-filter: blur(14px);
+}
+
+/* Keep left lookup card feeling as "substantial" as the right column without forcing a fixed height */
+.searchBox{ padding-bottom: 16px; }
+
+/* Small, readable, italic expectations note under the lookup input */
+.lookupNote{
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--muted2);
+  font-style: italic;
 }
 
 /* =========================
@@ -616,6 +627,19 @@ input:focus{ border-color: rgba(14,205,17,.45); box-shadow: 0 0 0 4px rgba(14,20
   padding-bottom: 2px;  /* subtle baseline alignment */
 }
 
+/* Force ONE LINE (order is the HTML order):
+   1) Embed link  2) BBCode  3) Export PNG  4) Copy link  5) Open embed */
+@media (min-width: 720px){
+  .shareActions{
+    display:grid;
+    grid-template-columns: minmax(240px, 1fr) minmax(240px, 1fr) auto auto auto;
+    align-items:end;
+    gap: 10px;
+  }
+  .shareField{ min-width: 0; }
+  .shareFieldRow input{ min-width: 0; }
+}
+
 .shareField{
   flex: 1 1 280px;
   min-width: 220px;
@@ -656,7 +680,6 @@ input:focus{ border-color: rgba(14,205,17,.45); box-shadow: 0 0 0 4px rgba(14,20
     flex: 1 1 100%;
     min-width: 0;
   }
-  /* keep buttons in the same order, but let them wrap neatly */
   .shareActions > .btn,
   .shareActions > a.btn{
     width: fit-content;
@@ -665,7 +688,6 @@ input:focus{ border-color: rgba(14,205,17,.45); box-shadow: 0 0 0 4px rgba(14,20
 }
 
 @media (max-width: 900px){
-  /* Preserve order but let it breathe */
   .shareField{ flex-basis: 100%; }
   .shareActions > .btn,
   .shareActions > a.btn{
@@ -1041,9 +1063,6 @@ body.embed .cardShell{ margin-top: 0; }
    - Make badges card match the search card height
    - Hide milestones for now
    ========================= */
-
-/* make sure it shows when you want (remove if you still want it hidden by default) */
-/* .badgeBox.hidden{ display:block !important; } */
 
 .badgeBox{
   max-height: 190px;          /* adjust 170–210 to taste */
