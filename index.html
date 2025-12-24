@@ -199,33 +199,41 @@
           </div>
         </div>
 
+        
         <div class="share">
-          <div class="shareRow">
-            <button id="exportBtn" class="btn" type="button">Export PNG</button>
-            <button id="copyLinkBtn" class="btn ghost" type="button">Copy link</button>
-            <a id="openEmbedLink" class="btn ghost" href="#" target="_blank" rel="noopener noreferrer">Open embed</a>
-          </div>
-
-          <div class="embedRow">
-            <div class="embedCol">
-              <label class="label" for="liveLink">Embed link</label>
-              <div class="embedInputRow">
+          <!-- Share / export controls: keep ONE LINE on desktop, wrap on mobile (order matters) -->
+          <div class="shareActions">
+            <!-- 1) Embed link -->
+            <div class="shareField">
+              <label class="shareFieldLabel" for="liveLink">Embed link</label>
+              <div class="shareFieldRow">
                 <input id="liveLink" type="text" readonly />
                 <button id="copyLiveLinkBtn" class="btn ghost" type="button">Copy</button>
               </div>
             </div>
 
-            <div class="embedCol">
-              <label class="label" for="bbcode">BBCode</label>
-              <div class="embedInputRow">
+            <!-- 2) BBCode -->
+            <div class="shareField">
+              <label class="shareFieldLabel" for="bbcode">BBCode</label>
+              <div class="shareFieldRow">
                 <input id="bbcode" type="text" readonly />
                 <button id="copyBbBtn" class="btn ghost" type="button">Copy</button>
               </div>
             </div>
+
+            <!-- 3) Export PNG -->
+            <button id="exportBtn" class="btn" type="button">Export PNG</button>
+
+            <!-- 4) Copy link -->
+            <button id="copyLinkBtn" class="btn ghost" type="button">Copy link</button>
+
+            <!-- 5) Open embedded -->
+            <a id="openEmbedLink" class="btn ghost" href="#" target="_blank" rel="noopener noreferrer">Open embedded</a>
           </div>
         </div>
 
         <div class="journal">
+
           <div class="journalHead">
             <div class="journalTitle">Xbox Journal</div>
             <div class="journalHint muted">A daily entry from your console. Roast-friendly.</div>
