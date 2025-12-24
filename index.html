@@ -110,19 +110,25 @@
       <div id="gamerCard" class="gamerCard">
         <div class="cardTop">
           <div class="profileRow">
-            <div class="avatarWrap" aria-hidden="true">
-              <img id="profilePic" class="pfp" alt="No gamerpic" crossorigin="anonymous" referrerpolicy="no-referrer" />
-              <div id="profilePicFallback" class="avatarFallback">?</div>
-              <span class="avatarRing"></span>
+            <div class="profileLeft">
+              <div class="avatarWrap" aria-hidden="true">
+                <img id="profilePic" class="pfp" alt="No gamerpic" crossorigin="anonymous" referrerpolicy="no-referrer" />
+                <div id="profilePicFallback" class="avatarFallback">?</div>
+                <span class="avatarRing"></span>
+              </div>
+
+              <div class="profileCopy">
+                <div id="gtName" class="gtName">—</div>
+                <div id="presence" class="presence muted">—</div>
+              </div>
             </div>
 
-            <div class="profileCopy">
-              <div id="gtName" class="gtName">—</div>
-              <div id="presence" class="presence muted">—</div>
+            <div class="profileRight">
               <div class="metaRow">
                 <span id="dataQualityPill" class="pill">Tracking</span>
                 <span id="lastUpdatedPill" class="pill mutedPill">Updated —</span>
               </div>
+              <div class="trackingLine" id="trackingInfo">—</div>
             </div>
           </div>
         </div>
@@ -192,12 +198,14 @@
           </div>
         </div>
 
-        <div class="trackingLine" id="trackingInfo">—</div>
-
         <div class="share">
-          <!-- Single responsive row, ordered per spec -->
-          <div class="shareActions" aria-label="Share and export controls">
-            <!-- 1) Embed link -->
+          <div class="shareRow">
+            <button id="exportBtn" class="btn" type="button">Export PNG</button>
+            <button id="copyLinkBtn" class="btn ghost" type="button">Copy link</button>
+            <a id="openEmbedLink" class="btn ghost" href="#" target="_blank" rel="noopener noreferrer">Open embed</a>
+          </div>
+
+          <div class="embedRow">
             <div class="embedCol">
               <label class="label" for="liveLink">Embed link</label>
               <div class="embedInputRow">
@@ -206,7 +214,6 @@
               </div>
             </div>
 
-            <!-- 2) BBCode -->
             <div class="embedCol">
               <label class="label" for="bbcode">BBCode</label>
               <div class="embedInputRow">
@@ -214,15 +221,6 @@
                 <button id="copyBbBtn" class="btn ghost" type="button">Copy</button>
               </div>
             </div>
-
-            <!-- 3) Export PNG -->
-            <button id="exportBtn" class="btn" type="button">Export PNG</button>
-
-            <!-- 4) Copy link -->
-            <button id="copyLinkBtn" class="btn ghost" type="button">Copy link</button>
-
-            <!-- 5) Open embedded -->
-            <a id="openEmbedLink" class="btn ghost" href="#" target="_blank" rel="noopener noreferrer">Open embed</a>
           </div>
         </div>
 
