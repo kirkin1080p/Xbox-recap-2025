@@ -90,9 +90,13 @@ const copyLinkBtn = el("copyLinkBtn");
 
 const achievementBlock = el("achievementBlock");
 const achievementIcon = el("achievementIcon");
+const achievementIconFallback = el("achievementIconFallback");
 const achievementName = el("achievementName");
 const achievementPercent = el("achievementPercent");
 const achievementContext = el("achievementContext");
+const achievementList = el("achievementList");
+const achievementListTitle = el("achievementListTitle");
+const achievementListSub = el("achievementListSub");
 
 const blogEntries = el("blogEntries");
 
@@ -515,20 +519,63 @@ function renderAchievement(recap) {
 
   show(achievementBlock);
 
+  // Hero (rarest)
   if (achievementIcon) {
     if (icon) {
       const cleanIcon = sanitizeXboxPicUrl(icon);
       const prox = proxifyImage(cleanIcon);
       achievementIcon.src = prox ? `${prox}&_=${Date.now()}` : cleanIcon;
       show(achievementIcon);
+      if (achievementIconFallback) hide(achievementIconFallback);
     } else {
       hide(achievementIcon);
+      if (achievementIconFallback) show(achievementIconFallback);
     }
   }
 
   setText(achievementName, name || "Rarest achievement");
   setText(achievementPercent, pct != null ? `${pct}% unlocked` : "Rarity unknown");
   setText(achievementContext, title ? `From ${title}` : "From recent play");
+
+  // Secondary list (5 items): prefer "recent unlocked" if provided, else show 5 rarest.
+  if (!achievementList) return;
+
+  const recent = Array.isArray(recap?.achievements?.recentUnlocked) ? recap.achievements.recentUnlocked : [];
+  const rare5 = Array.isArray(recap?.achievements?.rarestTop) ? recap.achievements.rarestTop : [];
+
+  const list = (recent && recent.length) ? recent.slice(0, 5) : rare5.slice(0, 5);
+  const mode = (recent && recent.length) ? "recent" : "rarest";
+
+  if (!list.length) {
+    achievementList.innerHTML = `<div class="muted" style="font-size:12px;">No extra achievement data yet — connect Xbox or generate again later.</div>`;
+    setText(achievementListTitle, "Also rare…");
+    setText(achievementListSub, "");
+    return;
+  }
+
+  setText(achievementListTitle, mode === "recent" ? "Last 5 unlocked" : "5 rarest unlocked");
+  setText(achievementListSub, mode === "recent" ? "Newest trophies detected" : "Sorted by lowest %" );
+
+  achievementList.innerHTML = list.map((a) => {
+    const nm = esc(a?.name || "—");
+    const p = (a?.percent != null) ? `${Number(a.percent).toFixed(2).replace(/\.00$/, "")}%` : "—";
+    const sub = mode === "recent" ? (a?.unlockedAt ? `Unlocked ${fmtDateTime(a.unlockedAt)}` : (a?.titleName ? `From ${a.titleName}` : "")) : (a?.titleName ? `From ${a.titleName}` : "");
+    const iconUrl = a?.icon ? proxifyImage(sanitizeXboxPicUrl(a.icon)) : null;
+    const iconHtml = iconUrl
+      ? `<img class="achItemIcon" alt="" crossorigin="anonymous" referrerpolicy="no-referrer" src="${esc(iconUrl)}&_=${Date.now()}" />`
+      : `<div class="achItemIcon" style="display:grid;place-items:center;">🏆</div>`;
+
+    return `
+      <div class="achItem">
+        ${iconHtml}
+        <div>
+          <div class="achItemName">${nm}</div>
+          <div class="achItemSub">${esc(sub || "")}</div>
+        </div>
+        <div class="achItemPct">${esc(p)}</div>
+      </div>
+    `;
+  }).join("");
 }
 
 function renderDonate(ds) {
@@ -871,16 +918,6 @@ if (signoutBtn) {
     gamertagInput.value = gt;
     run(gt);
   } else {
-    // ✅ Improve login UX:
-    // If the user is already connected (stored in localStorage), auto-generate their recap on load.
-    // Manual lookup remains unchanged for logged-out users.
-    const signedInGt = getSignedInGamertag();
-    if (signedInGt) {
-      if (gamertagInput && !gamertagInput.value) gamertagInput.value = signedInGt;
-      run(signedInGt);
-      return;
-    }
-
     fetchDonateStats().then(renderDonate).catch(() => {});
     if (openEmbedLink) {
       openEmbedLink.href = `${window.location.origin}${window.location.pathname}?embed=1`;
