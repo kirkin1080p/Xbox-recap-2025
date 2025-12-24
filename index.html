@@ -16,7 +16,7 @@
       <div class="logo" aria-hidden="true">X</div>
       <div>
         <h1>Xbox Recap <span class="year">2025</span></h1>
-        <p class="tagline">Play. Track. Flex.</p>
+        <p class="tagline">Play. Track. Flex the clip.</p>
       </div>
     </div>
 
@@ -47,9 +47,6 @@
           <button id="generateBtn" class="btn primary" type="button">Generate</button>
         </div>
         <p class="hint">Tip: share the link after you generate. It will keep the gamertag in the URL.</p>
-
-        <!-- Small note to set expectations (keeps structure/IDs intact) -->
-        <p class="lookupNote"><em>Tracking starts from the moment you use Xbox Recap. Some Xbox data depends on privacy settings and sign-in.</em></p>
       </div>
 
       <!-- Right column: shows Connect prompt (logged out) -->
@@ -198,13 +195,9 @@
         <div class="trackingLine" id="trackingInfo">—</div>
 
         <div class="share">
-          <div class="shareRow">
-            <button id="exportBtn" class="btn" type="button">Export PNG</button>
-            <button id="copyLinkBtn" class="btn ghost" type="button">Copy link</button>
-            <a id="openEmbedLink" class="btn ghost" href="#" target="_blank" rel="noopener noreferrer">Open embed</a>
-          </div>
-
-          <div class="embedRow">
+          <!-- Single responsive row, ordered per spec -->
+          <div class="shareActions" aria-label="Share and export controls">
+            <!-- 1) Embed link -->
             <div class="embedCol">
               <label class="label" for="liveLink">Embed link</label>
               <div class="embedInputRow">
@@ -213,6 +206,7 @@
               </div>
             </div>
 
+            <!-- 2) BBCode -->
             <div class="embedCol">
               <label class="label" for="bbcode">BBCode</label>
               <div class="embedInputRow">
@@ -220,6 +214,15 @@
                 <button id="copyBbBtn" class="btn ghost" type="button">Copy</button>
               </div>
             </div>
+
+            <!-- 3) Export PNG -->
+            <button id="exportBtn" class="btn" type="button">Export PNG</button>
+
+            <!-- 4) Copy link -->
+            <button id="copyLinkBtn" class="btn ghost" type="button">Copy link</button>
+
+            <!-- 5) Open embedded -->
+            <a id="openEmbedLink" class="btn ghost" href="#" target="_blank" rel="noopener noreferrer">Open embed</a>
           </div>
         </div>
 
