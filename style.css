@@ -957,7 +957,7 @@ body.embed .cardShell{ margin-top: 0; }
   display: none !important;
 }
 .lblGt {
-  text-transform: capitalize;
+  text-transform: capitalize !important;
   font-weight: bold;
   font-size: large;
 }
