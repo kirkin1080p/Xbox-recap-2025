@@ -296,7 +296,13 @@ body{
   font-size: 11px;
 }
 
-.label{ display:block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+.label{ 
+  display:block; 
+  font-size: 12px; 
+  color:red;
+  /*color: var(--muted);*/ 
+  margin-bottom: 8px; 
+}
 .searchInputRow{ display:flex; gap:10px; }
 
 input{
