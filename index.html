@@ -16,7 +16,7 @@
       <div class="logo" aria-hidden="true">X</div>
       <div>
         <h1>Xbox Recap <span class="year">2025</span></h1>
-        <p class="tagline">Play. Track. Flex the clip.</p>
+        <p class="tagline">Play. Track. Flex.</p>
       </div>
     </div>
 
@@ -49,7 +49,6 @@
         <p class="hint">Tip: share the link after you generate. It will keep the gamertag in the URL.</p>
       </div>
 
-      <!-- Right column: shows Connect prompt (logged out) -->
       <div class="ctaBox" id="signinPrompt">
         <div class="ctaTop">
           <div class="ctaIcon">🔐</div>
@@ -63,7 +62,6 @@
         <p class="tiny">By generating a recap you agree to tracking from today onward. We don’t sell data.</p>
       </div>
 
-      <!-- Right column: Badges & Milestones placeholder (coming soon) -->
       <section class="badgeBox hidden" id="badgeBox" aria-label="Badges and milestones">
         <div class="badgeTop">
           <div class="badgeIcon" aria-hidden="true">🏅</div>
@@ -109,26 +107,29 @@
     <section id="gamerCardWrap" class="cardShell hidden">
       <div id="gamerCard" class="gamerCard">
         <div class="cardTop">
-          <div class="profileRow">
-            <div class="profileLeft">
-              <div class="avatarWrap" aria-hidden="true">
-                <img id="profilePic" class="pfp" alt="No gamerpic" crossorigin="anonymous" referrerpolicy="no-referrer" />
-                <div id="profilePicFallback" class="avatarFallback">?</div>
-                <span class="avatarRing"></span>
-              </div>
-
-              <div class="profileCopy">
-                <div id="gtName" class="gtName">—</div>
-                <div id="presence" class="presence muted">—</div>
-              </div>
+          <!-- Restored to the structure your CSS already supports -->
+          <div class="gamerHeader">
+            <div class="pfpWrap" aria-hidden="true">
+              <img id="profilePic" class="pfp" alt="No gamerpic" crossorigin="anonymous" referrerpolicy="no-referrer" />
+              <div id="profilePicFallback" class="avatarFallback">?</div>
+              <span class="pfpRing"></span>
             </div>
 
-            <div class="profileRight">
-              <div class="metaRow">
-                <span id="dataQualityPill" class="pill">Tracking</span>
-                <span id="lastUpdatedPill" class="pill mutedPill">Updated —</span>
+            <div class="who">
+              <div class="whoTop">
+                <div class="whoLeft">
+                  <div id="gtName" class="gtName">—</div>
+                  <div id="presence" class="presence muted">—</div>
+                </div>
+
+                <div class="whoRight">
+                  <div class="metaRow">
+                    <span id="dataQualityPill" class="pill">Tracking</span>
+                    <span id="lastUpdatedPill" class="pill mutedPill">Updated —</span>
+                  </div>
+                  <div id="trackingInfo" class="whoMeta muted">—</div>
+                </div>
               </div>
-              <div class="trackingLine" id="trackingInfo">—</div>
             </div>
           </div>
         </div>
@@ -237,20 +238,17 @@
 
     <section class="donate" id="donate">
       <div class="donateCard">
-        <!-- LEFT -->
         <div class="donateLeft">
           <div class="donateTitle">Support the project</div>
           <div class="donateSub muted">Help keep the workers running and the recaps improving.</div>
         </div>
 
-        <!-- CENTER -->
         <div class="donateCenter" aria-label="Social links">
           <a class="socialBtn" href="#" target="_blank" rel="noopener noreferrer" aria-label="Twitter / X">𝕏</a>
           <a class="socialBtn" href="#" target="_blank" rel="noopener noreferrer" aria-label="YouTube">▶</a>
           <a class="socialBtn" href="#" target="_blank" rel="noopener noreferrer" aria-label="TikTok">♪</a>
         </div>
 
-        <!-- RIGHT -->
         <div class="donateRight">
           <div class="donateStats">
             <div class="donateStat">
@@ -270,7 +268,6 @@
       </div>
     </section>
 
-    <!-- Placeholder anchor for future badge settings / page section -->
     <section id="badges" class="hidden"></section>
 
     <footer class="siteFooter" id="siteFooter">
