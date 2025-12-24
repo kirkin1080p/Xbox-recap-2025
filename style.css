@@ -574,6 +574,49 @@ input:focus{ border-color: rgba(14,205,17,.45); box-shadow: 0 0 0 4px rgba(14,20
 .shareRow{ display:flex; gap:8px; align-items:center; }
 .shareRow input{ flex:1; padding: 11px 12px; border-radius: 14px; font-size: 12px; }
 
+/* =========================
+   Share / Export actions row
+   Requirements:
+   - One line on desktop
+   - Wrap on mobile while preserving DOM order
+   ========================= */
+.share{
+  margin-top: 12px;
+}
+
+.shareActions{
+  display:flex;
+  align-items:flex-end;
+  gap:10px;
+  flex-wrap:wrap; /* mobile wraps, order preserved */
+}
+
+.shareActions .embedCol{
+  flex: 1 1 320px; /* grow, but don’t crush */
+  min-width: 240px;
+}
+
+.embedInputRow{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+
+.embedInputRow input{
+  flex: 1 1 auto;
+  min-width: 160px;
+}
+
+/* Make action buttons sit nicely at the end of the row */
+.shareActions > .btn,
+.shareActions > a.btn{
+  flex: 0 0 auto;
+}
+
+@media (max-width: 900px){
+  .shareActions .embedCol{ flex-basis: 100%; min-width: 0; }
+}
+
 /* Donate section shell */
 .donate{
   margin-top: 16px;
