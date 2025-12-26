@@ -747,29 +747,71 @@ function renderRecap(data) {
 async function exportCardAsPng() {
   clearStatus();
 
-  if (!window.html2canvas) {
-    setStatus("PNG export library failed to load.");
-    return;
-  }
-  if (!gamerCard) {
-    setStatus("Card element missing (gamerCard).");
+  if (!window.html2canvas || !gamerCard) {
+    setStatus("Export failed.");
     return;
   }
 
   setStatus("Rendering PNG…");
 
-  // Wait for images to load/fail
+  // Wait for images
   const imgs = gamerCard.querySelectorAll("img");
-  await Promise.all(
-    [...imgs].map((img) => {
-      if (!img.src) return Promise.resolve();
-      if (img.complete) return Promise.resolve();
-      return new Promise((res) => {
-        img.onload = () => res();
-        img.onerror = () => res();
-      });
-    })
-  );
+  await Promise.all([...imgs].map(img => {
+    if (!img.src || img.complete) return;
+    return new Promise(res => {
+      img.onload = img.onerror = res;
+    });
+  }));
+
+  // --- Build offscreen export stage ---
+  const stage = document.createElement("div");
+  stage.className = "exportStage";
+
+  const vignette = document.createElement("div");
+  vignette.className = "exportVignette";
+
+  const center = document.createElement("div");
+  center.className = "exportCenter";
+
+  // Clone card so we don't mutate live DOM
+  const cardClone = gamerCard.cloneNode(true);
+
+  // Slight scale-down so it breathes in 970x540
+  cardClone.style.transform = "scale(0.92)";
+  cardClone.style.transformOrigin = "center";
+
+  center.appendChild(cardClone);
+  stage.appendChild(center);
+  stage.appendChild(vignette);
+  document.body.appendChild(stage);
+
+  // Render
+  const canvas = await html2canvas(stage, {
+    width: 970,
+    height: 540,
+    scale: 2,
+    backgroundColor: null,
+    useCORS: true,
+    logging: false,
+  });
+
+  // Cleanup
+  stage.remove();
+
+  const a = document.createElement("a");
+  a.href = canvas.toDataURL("image/png");
+  a.download = `xbox-recap-${(gtName?.textContent || "player")
+    .replace(/\s+/g, "-")
+    .toLowerCase()}.png`;
+
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  setStatus("PNG exported ✅");
+  setTimeout(clearStatus, 1400);
+}
+
 
   const canvas = await window.html2canvas(gamerCard, {
     backgroundColor: null,
