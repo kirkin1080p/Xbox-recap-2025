@@ -90,13 +90,9 @@ const copyLinkBtn = el("copyLinkBtn");
 
 const achievementBlock = el("achievementBlock");
 const achievementIcon = el("achievementIcon");
-const achievementIconFallback = el("achievementIconFallback");
 const achievementName = el("achievementName");
 const achievementPercent = el("achievementPercent");
 const achievementContext = el("achievementContext");
-const achievementList = el("achievementList");
-const achievementListTitle = el("achievementListTitle");
-const achievementListSub = el("achievementListSub");
 
 const blogEntries = el("blogEntries");
 
@@ -519,63 +515,20 @@ function renderAchievement(recap) {
 
   show(achievementBlock);
 
-  // Hero (rarest)
   if (achievementIcon) {
     if (icon) {
       const cleanIcon = sanitizeXboxPicUrl(icon);
       const prox = proxifyImage(cleanIcon);
       achievementIcon.src = prox ? `${prox}&_=${Date.now()}` : cleanIcon;
       show(achievementIcon);
-      if (achievementIconFallback) hide(achievementIconFallback);
     } else {
       hide(achievementIcon);
-      if (achievementIconFallback) show(achievementIconFallback);
     }
   }
 
   setText(achievementName, name || "Rarest achievement");
   setText(achievementPercent, pct != null ? `${pct}% unlocked` : "Rarity unknown");
   setText(achievementContext, title ? `From ${title}` : "From recent play");
-
-  // Secondary list (5 items): prefer "recent unlocked" if provided, else show 5 rarest.
-  if (!achievementList) return;
-
-  const recent = Array.isArray(recap?.achievements?.recentUnlocked) ? recap.achievements.recentUnlocked : [];
-  const rare5 = Array.isArray(recap?.achievements?.rarestTop) ? recap.achievements.rarestTop : [];
-
-  const list = (recent && recent.length) ? recent.slice(0, 5) : rare5.slice(0, 5);
-  const mode = (recent && recent.length) ? "recent" : "rarest";
-
-  if (!list.length) {
-    achievementList.innerHTML = `<div class="muted" style="font-size:12px;">No extra achievement data yet — connect Xbox or generate again later.</div>`;
-    setText(achievementListTitle, "Also rare…");
-    setText(achievementListSub, "");
-    return;
-  }
-
-  setText(achievementListTitle, mode === "recent" ? "Last 5 unlocked" : "5 rarest unlocked");
-  setText(achievementListSub, mode === "recent" ? "Newest trophies detected" : "Sorted by lowest %" );
-
-  achievementList.innerHTML = list.map((a) => {
-    const nm = esc(a?.name || "—");
-    const p = (a?.percent != null) ? `${Number(a.percent).toFixed(2).replace(/\.00$/, "")}%` : "—";
-    const sub = mode === "recent" ? (a?.unlockedAt ? `Unlocked ${fmtDateTime(a.unlockedAt)}` : (a?.titleName ? `From ${a.titleName}` : "")) : (a?.titleName ? `From ${a.titleName}` : "");
-    const iconUrl = a?.icon ? proxifyImage(sanitizeXboxPicUrl(a.icon)) : null;
-    const iconHtml = iconUrl
-      ? `<img class="achItemIcon" alt="" crossorigin="anonymous" referrerpolicy="no-referrer" src="${esc(iconUrl)}&_=${Date.now()}" />`
-      : `<div class="achItemIcon" style="display:grid;place-items:center;">🏆</div>`;
-
-    return `
-      <div class="achItem">
-        ${iconHtml}
-        <div>
-          <div class="achItemName">${nm}</div>
-          <div class="achItemSub">${esc(sub || "")}</div>
-        </div>
-        <div class="achItemPct">${esc(p)}</div>
-      </div>
-    `;
-  }).join("");
 }
 
 function renderDonate(ds) {
@@ -747,84 +700,85 @@ function renderRecap(data) {
 async function exportCardAsPng() {
   clearStatus();
 
-  if (!window.html2canvas || !gamerCard) {
-    setStatus("Export failed.");
+  if (!window.html2canvas) {
+    setStatus("PNG export library failed to load.");
+    return;
+  }
+  if (!gamerCard) {
+    setStatus("Card element missing (gamerCard).");
     return;
   }
 
   setStatus("Rendering PNG…");
 
-  // Wait for images
+  // Wait for images to load/fail (important for gamerpic + achievement icon)
   const imgs = gamerCard.querySelectorAll("img");
-  await Promise.all([...imgs].map(img => {
-    if (!img.src || img.complete) return;
-    return new Promise(res => {
-      img.onload = img.onerror = res;
-    });
-  }));
+  await Promise.all(
+    [...imgs].map((img) => {
+      if (!img.src) return Promise.resolve();
+      if (img.complete) return Promise.resolve();
+      return new Promise((res) => {
+        img.onload = () => res();
+        img.onerror = () => res();
+      });
+    })
+  );
 
-  // --- Build offscreen export stage ---
+  // Build a dedicated offscreen export stage (forum-signature friendly)
   const stage = document.createElement("div");
-  stage.className = "exportStage";
-
-  const vignette = document.createElement("div");
-  vignette.className = "exportVignette";
+  stage.className = "exportStage exportStage--sig";
+  stage.style.width = "970px";
+  stage.style.height = "540px";
+  stage.style.overflow = "hidden";
 
   const center = document.createElement("div");
   center.className = "exportCenter";
 
-  // Clone card so we don't mutate live DOM
+  // Clone the card so we never mutate the live UI
   const cardClone = gamerCard.cloneNode(true);
 
-  // Slight scale-down so it breathes in 970x540
-  cardClone.style.transform = "scale(0.92)";
+  // Remove sections that do not belong on a signature export
+  try { cardClone.querySelector(".share")?.remove(); } catch {}
+  try { cardClone.querySelector(".journal")?.remove(); } catch {}
+
+  // Give the clone its own class hook
+  cardClone.classList.add("sigCard");
+
+  // Slight scale so it breathes inside 970×540
+  cardClone.style.transform = "scale(0.96)";
   cardClone.style.transformOrigin = "center";
 
   center.appendChild(cardClone);
   stage.appendChild(center);
+
+  const vignette = document.createElement("div");
+  vignette.className = "exportVignette";
   stage.appendChild(vignette);
+
+  const watermark = document.createElement("div");
+  watermark.className = "exportWatermark";
+  watermark.textContent = "xboxrecap • 2025";
+  stage.appendChild(watermark);
+
   document.body.appendChild(stage);
 
-  // Render
-  const canvas = await html2canvas(stage, {
+  // Render to an exact 970×540 canvas
+  const canvas = await window.html2canvas(stage, {
     width: 970,
     height: 540,
     scale: 2,
-    backgroundColor: null,
-    useCORS: true,
-    logging: false,
-  });
-
-  // Cleanup
-  stage.remove();
-
-  const a = document.createElement("a");
-  a.href = canvas.toDataURL("image/png");
-  a.download = `xbox-recap-${(gtName?.textContent || "player")
-    .replace(/\s+/g, "-")
-    .toLowerCase()}.png`;
-
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-
-  setStatus("PNG exported ✅");
-  setTimeout(clearStatus, 1400);
-}
-
-
-  const canvas = await window.html2canvas(gamerCard, {
-    backgroundColor: null,
-    scale: 2,
+    backgroundColor: "#0b0d10", // hard fallback (prevents white bleed)
     useCORS: true,
     allowTaint: true,
     logging: false,
   });
 
+  stage.remove();
+
   const dataUrl = canvas.toDataURL("image/png");
   const a = document.createElement("a");
   a.href = dataUrl;
-  a.download = `xbox-recap-${(gtName?.textContent || "player").replace(/\s+/g, "-")}.png`;
+  a.download = `xbox-recap-${(gtName?.textContent || "player").replace(/\s+/g, "-")}-sig.png`;
   document.body.appendChild(a);
   a.click();
   a.remove();
