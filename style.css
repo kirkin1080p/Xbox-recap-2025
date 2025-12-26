@@ -432,29 +432,25 @@ input:focus{ border-color: rgba(14,205,17,.45); box-shadow: 0 0 0 4px rgba(14,20
 
 .gamerHeader{ display:flex; gap:14px; align-items:flex-start; }
 .pfpWrap{
-/* === Gamer card PFP (circular) === */
-.pfpWrap{
   width:86px;
   height:86px;
-  border-radius: 50%;
-  position: relative;
-  flex: 0 0 auto;
+  border-radius: 22px;
+  position:relative;
+  flex: 0 0 auto; /* never stretch */
 }
-
 .pfp{
   width:86px;
   height:86px;
-  border-radius: 50%;
-  object-fit: cover;
+  border-radius: 22px;
+  object-fit: cover; /* never stretch */
   border: 1px solid rgba(255,255,255,.18);
   background: rgba(0,0,0,.25);
   display:block;
 }
-
 .pfpRing{
   position:absolute;
   inset:-2px;
-  border-radius: 50%;
+  border-radius: 24px;
   border: 2px solid rgba(14,205,17,.55);
   opacity:.45;
   pointer-events:none;
@@ -1144,23 +1140,34 @@ body.embed .cardShell{ margin-top: 0; }
   background: rgba(14,205,17,.10);
   border: 1px solid rgba(14,205,17,.25);
 }
-/* ===== FORCE circular gamer card PFP (stats area) ===== */
-#gamerCard .pfpWrap{
-  width: 86px;
-  height: 86px;
-  border-radius: 50% !important;
-  overflow: hidden; /* key: prevents square corners from showing */
+/* =========================
+   PNG EXPORT STAGE (OFFSCREEN)
+   ========================= */
+
+.exportStage {
+  position: fixed;
+  left: -9999px;
+  top: -9999px;
+  width: 970px;
+  height: 540px;
+  overflow: hidden;
+  background:
+    radial-gradient(800px 500px at 15% 10%, rgba(14,205,17,0.35), transparent 60%),
+    radial-gradient(700px 450px at 85% 20%, rgba(0,153,255,0.25), transparent 55%),
+    radial-gradient(900px 600px at 50% 110%, rgba(255,255,255,0.08), transparent 60%),
+    linear-gradient(180deg, #0b0d10, #07080b);
 }
 
-#gamerCard img.pfp{
-  width: 86px;
-  height: 86px;
-  border-radius: 50% !important;
-  object-fit: cover;
-  object-position: center;
-  display: block;
+.exportVignette {
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 120px rgba(0,0,0,0.75);
+  pointer-events: none;
 }
 
-#gamerCard .pfpRing{
-  border-radius: 50% !important;
-}
+.exportCenter {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+                                           }
