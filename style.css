@@ -432,25 +432,29 @@ input:focus{ border-color: rgba(14,205,17,.45); box-shadow: 0 0 0 4px rgba(14,20
 
 .gamerHeader{ display:flex; gap:14px; align-items:flex-start; }
 .pfpWrap{
+/* === Gamer card PFP (circular) === */
+.pfpWrap{
   width:86px;
   height:86px;
-  border-radius: 22px;
-  position:relative;
-  flex: 0 0 auto; /* never stretch */
+  border-radius: 50%;
+  position: relative;
+  flex: 0 0 auto;
 }
+
 .pfp{
   width:86px;
   height:86px;
-  border-radius: 22px;
-  object-fit: cover; /* never stretch */
+  border-radius: 50%;
+  object-fit: cover;
   border: 1px solid rgba(255,255,255,.18);
   background: rgba(0,0,0,.25);
   display:block;
 }
+
 .pfpRing{
   position:absolute;
   inset:-2px;
-  border-radius: 24px;
+  border-radius: 50%;
   border: 2px solid rgba(14,205,17,.55);
   opacity:.45;
   pointer-events:none;
