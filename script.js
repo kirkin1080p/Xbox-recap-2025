@@ -507,10 +507,15 @@ function renderAchievement(recap) {
   const rarestEver = recap?.achievements?.rarestEver;
   const fallback = recap?.achievements;
 
-  const name = rarestEver?.name || fallback?.rarestName || null;
-  const pct  = rarestEver?.percent ?? fallback?.rarestPercent ?? null;
-  const icon = rarestEver?.icon || fallback?.rarestIcon || null;
-  const title = rarestEver?.titleName || fallback?.lastTitleName || null;
+  // ✅ PATCH: If we have a stored "rarestEver", don't mix its name/icon with
+  // the current game's description (which causes wrong hover text).
+  const useEver = !!rarestEver;
+
+  const name = useEver ? (rarestEver?.name || null) : (fallback?.rarestName || null);
+  const pct  = useEver ? (rarestEver?.percent ?? null) : (fallback?.rarestPercent ?? null);
+  const icon = useEver ? (rarestEver?.icon || null) : (fallback?.rarestIcon || null);
+  const title = useEver ? (rarestEver?.titleName || null) : (fallback?.lastTitleName || null);
+  const desc = useEver ? (rarestEver?.desc || null) : (fallback?.rarestDesc || null);
 
   if (!name && !icon && pct == null) {
     hide(achievementBlock);
@@ -525,6 +530,9 @@ function renderAchievement(recap) {
       const cleanIcon = sanitizeXboxPicUrl(icon);
       const prox = proxifyImage(cleanIcon);
       achievementIcon.src = prox ? `${prox}&_=${Date.now()}` : cleanIcon;
+      // Hover tooltip (desktop): safe for mobile (no hover means nothing happens)
+      if (desc) achievementIcon.title = String(desc);
+      else achievementIcon.removeAttribute("title");
       show(achievementIcon);
       if (achievementIconFallback) hide(achievementIconFallback);
     } else {
@@ -560,10 +568,15 @@ function renderAchievement(recap) {
     const nm = esc(a?.name || "—");
     const p = (a?.percent != null) ? `${Number(a.percent).toFixed(2).replace(/\.00$/, "")}%` : "—";
     const sub = mode === "recent" ? (a?.unlockedAt ? `Unlocked ${fmtDateTime(a.unlockedAt)}` : (a?.titleName ? `From ${a.titleName}` : "")) : (a?.titleName ? `From ${a.titleName}` : "");
+    const d = a?.desc ? esc(a.desc) : "";
     const iconUrl = a?.icon ? proxifyImage(sanitizeXboxPicUrl(a.icon)) : null;
-    const iconHtml = iconUrl
-      ? `<img class="achItemIcon" alt="" crossorigin="anonymous" referrerpolicy="no-referrer" src="${esc(iconUrl)}&_=${Date.now()}" />`
-      : `<div class="achItemIcon" style="display:grid;place-items:center;">🏆</div>`;
+    const iconInner = iconUrl
+      ? `<img class="achItemIcon" alt="" title="${d}" crossorigin="anonymous" referrerpolicy="no-referrer" src="${esc(iconUrl)}&_=${Date.now()}" />`
+      : `<div class="achItemIcon" title="${d}" style="display:grid;place-items:center;">🏆</div>`;
+
+    const iconHtml = d
+      ? `<span class="achTipWrap">${iconInner}<span class="achTip">${d}</span></span>`
+      : iconInner;
 
     return `
       <div class="achItem">
