@@ -39,6 +39,37 @@
   </header>
 
   <main class="wrap">
+        <section class="donate" id="donate">
+      <div class="donateCard">
+        <div class="donateLeft">
+          <div class="donateTitle">Support the project</div>
+          <div class="donateSub muted">Help keep the workers running and the recaps improving.</div>
+        </div>
+
+        <div class="donateCenter" aria-label="Social links">
+          <a class="socialBtn" href="#" target="_blank" rel="noopener noreferrer" aria-label="Twitter / X">𝕏</a>
+          <a class="socialBtn" href="#" target="_blank" rel="noopener noreferrer" aria-label="YouTube">▶</a>
+          <a class="socialBtn" href="#" target="_blank" rel="noopener noreferrer" aria-label="TikTok">♪</a>
+        </div>
+
+        <div class="donateRight">
+          <div class="donateStats">
+            <div class="donateStat">
+              <div class="k">Raised</div>
+              <div class="v" id="donateTotal">£0</div>
+            </div>
+            <div class="donateStat">
+              <div class="k">Supporters</div>
+              <div class="v" id="donateSupporters">0</div>
+            </div>
+          </div>
+
+          <a class="btn primary donateBtn" href="https://buymeacoffee.com/keepxboxfree" target="_blank" rel="noopener noreferrer">
+            Buy me a cookie
+          </a>
+        </div>
+      </div>
+    </section>
     <section class="searchRow" id="searchRow">
       <div class="searchBox">
         <label class="label" for="gamertagInput">Gamertag</label>
@@ -190,12 +221,33 @@
           </div>
         </div>
 
-        <div id="achievementBlock" class="achievement hidden">
-          <img id="achievementIcon" class="achievementIcon hidden" alt="Achievement icon" crossorigin="anonymous" referrerpolicy="no-referrer" />
-          <div class="achievementCopy">
-            <div id="achievementName" class="achievementName">—</div>
-            <div id="achievementPercent" class="achievementPercent">—</div>
-            <div id="achievementContext" class="achievementContext">—</div>
+        <!-- Rarest achievement + recent unlocked list -->
+        <div id="achievementBlock" class="achievementShowcase hidden">
+          <div class="achievementHero">
+            <div class="achievementIconWrap">
+              <img id="achievementIcon" class="achievementIcon hidden" alt="Achievement icon" crossorigin="anonymous" referrerpolicy="no-referrer" />
+              <div id="achievementIconFallback" class="achievementIconFallback hidden" aria-hidden="true">🏆</div>
+            </div>
+
+            <div class="achievementCopy">
+              <div class="achievementEyebrow">Rarest achievement</div>
+              <div id="achievementName" class="achievementName">—</div>
+              <div class="achievementMeta">
+                <span id="achievementPercent" class="achievementPercent">—</span>
+                <span class="dot">•</span>
+                <span id="achievementContext" class="achievementContext">—</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="achievementListWrap">
+            <div class="achievementListHead">
+              <div>
+                <div id="achievementListTitle" class="achievementListTitle">Last 5 unlocked</div>
+                <div id="achievementListSub" class="achievementListSub muted">Newest trophies detected</div>
+              </div>
+            </div>
+            <div id="achievementList" class="achievementList"></div>
           </div>
         </div>
 
@@ -241,39 +293,6 @@
         </div>
       </div>
     </section>
-
-    <section class="donate" id="donate">
-      <div class="donateCard">
-        <div class="donateLeft">
-          <div class="donateTitle">Support the project</div>
-          <div class="donateSub muted">Help keep the workers running and the recaps improving.</div>
-        </div>
-
-        <div class="donateCenter" aria-label="Social links">
-          <a class="socialBtn" href="#" target="_blank" rel="noopener noreferrer" aria-label="Twitter / X">𝕏</a>
-          <a class="socialBtn" href="#" target="_blank" rel="noopener noreferrer" aria-label="YouTube">▶</a>
-          <a class="socialBtn" href="#" target="_blank" rel="noopener noreferrer" aria-label="TikTok">♪</a>
-        </div>
-
-        <div class="donateRight">
-          <div class="donateStats">
-            <div class="donateStat">
-              <div class="k">Raised</div>
-              <div class="v" id="donateTotal">£0</div>
-            </div>
-            <div class="donateStat">
-              <div class="k">Supporters</div>
-              <div class="v" id="donateSupporters">0</div>
-            </div>
-          </div>
-
-          <a class="btn primary donateBtn" href="https://buymeacoffee.com/keepxboxfree" target="_blank" rel="noopener noreferrer">
-            Buy me a cookie
-          </a>
-        </div>
-      </div>
-    </section>
-
     <section id="badges" class="hidden"></section>
 
     <footer class="siteFooter" id="siteFooter">
