@@ -66,6 +66,7 @@ const favGameSessions = el("favGameSessions");
 const currentStreak = el("currentStreak");
 const longestStreak = el("longestStreak");
 const longestBreak = el("longestBreak");
+const longestBreakSub = el("longestBreakSub");
 const uniqueGames = el("uniqueGames");
 const oneHit = el("oneHit");
 
@@ -183,6 +184,24 @@ function fmtDateTime(iso) {
   } catch {
     return "—";
   }
+}
+
+// UTC day helpers (match worker's day keys)
+function yyyyMmDdUTCFromDate(d) {
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function daysBetweenDayKeysUTC(aYYYYMMDD, bYYYYMMDD) {
+  if (!aYYYYMMDD || !bYYYYMMDD) return null;
+  const ap = String(aYYYYMMDD).split("-").map(Number);
+  const bp = String(bYYYYMMDD).split("-").map(Number);
+  if (ap.length !== 3 || bp.length !== 3) return null;
+  const a = Date.UTC(ap[0], ap[1] - 1, ap[2]);
+  const b = Date.UTC(bp[0], bp[1] - 1, bp[2]);
+  return Math.round((b - a) / 86400000);
 }
 
 async function copyToClipboard(text) {
@@ -504,18 +523,21 @@ function setLastUpdated(recap) {
 function renderAchievement(recap) {
   if (!achievementBlock) return;
 
+
   const rarestEver = recap?.achievements?.rarestEver;
   const fallback = recap?.achievements;
 
-  // ✅ PATCH: If we have a stored "rarestEver", don't mix its name/icon with
-  // the current game's description (which causes wrong hover text).
-  const useEver = !!rarestEver;
+  // Prefer the current title's rarest unlocked achievement (rarestName/rarestPercent),
+  // because rarestEver can be stale from older runs and must never show a locked achievement.
+  const useCurrent =
+    !!(fallback?.rarestName) &&
+    (typeof fallback?.rarestPercent === "number" || fallback?.rarestPercent != null);
 
-  const name = useEver ? (rarestEver?.name || null) : (fallback?.rarestName || null);
-  const pct  = useEver ? (rarestEver?.percent ?? null) : (fallback?.rarestPercent ?? null);
-  const icon = useEver ? (rarestEver?.icon || null) : (fallback?.rarestIcon || null);
-  const title = useEver ? (rarestEver?.titleName || null) : (fallback?.lastTitleName || null);
-  const desc = useEver ? (rarestEver?.desc || null) : (fallback?.rarestDesc || null);
+  const name = useCurrent ? (fallback?.rarestName || null) : (rarestEver?.name || null);
+  const pct  = useCurrent ? (fallback?.rarestPercent ?? null) : (rarestEver?.percent ?? null);
+  const icon = useCurrent ? (fallback?.rarestIcon || null) : (rarestEver?.icon || null);
+  const desc = useCurrent ? (fallback?.rarestDesc || "") : (rarestEver?.desc || "");
+  const title = useCurrent ? (fallback?.lastTitleName || null) : (rarestEver?.titleName || null);
 
   if (!name && !icon && pct == null) {
     hide(achievementBlock);
@@ -530,9 +552,6 @@ function renderAchievement(recap) {
       const cleanIcon = sanitizeXboxPicUrl(icon);
       const prox = proxifyImage(cleanIcon);
       achievementIcon.src = prox ? `${prox}&_=${Date.now()}` : cleanIcon;
-      // Hover tooltip (desktop): safe for mobile (no hover means nothing happens)
-      if (desc) achievementIcon.title = String(desc);
-      else achievementIcon.removeAttribute("title");
       show(achievementIcon);
       if (achievementIconFallback) hide(achievementIconFallback);
     } else {
@@ -544,6 +563,12 @@ function renderAchievement(recap) {
   setText(achievementName, name || "Rarest achievement");
   setText(achievementPercent, pct != null ? `${pct}% unlocked` : "Rarity unknown");
   setText(achievementContext, title ? `From ${title}` : "From recent play");
+
+  // ✅ Hover description must match the achievement being hovered.
+  if (achievementName) achievementName.title = desc || "";
+  if (achievementIcon) achievementIcon.title = desc || "";
+  if (achievementIconFallback) achievementIconFallback.title = desc || "";
+
 
   // Secondary list (5 items): prefer "recent unlocked" if provided, else show 5 rarest.
   if (!achievementList) return;
@@ -568,18 +593,13 @@ function renderAchievement(recap) {
     const nm = esc(a?.name || "—");
     const p = (a?.percent != null) ? `${Number(a.percent).toFixed(2).replace(/\.00$/, "")}%` : "—";
     const sub = mode === "recent" ? (a?.unlockedAt ? `Unlocked ${fmtDateTime(a.unlockedAt)}` : (a?.titleName ? `From ${a.titleName}` : "")) : (a?.titleName ? `From ${a.titleName}` : "");
-    const d = a?.desc ? esc(a.desc) : "";
     const iconUrl = a?.icon ? proxifyImage(sanitizeXboxPicUrl(a.icon)) : null;
-    const iconInner = iconUrl
-      ? `<img class="achItemIcon" alt="" title="${d}" crossorigin="anonymous" referrerpolicy="no-referrer" src="${esc(iconUrl)}&_=${Date.now()}" />`
-      : `<div class="achItemIcon" title="${d}" style="display:grid;place-items:center;">🏆</div>`;
-
-    const iconHtml = d
-      ? `<span class="achTipWrap">${iconInner}<span class="achTip">${d}</span></span>`
-      : iconInner;
+    const iconHtml = iconUrl
+      ? `<img class="achItemIcon" alt="" crossorigin="anonymous" referrerpolicy="no-referrer" src="${esc(iconUrl)}&_=${Date.now()}" />`
+      : `<div class="achItemIcon" style="display:grid;place-items:center;">🏆</div>`;
 
     return `
-      <div class="achItem">
+      <div class="achItem" title="${esc(a?.desc || "")}">
         ${iconHtml}
         <div>
           <div class="achItemName">${nm}</div>
@@ -688,9 +708,13 @@ function renderRecap(data) {
 
   setText(daysPlayed, recap?.daysPlayedCount ?? "—");
 
+  const todayKeyUTC = yyyyMmDdUTCFromDate(new Date());
+
+  // Days Played counts ONLY days with confirmed play,
+  // but the displayed date window should keep moving forward even on inactive days.
   const range =
-    recap?.firstPlayDay && recap?.lastPlayDay
-      ? `${recap.firstPlayDay} → ${recap.lastPlayDay}`
+    recap?.firstPlayDay
+      ? `${recap.firstPlayDay} → ${todayKeyUTC}`
       : recap?.firstSeen
       ? `Tracking since ${fmtDateTime(recap.firstSeen)}`
       : "—";
@@ -702,11 +726,32 @@ function renderRecap(data) {
     recap?.favouriteGameSessions ? `${recap.favouriteGameSessions} sessions` : "—"
   );
 
-  setText(currentStreak, recap?.currentStreak ?? "—");
-  setText(longestStreak, recap?.longestStreak ? `Best: ${recap.longestStreak} days` : "—");
-  setText(longestBreak, recap?.longestBreakDays ?? 0);
+  // Streak display: if you haven't played today (UTC), streak is 0.
+  const lastPlayDay = recap?.lastPlayDay || null;
+  const gapDays = lastPlayDay ? daysBetweenDayKeysUTC(lastPlayDay, todayKeyUTC) : null;
 
-  setText(uniqueGames, recap?.uniqueGamesObserved ?? "—");
+  const displayStreak = (typeof gapDays === "number" && gapDays === 0)
+    ? (recap?.currentStreak ?? 0)
+    : 0;
+
+  setText(currentStreak, displayStreak);
+  setText(longestStreak, recap?.longestStreak ? `Best: ${recap.longestStreak} days` : "—");
+
+  // ✅ Breaks: show "current break" + "longest break" stacked
+  const currentBreakDays =
+    (typeof gapDays === "number" && gapDays > 0) ? gapDays : 0;
+
+  const longestBreakDays =
+    (recap?.longestBreakDays != null) ? recap.longestBreakDays : 0;
+
+  if (longestBreak) {
+  setText(longestBreak, `${String(longestBreakDays)} day${longestBreakDays === 1 ? "" : "s"}`);
+}
+if (longestBreakSub) {
+  setText(longestBreakSub, `Current: ${String(currentBreakDays)} day${currentBreakDays === 1 ? "" : "s"}`);
+}
+
+setText(uniqueGames, recap?.uniqueGamesObserved ?? "—");
 
   const oneHitEff = recap?.oneHitWondersEffective ?? recap?.oneHitWondersCount ?? 0;
   const mature = recap?.oneHitWondersIsMature ?? false;
