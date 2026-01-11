@@ -66,7 +66,6 @@ const favGameSessions = el("favGameSessions");
 const currentStreak = el("currentStreak");
 const longestStreak = el("longestStreak");
 const longestBreak = el("longestBreak");
-const longestBreakSub = el("longestBreakSub");
 const uniqueGames = el("uniqueGames");
 const oneHit = el("oneHit");
 
@@ -523,21 +522,13 @@ function setLastUpdated(recap) {
 function renderAchievement(recap) {
   if (!achievementBlock) return;
 
-
   const rarestEver = recap?.achievements?.rarestEver;
   const fallback = recap?.achievements;
 
-  // Prefer the current title's rarest unlocked achievement (rarestName/rarestPercent),
-  // because rarestEver can be stale from older runs and must never show a locked achievement.
-  const useCurrent =
-    !!(fallback?.rarestName) &&
-    (typeof fallback?.rarestPercent === "number" || fallback?.rarestPercent != null);
-
-  const name = useCurrent ? (fallback?.rarestName || null) : (rarestEver?.name || null);
-  const pct  = useCurrent ? (fallback?.rarestPercent ?? null) : (rarestEver?.percent ?? null);
-  const icon = useCurrent ? (fallback?.rarestIcon || null) : (rarestEver?.icon || null);
-  const desc = useCurrent ? (fallback?.rarestDesc || "") : (rarestEver?.desc || "");
-  const title = useCurrent ? (fallback?.lastTitleName || null) : (rarestEver?.titleName || null);
+  const name = rarestEver?.name || fallback?.rarestName || null;
+  const pct  = rarestEver?.percent ?? fallback?.rarestPercent ?? null;
+  const icon = rarestEver?.icon || fallback?.rarestIcon || null;
+  const title = rarestEver?.titleName || fallback?.lastTitleName || null;
 
   if (!name && !icon && pct == null) {
     hide(achievementBlock);
@@ -563,12 +554,6 @@ function renderAchievement(recap) {
   setText(achievementName, name || "Rarest achievement");
   setText(achievementPercent, pct != null ? `${pct}% unlocked` : "Rarity unknown");
   setText(achievementContext, title ? `From ${title}` : "From recent play");
-
-  // ✅ Hover description must match the achievement being hovered.
-  if (achievementName) achievementName.title = desc || "";
-  if (achievementIcon) achievementIcon.title = desc || "";
-  if (achievementIconFallback) achievementIconFallback.title = desc || "";
-
 
   // Secondary list (5 items): prefer "recent unlocked" if provided, else show 5 rarest.
   if (!achievementList) return;
@@ -599,7 +584,7 @@ function renderAchievement(recap) {
       : `<div class="achItemIcon" style="display:grid;place-items:center;">🏆</div>`;
 
     return `
-      <div class="achItem" title="${esc(a?.desc || "")}">
+      <div class="achItem">
         ${iconHtml}
         <div>
           <div class="achItemName">${nm}</div>
@@ -730,28 +715,26 @@ function renderRecap(data) {
   const lastPlayDay = recap?.lastPlayDay || null;
   const gapDays = lastPlayDay ? daysBetweenDayKeysUTC(lastPlayDay, todayKeyUTC) : null;
 
-  const displayStreak = (typeof gapDays === "number" && gapDays === 0)
-    ? (recap?.currentStreak ?? 0)
-    : 0;
+  const displayStreak = (typeof gapDays === "number" && (gapDays === 0 || gapDays === 1)) ? (recap?.currentStreak ?? 0) : 0;
 
   setText(currentStreak, displayStreak);
   setText(longestStreak, recap?.longestStreak ? `Best: ${recap.longestStreak} days` : "—");
 
   // ✅ Breaks: show "current break" + "longest break" stacked
   const currentBreakDays =
-    (typeof gapDays === "number" && gapDays > 0) ? gapDays : 0;
+    (typeof gapDays === "number" && gapDays > 1) ? (gapDays - 1) : 0;
 
   const longestBreakDays =
     (recap?.longestBreakDays != null) ? recap.longestBreakDays : 0;
 
   if (longestBreak) {
-  setText(longestBreak, `${String(longestBreakDays)} day${longestBreakDays === 1 ? "" : "s"}`);
-}
-if (longestBreakSub) {
-  setText(longestBreakSub, `Current: ${String(currentBreakDays)} day${currentBreakDays === 1 ? "" : "s"}`);
-}
+    // Using <br> so it renders as two lines without needing CSS changes.
+    longestBreak.innerHTML =
+      `Current break: ${esc(String(currentBreakDays))} day${currentBreakDays === 1 ? "" : "s"}<br>` +
+      `Longest break: ${esc(String(longestBreakDays))} day${longestBreakDays === 1 ? "" : "s"}`;
+  }
 
-setText(uniqueGames, recap?.uniqueGamesObserved ?? "—");
+  setText(uniqueGames, recap?.uniqueGamesObserved ?? "—");
 
   const oneHitEff = recap?.oneHitWondersEffective ?? recap?.oneHitWondersCount ?? 0;
   const mature = recap?.oneHitWondersIsMature ?? false;
