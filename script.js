@@ -667,12 +667,19 @@ function renderRecap(data) {
     recap?.titleHistory?.lastTimePlayed ||
     null;
 
-  const fallbackPresence =
-    lastPlayedName
-      ? `Last played: ${lastPlayedName} • ${fmtDateTime(lastPlayedAt)}`
-      : "No recent activity observed yet.";
+const hasLivePresence = !!profile?.presenceText;
+const hasLastSeen = !!data?.recap?.lastSeen;
 
-  setText(presence, profile?.presenceText || fallbackPresence);
+let safePresence = "Activity unavailable";
+
+if (hasLivePresence) {
+  safePresence = profile.presenceText;
+} else if (hasLastSeen) {
+  safePresence = `Last seen: ${fmtDateTime(data.recap.lastSeen)}`;
+}
+
+// Final render
+setText(presence, safePresence);
 
   // ✅ PFP: proxy + fallback
   setAvatar({
