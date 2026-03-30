@@ -667,20 +667,16 @@ function renderRecap(data) {
     recap?.titleHistory?.lastTimePlayed ||
     null;
 
-// ===== FIX: Use lastSeen instead of stale titleHistory =====
+  let safePresence = "No recent activity observed yet.";
+  if (profile?.presenceText) {
+    safePresence = profile.presenceText;
+  } else if (recap?.lastSeen) {
+    safePresence = `Last seen: ${fmtDateTime(recap.lastSeen)}`;
+  } else if (lastPlayedName && lastPlayedAt) {
+    safePresence = `Last played: ${lastPlayedName} • ${fmtDateTime(lastPlayedAt)}`;
+  }
 
-let safePresence = "No recent activity observed yet.";
-
-if (profile?.presenceText) {
-  safePresence = profile.presenceText;
-} else if (recap?.lastSeen) {
-  safePresence = `Last seen: ${fmtDateTime(recap.lastSeen)}`;
-} else if (lastPlayedName && lastPlayedAt) {
-  // fallback ONLY if nothing else exists
-  safePresence = `Last played: ${lastPlayedName} • ${fmtDateTime(lastPlayedAt)}`;
-}
-
-setText(presence, safePresence);
+  setText(presence, safePresence);
 
   // ✅ PFP: proxy + fallback
   setAvatar({
@@ -769,6 +765,8 @@ setText(presence, safePresence);
   if (trackingInfo) {
     const observedLine = recap?.lastObservedAt
       ? `Observed play: ${fmtDateTime(recap.lastObservedAt)}`
+      : recap?.lastSeen
+      ? `Last seen: ${fmtDateTime(recap.lastSeen)}`
       : `No play observed yet`;
     trackingInfo.textContent =
       `First seen: ${fmtDateTime(recap?.firstSeen)} • ${observedLine} • Lookups: ${recap?.lookupCount ?? 0}`;
