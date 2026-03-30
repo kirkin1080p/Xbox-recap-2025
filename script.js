@@ -203,20 +203,6 @@ function daysBetweenDayKeysUTC(aYYYYMMDD, bYYYYMMDD) {
   return Math.round((b - a) / 86400000);
 }
 
-function dayKeyFromIsoUTC(iso) {
-  if (!iso) return null;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return null;
-  return yyyyMmDdUTCFromDate(d);
-}
-
-function extractPresenceGameName(presenceText) {
-  if (!presenceText) return null;
-  const s = String(presenceText).trim();
-  const match = s.match(/^Playing\s+(.+)$/i);
-  return match && match[1] ? match[1].trim() : null;
-}
-
 async function copyToClipboard(text) {
   try {
     await navigator.clipboard.writeText(text);
@@ -526,16 +512,8 @@ function setPillQuality(recap, linked) {
 
 function setLastUpdated(recap) {
   if (!lastUpdatedPill) return;
-
-  // Prefer live lastSeen because titleHistory/lastObservedAt is stale right now.
-  const safeLive = recap?.lastSeen || null;
   const observed = recap?.lastObservedAt || null;
   const refreshed = recap?.lastSeen || null;
-
-  if (safeLive) {
-    lastUpdatedPill.textContent = `Last seen ${fmtDateTime(safeLive)}`;
-    return;
-  }
 
   if (observed) lastUpdatedPill.textContent = `Last observed ${fmtDateTime(observed)}`;
   else lastUpdatedPill.textContent = `Last refreshed ${fmtDateTime(refreshed)}`;
@@ -689,25 +667,12 @@ function renderRecap(data) {
     recap?.titleHistory?.lastTimePlayed ||
     null;
 
-  const liveGameName = extractPresenceGameName(profile?.presenceText);
-  const hasLivePresence = !!profile?.presenceText;
-  const hasLastSeen = !!recap?.lastSeen;
+  const fallbackPresence =
+    lastPlayedName
+      ? `Last played: ${lastPlayedName} • ${fmtDateTime(lastPlayedAt)}`
+      : "No recent activity observed yet.";
 
-  let safePresence = "Activity unavailable";
-
-  // Weekend-safe priority:
-  // 1) live presence text with game
-  // 2) last seen
-  // 3) old fallback only if nothing else exists
-  if (hasLivePresence) {
-    safePresence = profile.presenceText;
-  } else if (hasLastSeen) {
-    safePresence = `Last seen: ${fmtDateTime(recap.lastSeen)}`;
-  } else if (lastPlayedName && lastPlayedAt) {
-    safePresence = `Last played: ${lastPlayedName} • ${fmtDateTime(lastPlayedAt)}`;
-  }
-
-  setText(presence, safePresence);
+  setText(presence, profile?.presenceText || fallbackPresence);
 
   // ✅ PFP: proxy + fallback
   setAvatar({
@@ -740,40 +705,19 @@ function renderRecap(data) {
       : "—";
   setText(playRange, range);
 
-  // Weekend-safe game display:
-  // Prefer live presence game if available, otherwise keep existing favourite game behaviour.
-  setText(favGame, liveGameName || recap?.favouriteGame || "—");
+  setText(favGame, recap?.favouriteGame ?? "—");
   setText(
     favGameSessions,
-    liveGameName
-      ? "Live activity detected"
-      : recap?.favouriteGameSessions
-      ? `${recap.favouriteGameSessions} sessions`
-      : "—"
+    recap?.favouriteGameSessions ? `${recap.favouriteGameSessions} sessions` : "—"
   );
 
-  // Streak display:
-  // Title history is stale, so do not force a misleading 0 when lastSeen is fresh.
+  // Streak display: if you haven't played today (UTC), streak is 0.
   const lastPlayDay = recap?.lastPlayDay || null;
   const gapDays = lastPlayDay ? daysBetweenDayKeysUTC(lastPlayDay, todayKeyUTC) : null;
 
-  const lastSeenDay = dayKeyFromIsoUTC(recap?.lastSeen);
-  const liveSeenGapDays = lastSeenDay ? daysBetweenDayKeysUTC(lastSeenDay, todayKeyUTC) : null;
-  const hasRecentLiveSeen = typeof liveSeenGapDays === "number" && (liveSeenGapDays === 0 || liveSeenGapDays === 1);
+  const displayStreak = (typeof gapDays === "number" && (gapDays === 0 || gapDays === 1)) ? (recap?.currentStreak ?? 0) : 0;
 
-  let streakPrimary = "—";
-  if ((recap?.currentStreak ?? 0) > 0) {
-    streakPrimary = String(recap.currentStreak);
-  } else if (hasRecentLiveSeen) {
-    streakPrimary = "Tracking activity…";
-  } else {
-    const displayStreak = (typeof gapDays === "number" && (gapDays === 0 || gapDays === 1))
-      ? (recap?.currentStreak ?? 0)
-      : 0;
-    streakPrimary = String(displayStreak);
-  }
-
-  setText(currentStreak, streakPrimary);
+  setText(currentStreak, displayStreak);
   setText(longestStreak, recap?.longestStreak ? `Best: ${recap.longestStreak} days` : "—");
 
   // ✅ Breaks: show "current break" + "longest break" stacked
@@ -815,24 +759,11 @@ function renderRecap(data) {
   );
 
   if (trackingInfo) {
-    const activityBits = [];
-
-    if (recap?.lastSeen) {
-      activityBits.push(`Last seen: ${fmtDateTime(recap.lastSeen)}`);
-    } else if (recap?.lastObservedAt) {
-      activityBits.push(`Observed play: ${fmtDateTime(recap.lastObservedAt)}`);
-    } else {
-      activityBits.push("No play observed yet");
-    }
-
-    if (liveGameName) {
-      activityBits.push(`Game: ${liveGameName}`);
-    }
-
-    activityBits.push(`Lookups: ${recap?.lookupCount ?? 0}`);
-
+    const observedLine = recap?.lastObservedAt
+      ? `Observed play: ${fmtDateTime(recap.lastObservedAt)}`
+      : `No play observed yet`;
     trackingInfo.textContent =
-      `First seen: ${fmtDateTime(recap?.firstSeen)} • ${activityBits.join(" • ")}`;
+      `First seen: ${fmtDateTime(recap?.firstSeen)} • ${observedLine} • Lookups: ${recap?.lookupCount ?? 0}`;
   }
 
   setPillQuality(recap, linked);
