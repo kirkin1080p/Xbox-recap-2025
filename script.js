@@ -512,8 +512,17 @@ function setPillQuality(recap, linked) {
 
 function setLastUpdated(recap) {
   if (!lastUpdatedPill) return;
+
+  // PATCH:
+  // Prefer recap.lastSeen because OpenXBL titleHistory/lastObservedAt is currently stale.
+  const safeLive = recap?.lastSeen || null;
   const observed = recap?.lastObservedAt || null;
   const refreshed = recap?.lastSeen || null;
+
+  if (safeLive) {
+    lastUpdatedPill.textContent = `Last seen ${fmtDateTime(safeLive)}`;
+    return;
+  }
 
   if (observed) lastUpdatedPill.textContent = `Last observed ${fmtDateTime(observed)}`;
   else lastUpdatedPill.textContent = `Last refreshed ${fmtDateTime(refreshed)}`;
@@ -667,19 +676,23 @@ function renderRecap(data) {
     recap?.titleHistory?.lastTimePlayed ||
     null;
 
-const hasLivePresence = !!profile?.presenceText;
-const hasLastSeen = !!data?.recap?.lastSeen;
+  // PATCH:
+  // Do not trust titleHistory wording for presence right now.
+  // Prefer real presence, then recap.lastSeen, then a neutral fallback.
+  const hasLivePresence = !!profile?.presenceText;
+  const hasLastSeen = !!recap?.lastSeen;
 
-let safePresence = "Activity unavailable";
+  let safePresence = "Activity unavailable";
 
-if (hasLivePresence) {
-  safePresence = profile.presenceText;
-} else if (hasLastSeen) {
-  safePresence = `Last seen: ${fmtDateTime(data.recap.lastSeen)}`;
-}
+  if (hasLivePresence) {
+    safePresence = profile.presenceText;
+  } else if (hasLastSeen) {
+    safePresence = `Last seen: ${fmtDateTime(recap.lastSeen)}`;
+  } else if (lastPlayedName && lastPlayedAt) {
+    safePresence = `Last played: ${lastPlayedName} • ${fmtDateTime(lastPlayedAt)}`;
+  }
 
-// Final render
-setText(presence, safePresence);
+  setText(presence, safePresence);
 
   // ✅ PFP: proxy + fallback
   setAvatar({
@@ -766,9 +779,14 @@ setText(presence, safePresence);
   );
 
   if (trackingInfo) {
-    const observedLine = recap?.lastObservedAt
+    // PATCH:
+    // Prefer lastSeen in the display line because lastObservedAt is stale right now.
+    const observedLine = recap?.lastSeen
+      ? `Last seen: ${fmtDateTime(recap.lastSeen)}`
+      : recap?.lastObservedAt
       ? `Observed play: ${fmtDateTime(recap.lastObservedAt)}`
       : `No play observed yet`;
+
     trackingInfo.textContent =
       `First seen: ${fmtDateTime(recap?.firstSeen)} • ${observedLine} • Lookups: ${recap?.lookupCount ?? 0}`;
   }
