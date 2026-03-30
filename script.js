@@ -667,16 +667,12 @@ function renderRecap(data) {
     recap?.titleHistory?.lastTimePlayed ||
     null;
 
-  let safePresence = "No recent activity observed yet.";
-  if (profile?.presenceText) {
-    safePresence = profile.presenceText;
-  } else if (recap?.lastSeen) {
-    safePresence = `Last seen: ${fmtDateTime(recap.lastSeen)}`;
-  } else if (lastPlayedName && lastPlayedAt) {
-    safePresence = `Last played: ${lastPlayedName} • ${fmtDateTime(lastPlayedAt)}`;
-  }
+  const fallbackPresence =
+    lastPlayedName
+      ? `Last played: ${lastPlayedName} • ${fmtDateTime(lastPlayedAt)}`
+      : "No recent activity observed yet.";
 
-  setText(presence, safePresence);
+  setText(presence, profile?.presenceText || fallbackPresence);
 
   // ✅ PFP: proxy + fallback
   setAvatar({
@@ -765,8 +761,6 @@ function renderRecap(data) {
   if (trackingInfo) {
     const observedLine = recap?.lastObservedAt
       ? `Observed play: ${fmtDateTime(recap.lastObservedAt)}`
-      : recap?.lastSeen
-      ? `Last seen: ${fmtDateTime(recap.lastSeen)}`
       : `No play observed yet`;
     trackingInfo.textContent =
       `First seen: ${fmtDateTime(recap?.firstSeen)} • ${observedLine} • Lookups: ${recap?.lookupCount ?? 0}`;
