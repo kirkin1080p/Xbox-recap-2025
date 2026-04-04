@@ -28,43 +28,15 @@
 <script>
   const WORKER_URL = "https://falling-cake-f670.kirkjlemon.workers.dev";
   const SIGNED_IN_KEY = "xr_signedInGamertag";
-  const POST_SIGNIN_RETURN_URL_KEY = "xr_postSigninReturnUrl";
 
   const statusEl = document.getElementById("status");
   function setStatus(msg) { statusEl.textContent = msg; }
-  function normalizeGamertag(value) {
-    return String(value ?? "")
-      .replace(/[\u0000-\u001F\u007F]+/g, "")
-      .replace(/\s+/g, " ")
-      .trim()
-      .slice(0, 32);
-  }
 
-  function getReturnUrl() {
-    try {
-      const saved = sessionStorage.getItem(POST_SIGNIN_RETURN_URL_KEY);
-      if (saved) {
-        const u = new URL(saved, window.location.origin);
-        if (u.origin === window.location.origin) return u.toString();
-      }
-    } catch {}
-
-    try {
-      if (document.referrer) {
-        const u = new URL(document.referrer, window.location.origin);
-        if (u.origin === window.location.origin) return u.toString();
-      }
-    } catch {}
-
+  function getHomeUrl() {
     const u = new URL(window.location.href);
-    u.pathname = u.pathname.replace(/\/[^\/]*$/, "/");
-    u.search = "";
-    u.hash = "";
-    return u.toString();
-  }
-
-  function clearReturnUrl() {
-    try { sessionStorage.removeItem(POST_SIGNIN_RETURN_URL_KEY); } catch {}
+    const parts = u.pathname.split("/").filter(Boolean);
+    if (parts.length >= 2) return `${u.origin}/${parts[0]}/`;
+    return `${u.origin}/`;
   }
 
   function getParamFromSearchOrHash(name) {
@@ -114,12 +86,11 @@
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const detail = data.error || data.message || ("HTTP " + res.status);
-        setStatus(`Claim failed: ${detail}`);
+        setStatus(`Claim failed: ${data.error || ("HTTP " + res.status)}`);
         return;
       }
 
-      const gamertag = normalizeGamertag(data.gamertag);
+      const gamertag = data.gamertag ? String(data.gamertag).trim() : "";
       if (!gamertag) {
         setStatus("Claimed, but worker did not return a gamertag.");
         return;
@@ -129,12 +100,9 @@
 
       setStatus(`Linked as ${gamertag}. Redirecting…`);
 
-      const url = new URL(getReturnUrl());
+      const home = getHomeUrl();
+      const url = new URL(home);
       url.searchParams.set("gamertag", gamertag);
-      url.searchParams.delete("code");
-      url.searchParams.delete("error");
-      url.searchParams.delete("error_description");
-      clearReturnUrl();
       window.location.replace(url.toString());
     } catch (e) {
       console.error(e);
