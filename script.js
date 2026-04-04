@@ -4,7 +4,6 @@
 
 // === CONFIG ===
 const SIGNED_IN_KEY = "xr_signedInGamertag";
-const POST_SIGNIN_RETURN_URL_KEY = "xr_postSigninReturnUrl";
 
 const WORKER_BASE = "https://falling-cake-f670.kirkjlemon.workers.dev";
 const PUBLIC_KEY = "4f6e9e47-98c9-0501-ae8a-4c078183a6dc";
@@ -31,14 +30,6 @@ function esc(s) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
-}
-
-function normalizeGamertagInput(value, max = 32) {
-  return String(value ?? "")
-    .replace(/[\u0000-\u001F\u007F]+/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, max);
 }
 
 // Minimal, safe inline formatting for journal text.
@@ -241,13 +232,7 @@ function buildShareUrls(gamertag) {
 }
 
 function getOpenXblSigninUrl() {
-  return `https://xbl.io/app/auth/${PUBLIC_KEY}?prompt=select_account`;
-}
-
-function rememberPostSigninReturnUrl() {
-  try {
-    sessionStorage.setItem(POST_SIGNIN_RETURN_URL_KEY, window.location.href);
-  } catch {}
+  return `https://xbl.io/app/auth/${PUBLIC_KEY}`;
 }
 
 function showCard() { show(gamerCardWrap); }
@@ -319,7 +304,7 @@ function setAvatar({ imgEl, fallbackEl, url, labelText }) {
 function getSignedInGamertag() {
   try {
     const gt = localStorage.getItem(SIGNED_IN_KEY);
-    return gt ? normalizeGamertagInput(gt) : null;
+    return gt ? String(gt).trim() : null;
   } catch {
     return null;
   }
@@ -327,9 +312,8 @@ function getSignedInGamertag() {
 
 function setSignedInGamertag(gt) {
   try {
-    const clean = normalizeGamertagInput(gt);
-    if (!clean) localStorage.removeItem(SIGNED_IN_KEY);
-    else localStorage.setItem(SIGNED_IN_KEY, clean);
+    if (!gt) localStorage.removeItem(SIGNED_IN_KEY);
+    else localStorage.setItem(SIGNED_IN_KEY, String(gt).trim());
   } catch {}
 }
 
@@ -526,9 +510,9 @@ function setPillQuality(recap, linked) {
   dataQualityPill.textContent = label;
 }
 
-function setLastUpdated(recap, profile) {
+function setLastUpdated(recap) {
   if (!lastUpdatedPill) return;
-  const observed = profile?.lastSeenAt || recap?.lastObservedAt || null;
+  const observed = recap?.lastObservedAt || null;
   const refreshed = recap?.lastSeen || null;
 
   if (observed) lastUpdatedPill.textContent = `Last observed ${fmtDateTime(observed)}`;
@@ -621,15 +605,6 @@ function renderDonate(ds) {
   donateSupporters.textContent = String(ds.supporters || 0);
 }
 
-function renderBadgeViews(recap) {
-  const badges = Array.isArray(recap?.badges?.list) ? recap.badges.list : [];
-  const milestones = Array.isArray(recap?.badges?.milestones) ? recap.badges.milestones : [];
-
-  if (window.XRComponents?.renderBadgeBox) {
-    window.XRComponents.renderBadgeBox(badgeBox, badges, milestones);
-  }
-}
-
 function renderBlog(blog, recap, gamertag, shareUrl) {
   if (!blogEntries) return;
 
@@ -682,15 +657,12 @@ function renderRecap(data) {
   setText(gtName, gamertag);
 
   const lastPlayedName =
-    profile?.lastGame ||
     recap?.lastPlayedGame ||
-    recap?.lastObservedGame ||
     recap?.titleHistory?.lastTitleName ||
+    recap?.lastObservedGame ||
     null;
 
   const lastPlayedAt =
-    profile?.lastSeenAt ||
-    recap?.lastObservedAt ||
     recap?.lastPlayedAt ||
     recap?.titleHistory?.lastTimePlayed ||
     null;
@@ -787,16 +759,15 @@ function renderRecap(data) {
   );
 
   if (trackingInfo) {
-    const observedAt = profile?.lastSeenAt || recap?.lastObservedAt || null;
-    const observedLine = observedAt
-      ? `Observed play: ${fmtDateTime(observedAt)}`
+    const observedLine = recap?.lastObservedAt
+      ? `Observed play: ${fmtDateTime(recap.lastObservedAt)}`
       : `No play observed yet`;
     trackingInfo.textContent =
       `First seen: ${fmtDateTime(recap?.firstSeen)} • ${observedLine} • Lookups: ${recap?.lookupCount ?? 0}`;
   }
 
   setPillQuality(recap, linked);
-  setLastUpdated(recap, profile);
+  setLastUpdated(recap);
 
   const urls = buildShareUrls(gamertag);
   if (liveLink) liveLink.value = urls.embed;
@@ -804,7 +775,6 @@ function renderRecap(data) {
   if (openEmbedLink) openEmbedLink.href = urls.embed;
 
   renderAchievement(recap);
-  renderBadgeViews(recap);
   showCard();
 
   // IMPORTANT:
@@ -870,7 +840,7 @@ async function run(gamertag) {
 
     if (!preflightReportMissingIds()) return;
 
-    const gt = normalizeGamertagInput(gamertag);
+    const gt = (gamertag || "").trim();
     if (!gt) { setStatus("Enter a gamertag first."); return; }
 
     // Keep URL in sync
@@ -936,7 +906,6 @@ if (signinBtn) {
   signinBtn.href = getOpenXblSigninUrl();
   signinBtn.addEventListener("click", (e) => {
     e.preventDefault();
-    rememberPostSigninReturnUrl();
     window.location.href = getOpenXblSigninUrl();
   });
 }
