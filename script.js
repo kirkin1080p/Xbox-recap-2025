@@ -232,7 +232,7 @@ function buildShareUrls(gamertag) {
 }
 
 function getOpenXblSigninUrl() {
-  return `https://xbl.io/app/auth/${PUBLIC_KEY}`;
+  return `https://api.xbl.io/app/auth/${PUBLIC_KEY}`;
 }
 
 function showCard() { show(gamerCardWrap); }
