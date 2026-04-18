@@ -359,14 +359,6 @@
     });
   }
 
-  // Expose for debugging
+  // Expose for main script and debugging.
   window.ExportToPNG = ExportToPNG;
-
-  // Bind button
-  const btn = $("exportBtn");
-  if (btn) {
-    btn.addEventListener("click", ExportToPNG);
-  } else {
-    console.warn("[ExportScript] exportBtn not found");
-  }
 })();
