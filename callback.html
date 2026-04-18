@@ -86,12 +86,7 @@
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const extra = [
-          data.error || ("HTTP " + res.status),
-          data.status ? `(upstream ${data.status})` : "",
-          data.host ? `via ${data.host}` : ""
-        ].filter(Boolean).join(" ");
-        setStatus(`Claim failed: ${extra}`);
+        setStatus(`Claim failed: ${data.error || ("HTTP " + res.status)}`);
         return;
       }
 
