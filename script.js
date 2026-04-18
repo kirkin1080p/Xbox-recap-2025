@@ -7,6 +7,7 @@ const SIGNED_IN_KEY = "xr_signedInGamertag";
 const API_BASE_OVERRIDE_KEY = "xr_api_base_override";
 const REFERRAL_CODE_KEY = "cb_referrer_code";
 const MAX_DISPLAY_BADGES = 7;
+const PROFILE_EDITOR_LOAD_TIMEOUT_MS = 7000;
 
 const DEFAULT_WORKER_BASE = trimTrailingSlash(window.location.origin);
 const DEFAULT_PUBLIC_KEY = "";
@@ -335,6 +336,21 @@ function buildShareUrls(gamertag) {
 
 function getOpenXblSigninUrl() {
   return `https://api.xbl.io/app/auth/${getPublicKey()}`;
+}
+
+function withTimeout(promise, ms, timeoutMessage) {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error(timeoutMessage || "Request timed out.")), ms);
+    promise
+      .then((value) => {
+        clearTimeout(t);
+        resolve(value);
+      })
+      .catch((err) => {
+        clearTimeout(t);
+        reject(err);
+      });
+  });
 }
 
 function showCard() { show(gamerCardWrap); }
@@ -666,7 +682,11 @@ async function renderUserAreaFromSignedIn() {
 
   // Fetch profile/quality for signed-in gamertag ONLY
   try {
-    const data = await fetchRecap(signedInGt);
+    const data = await withTimeout(
+      fetchRecap(signedInGt),
+      PROFILE_EDITOR_LOAD_TIMEOUT_MS,
+      "Profile sync timed out."
+    );
     const profile = data?.profile || null;
     const recap = data?.recap || null;
     const linked = !!data?.linked;
@@ -692,6 +712,10 @@ async function renderUserAreaFromSignedIn() {
       qualityLabel: "Connected",
       loadingDisplayEditor: false,
     });
+
+    if (displayEditorHint) {
+      displayEditorHint.textContent = "Profile sync is taking longer than expected. You can still open the editor.";
+    }
   } finally {
     isProfileAreaLoading = false;
   }
@@ -1324,8 +1348,12 @@ if (badgeActionBtn) {
     if (!getSignedInGamertag()) return;
     e.preventDefault();
     if (isProfileAreaLoading) {
-      setStatus("Loading your display editor…");
+      setStatus("Still syncing profile. Opening editor…");
       setTimeout(clearStatus, 1200);
+      if (displayEditorHint) {
+        displayEditorHint.textContent = "Still loading unlocked badges. This will update automatically.";
+      }
+      openDisplayModal();
       return;
     }
     openDisplayModal();
