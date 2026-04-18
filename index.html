@@ -7,6 +7,9 @@
   <link rel="stylesheet" href="./style.css?v=2026.7" />
   <script>
     (function () {
+      const DEFAULT_WORKER_BASE = "https://falling-cake-f670.kirkjlemon.workers.dev";
+      const DEFAULT_PUBLIC_KEY = "47df8f32-55fd-44ae-80c3-b87c1d42ef80";
+
       const params = new URLSearchParams(window.location.search);
 
       const workerFromQuery = (params.get("workerBase") || "").trim();
@@ -27,8 +30,8 @@
         publicKey = (localStorage.getItem("xr_runtime_public_key") || "").trim();
       } catch {}
 
-      // Fallback to same origin when worker is routed under this host.
-      if (!workerBase) workerBase = window.location.origin;
+      if (!workerBase) workerBase = DEFAULT_WORKER_BASE;
+      if (!publicKey) publicKey = DEFAULT_PUBLIC_KEY;
 
       window.__XR_CONFIG__ = {
         workerBase,
@@ -135,13 +138,13 @@
         </div>
 
         <div id="badgeStrip" class="badgeStrip" aria-label="Unlocked badges">
-          <span class="badgeTile"><span class="badgeTileFallback">ðŸ§ª</span></span>
-          <span class="badgeTile"><span class="badgeTileFallback">ðŸ”¥</span></span>
-          <span class="badgeTile"><span class="badgeTileFallback">ðŸŽ®</span></span>
-          <span class="badgeTile"><span class="badgeTileFallback">ðŸ†</span></span>
-          <span class="badgeTile"><span class="badgeTileFallback">ðŸ›¡ï¸</span></span>
-          <span class="badgeTile"><span class="badgeTileFallback">âœ…</span></span>
-          <span class="badgeTile"><span class="badgeTileFallback">ðŸŽ¯</span></span>
+          <span class="badgeTile"><span class="badgeTileFallback">&#x1F9EA;</span></span>
+          <span class="badgeTile"><span class="badgeTileFallback">&#x1F525;</span></span>
+          <span class="badgeTile"><span class="badgeTileFallback">&#x1F3AE;</span></span>
+          <span class="badgeTile"><span class="badgeTileFallback">&#x1F3C6;</span></span>
+          <span class="badgeTile"><span class="badgeTileFallback">&#x1F6E1;&#xFE0F;</span></span>
+          <span class="badgeTile"><span class="badgeTileFallback">&#x2705;</span></span>
+          <span class="badgeTile"><span class="badgeTileFallback">&#x1F3AF;</span></span>
         </div>
 
         <div id="badgeRailFoot" class="badgeFoot muted">
