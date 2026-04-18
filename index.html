@@ -6,10 +6,35 @@
   <title>chatterbox</title>
   <link rel="stylesheet" href="./style.css?v=2026.7" />
   <script>
-    window.__XR_CONFIG__ = {
-      workerBase: "https://falling-cake-f670.kirkjlemon.workers.dev",
-      publicKey: "47df8f32-55fd-44ae-80c3-b87c1d42ef80"
-    };
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+
+      const workerFromQuery = (params.get("workerBase") || "").trim();
+      const keyFromQuery = (params.get("publicKey") || "").trim();
+
+      if (workerFromQuery) {
+        try { localStorage.setItem("xr_runtime_worker_base", workerFromQuery); } catch {}
+      }
+      if (keyFromQuery) {
+        try { localStorage.setItem("xr_runtime_public_key", keyFromQuery); } catch {}
+      }
+
+      let workerBase = "";
+      let publicKey = "";
+
+      try {
+        workerBase = (localStorage.getItem("xr_runtime_worker_base") || "").trim();
+        publicKey = (localStorage.getItem("xr_runtime_public_key") || "").trim();
+      } catch {}
+
+      // Fallback to same origin when worker is routed under this host.
+      if (!workerBase) workerBase = window.location.origin;
+
+      window.__XR_CONFIG__ = {
+        workerBase,
+        publicKey,
+      };
+    })();
   </script>
 </head>
 <body>
@@ -321,51 +346,60 @@
         </div>
       </div>
     </section>
-    <section id="badges" class="profileArea hidden" aria-label="Your display badges">
-      <div class="profileGrid">
-        <section class="profileCard">
-          <div class="profileCardHead">
-            <div>
-              <h2 class="profileTitle">Your display</h2>
-              <p class="profileSub">Pick up to 7 unlocked badges or milestones to keep on your profile rail.</p>
-            </div>
-            <button id="saveDisplayBtn" class="btn primary" type="button">Save display</button>
-          </div>
-
-          <div id="displaySlots" class="displaySlots" aria-label="Pinned display badges"></div>
-          <p id="displayEditorHint" class="muted tiny">Select from your unlocked catalog below, then save.</p>
-        </section>
-
-        <section class="profileCard">
-          <div class="profileCardHead">
-            <div>
-              <h2 class="profileTitle">Refer friends</h2>
-              <p class="profileSub">Share your invite link. Referrals level up your Friendship Badge.</p>
-            </div>
-            <button id="copyReferralBtn" class="btn ghost" type="button">Copy invite</button>
-          </div>
-
-          <div class="referralBox">
-            <label class="shareFieldLabel" for="referralLink">Invite link</label>
-            <div class="shareFieldRow">
-              <input id="referralLink" type="text" readonly />
-            </div>
-          </div>
-
-          <div id="referralStats" class="referralStats muted">Invite friends to unlock the Friendship Badge.</div>
-        </section>
-      </div>
-
-      <section class="profileCard">
-        <div class="profileCardHead">
-          <div>
-            <h2 class="profileTitle">Unlocked catalog</h2>
-            <p class="profileSub">Click any unlocked item to add or remove it from your display.</p>
-          </div>
+    <section id="badges" class="profileModal hidden" aria-hidden="true" aria-label="Edit display">
+      <div class="profileModalDialog" role="dialog" aria-modal="true" aria-labelledby="displayModalTitle">
+        <div class="profileModalHead">
+          <h2 id="displayModalTitle" class="profileModalTitle">Edit display</h2>
+          <button id="closeDisplayModalBtn" class="btn ghost" type="button" aria-label="Close edit display">Close</button>
         </div>
 
-        <div id="badgeCatalog" class="badgeCatalog"></div>
-      </section>
+        <div class="profileArea">
+          <div class="profileGrid">
+            <section class="profileCard">
+              <div class="profileCardHead">
+                <div>
+                  <h2 class="profileTitle">Your display</h2>
+                  <p class="profileSub">Pick up to 7 unlocked badges or milestones to keep on your profile rail.</p>
+                </div>
+                <button id="saveDisplayBtn" class="btn primary" type="button">Save display</button>
+              </div>
+
+              <div id="displaySlots" class="displaySlots" aria-label="Pinned display badges"></div>
+              <p id="displayEditorHint" class="muted tiny">Select from your unlocked catalog below, then save.</p>
+            </section>
+
+            <section class="profileCard">
+              <div class="profileCardHead">
+                <div>
+                  <h2 class="profileTitle">Refer friends</h2>
+                  <p class="profileSub">Share your invite link. Referrals level up your Friendship Badge.</p>
+                </div>
+                <button id="copyReferralBtn" class="btn ghost" type="button">Copy invite</button>
+              </div>
+
+              <div class="referralBox">
+                <label class="shareFieldLabel" for="referralLink">Invite link</label>
+                <div class="shareFieldRow">
+                  <input id="referralLink" type="text" readonly />
+                </div>
+              </div>
+
+              <div id="referralStats" class="referralStats muted">Invite friends to unlock the Friendship Badge.</div>
+            </section>
+          </div>
+
+          <section class="profileCard">
+            <div class="profileCardHead">
+              <div>
+                <h2 class="profileTitle">Unlocked catalog</h2>
+                <p class="profileSub">Click any unlocked item to add or remove it from your display.</p>
+              </div>
+            </div>
+
+            <div id="badgeCatalog" class="badgeCatalog"></div>
+          </section>
+        </div>
+      </div>
     </section>
 
     <footer class="siteFooter" id="siteFooter">
@@ -377,6 +411,7 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
   <script src="./components.js"></script>
+  <script src="./exportscript.js?v=2026.7"></script>
   <script src="./script.js?v=2026.7"></script>
 </body>
 </html>
