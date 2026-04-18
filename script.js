@@ -609,7 +609,7 @@ function setSignedInUiState({ gamertag, avatarUrl, qualityLabel }) {
 
   show(signoutBtn);
   if (signoutBtn) signoutBtn.disabled = false;
-  if (badgesSection && latestRecapData?.linked) show(badgesSection);
+  closeDisplayModal();
 }
 
 function setSignedOutUiState() {
