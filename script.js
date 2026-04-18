@@ -8,8 +8,8 @@ const API_BASE_OVERRIDE_KEY = "xr_api_base_override";
 const REFERRAL_CODE_KEY = "cb_referrer_code";
 const MAX_DISPLAY_BADGES = 7;
 
-const DEFAULT_WORKER_BASE = "https://falling-cake-f670.kirkjlemon.workers.dev";
-const DEFAULT_PUBLIC_KEY = "47df8f32-55fd-44ae-80c3-b87c1d42ef80";
+const DEFAULT_WORKER_BASE = trimTrailingSlash(window.location.origin);
+const DEFAULT_PUBLIC_KEY = "";
 
 function trimTrailingSlash(value) {
   return String(value || "").trim().replace(/\/+$/, "");
@@ -89,7 +89,9 @@ function esc(s) {
 function formatJournalText(raw) {
   const safe = esc(raw ?? "");
   // Support **bold** spanning across words/newlines (lazy match).
-  return safe.replace(/\*\*([\s\S]+?)\*\*/g, "<strong>$1</strong>");
+  return safe
+    .replace(/\*\*([\s\S]+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(\d{4}-\d{2}-\d{2})\*/g, "<strong>$1</strong>");
 }
 
 // === DOM ===
@@ -172,6 +174,7 @@ const signoutBtn = el("signoutBtn");
 const badgesSection = el("badges");
 const displaySlots = el("displaySlots");
 const saveDisplayBtn = el("saveDisplayBtn");
+const closeDisplayModalBtn = el("closeDisplayModalBtn");
 const displayEditorHint = el("displayEditorHint");
 const badgeCatalog = el("badgeCatalog");
 const referralLink = el("referralLink");
@@ -259,6 +262,19 @@ function fmtDateTime(iso) {
   } catch {
     return "—";
   }
+}
+
+function fmtWholeNumber(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return String(value ?? "—");
+  return Math.trunc(n).toLocaleString();
+}
+
+function fmtSignedWholeNumber(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return String(value ?? "—");
+  const abs = Math.abs(Math.trunc(n)).toLocaleString();
+  return `${n >= 0 ? "+" : "-"}${abs}`;
 }
 
 // UTC day helpers (match worker's day keys)
@@ -520,11 +536,25 @@ function renderReferralPanel(recap) {
   }
 }
 
+function openDisplayModal() {
+  if (!badgesSection) return;
+  show(badgesSection);
+  badgesSection.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modalOpen");
+}
+
+function closeDisplayModal() {
+  if (!badgesSection) return;
+  hide(badgesSection);
+  badgesSection.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("modalOpen");
+}
+
 function renderProfileArea(recap, gamertag, linked) {
   if (!badgesSection) return;
 
   if (!linked) {
-    hide(badgesSection);
+    closeDisplayModal();
     latestEditableItems = [];
     selectedDisplayIds = [];
     if (badgeCatalog) badgeCatalog.innerHTML = "";
@@ -532,7 +562,6 @@ function renderProfileArea(recap, gamertag, linked) {
     return;
   }
 
-  show(badgesSection);
   latestEditableItems = getEditableBadgeItems(recap);
   const savedIds = Array.isArray(recap?.badges?.display?.ids) ? recap.badges.display.ids : [];
   selectedDisplayIds = savedIds.length
@@ -557,7 +586,7 @@ function setSignedInUiState({ gamertag, avatarUrl, qualityLabel }) {
   show(badgeBox);
   if (badgeActionBtn) {
     badgeActionBtn.textContent = "Edit display";
-    badgeActionBtn.href = "#badges";
+    badgeActionBtn.href = "#";
   }
 
   setText(userName, gamertag, "—");
@@ -611,7 +640,7 @@ function setSignedOutUiState() {
     badgeActionBtn.textContent = "Connect Xbox";
     badgeActionBtn.href = getOpenXblSigninUrl();
   }
-  hide(badgesSection);
+  closeDisplayModal();
 }
 
 // Render user area ONLY from signed-in identity (never from generated gamertag)
@@ -864,7 +893,13 @@ function renderAchievement(recap) {
   achievementList.innerHTML = list.map((a) => {
     const nm = esc(a?.name || "—");
     const p = (a?.percent != null) ? `${Number(a.percent).toFixed(2).replace(/\.00$/, "")}%` : "—";
-    const sub = mode === "recent" ? (a?.unlockedAt ? `Unlocked ${fmtDateTime(a.unlockedAt)}` : (a?.titleName ? `From ${a.titleName}` : "")) : (a?.titleName ? `From ${a.titleName}` : "");
+    const gameName = esc(a?.titleName || "Unknown game");
+    const unlockedAtText = a?.unlockedAt ? esc(fmtDateTime(a.unlockedAt)) : "";
+    const subHtml = mode === "recent"
+      ? (unlockedAtText
+        ? `<strong>${gameName}</strong> <em>Unlocked ${unlockedAtText}</em>`
+        : `<strong>${gameName}</strong>`)
+      : (a?.titleName ? `From <strong>${gameName}</strong>` : "");
     const iconUrl = a?.icon ? proxifyImage(sanitizeXboxPicUrl(a.icon)) : null;
     const iconHtml = iconUrl
       ? `<img class="achItemIcon" alt="" crossorigin="anonymous" referrerpolicy="no-referrer" src="${esc(iconUrl)}&_=${Date.now()}" />`
@@ -875,7 +910,7 @@ function renderAchievement(recap) {
         ${iconHtml}
         <div>
           <div class="achItemName">${nm}</div>
-          <div class="achItemSub">${esc(sub || "")}</div>
+          <div class="achItemSub">${subHtml || ""}</div>
         </div>
         <div class="achItemPct">${esc(p)}</div>
       </div>
@@ -886,10 +921,23 @@ function renderAchievement(recap) {
 function renderDonate(ds) {
   if (!ds || !donateTotal || !donateSupporters) return;
 
-  const cur = ds.currency || "GBP";
-  const symbol = cur === "GBP" ? "£" : cur === "USD" ? "$" : cur === "EUR" ? "€" : "";
-  donateTotal.textContent = `${symbol}${Number(ds.totalRaised || 0).toFixed(0)}`;
-  donateSupporters.textContent = String(ds.supporters || 0);
+  const cur = String(ds.currency || "GBP").toUpperCase();
+  const total = Number(ds.totalRaised || 0);
+  const supporters = Number(ds.supporters || 0);
+
+  try {
+    donateTotal.textContent = new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: cur,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(Number.isFinite(total) ? total : 0);
+  } catch {
+    const symbol = cur === "GBP" ? "£" : cur === "USD" ? "$" : cur === "EUR" ? "€" : `${cur} `;
+    donateTotal.textContent = `${symbol}${(Number.isFinite(total) ? total : 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  }
+
+  donateSupporters.textContent = Math.max(0, Math.trunc(Number.isFinite(supporters) ? supporters : 0)).toLocaleString();
 }
 
 function renderBlog(blog, recap, gamertag, shareUrl) {
@@ -986,13 +1034,29 @@ function renderRecap(data) {
     labelText: gamertag,
   });
 
-  setText(gamerscore, recap?.gamerscoreCurrent ?? profile?.gamerscore ?? "—");
+  const gamerscoreCurrent = recap?.gamerscoreCurrent ?? profile?.gamerscore ?? null;
+  const gamerscoreSinceTracking =
+    recap?.gamerscoreDelta != null
+      ? recap.gamerscoreDelta
+      : (recap?.gamerscoreCurrent != null && recap?.gamerscoreFirst != null)
+      ? (recap.gamerscoreCurrent - recap.gamerscoreFirst)
+      : null;
+
+  if (gamerscoreCurrent != null && gamerscoreSinceTracking != null) {
+    setText(
+      gamerscore,
+      `${fmtWholeNumber(gamerscoreCurrent)} (${fmtSignedWholeNumber(gamerscoreSinceTracking)} total)`
+    );
+  } else {
+    setText(gamerscore, gamerscoreCurrent != null ? fmtWholeNumber(gamerscoreCurrent) : "—");
+  }
 
   if (gamerscoreDelta) {
+    const lastUpdateGain = recap?.gamerscoreDeltaSinceLastRecap;
     gamerscoreDelta.textContent =
-      recap?.gamerscoreDeltaSinceLastRecap != null
-        ? `+${recap.gamerscoreDeltaSinceLastRecap} since last recap`
-        : (linked ? "First recap snapshot" : "Connect Xbox for delta");
+      lastUpdateGain != null
+        ? `${fmtSignedWholeNumber(lastUpdateGain)} in last update`
+        : (linked ? "Awaiting next update" : "Connect Xbox for update deltas");
   }
 
   setText(daysPlayed, recap?.daysPlayedCount ?? "—");
@@ -1226,7 +1290,15 @@ if (gamertagInput) {
     if (e.key === "Enter") run(gamertagInput.value);
   });
 }
-if (exportBtn) exportBtn.addEventListener("click", exportCardAsPng);
+if (exportBtn) {
+  exportBtn.addEventListener("click", () => {
+    if (typeof window.ExportToPNG === "function") {
+      window.ExportToPNG();
+      return;
+    }
+    exportCardAsPng();
+  });
+}
 
 if (copyLinkBtn) {
   copyLinkBtn.addEventListener("click", () => {
@@ -1242,12 +1314,27 @@ if (badgeActionBtn) {
   badgeActionBtn.addEventListener("click", (e) => {
     if (!getSignedInGamertag()) return;
     e.preventDefault();
-    if (badgesSection) {
-      show(badgesSection);
-      badgesSection.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    openDisplayModal();
   });
 }
+
+if (closeDisplayModalBtn) {
+  closeDisplayModalBtn.addEventListener("click", () => {
+    closeDisplayModal();
+  });
+}
+
+if (badgesSection) {
+  badgesSection.addEventListener("click", (e) => {
+    if (e.target === badgesSection) closeDisplayModal();
+  });
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && badgesSection && !badgesSection.classList.contains("hidden")) {
+    closeDisplayModal();
+  }
+});
 
 if (badgeCatalog) {
   badgeCatalog.addEventListener("click", (e) => {
@@ -1305,6 +1392,7 @@ if (saveDisplayBtn) {
       }
       setStatus("Display saved.");
       setTimeout(clearStatus, 1200);
+      closeDisplayModal();
     } catch (err) {
       console.error(err);
       setStatus(String(err?.message || "Save failed."));
