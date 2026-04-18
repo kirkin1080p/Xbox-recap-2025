@@ -184,6 +184,7 @@ const referralStats = el("referralStats");
 let latestRecapData = null;
 let latestEditableItems = [];
 let selectedDisplayIds = [];
+let isProfileAreaLoading = false;
 
 // === STATUS ===
 function setStatus(msg) {
@@ -578,15 +579,16 @@ function renderProfileArea(recap, gamertag, linked) {
 }
 
 // === USER AREA STATES ===
-function setSignedInUiState({ gamertag, avatarUrl, qualityLabel }) {
+function setSignedInUiState({ gamertag, avatarUrl, qualityLabel, loadingDisplayEditor = false }) {
   show(userArea);
 
   // ✅ When signed in: hide connect prompt, show badges panel
   hide(signinPrompt);
   show(badgeBox);
   if (badgeActionBtn) {
-    badgeActionBtn.textContent = "Edit display";
+    badgeActionBtn.textContent = loadingDisplayEditor ? "Loading…" : "Edit display";
     badgeActionBtn.href = "#";
+    badgeActionBtn.setAttribute("aria-disabled", loadingDisplayEditor ? "true" : "false");
   }
 
   setText(userName, gamertag, "—");
@@ -639,6 +641,7 @@ function setSignedOutUiState() {
   if (badgeActionBtn) {
     badgeActionBtn.textContent = "Connect Xbox";
     badgeActionBtn.href = getOpenXblSigninUrl();
+    badgeActionBtn.setAttribute("aria-disabled", "false");
   }
   closeDisplayModal();
 }
@@ -653,10 +656,12 @@ async function renderUserAreaFromSignedIn() {
   }
 
   // Immediate UI (fast) while we fetch better details
+  isProfileAreaLoading = true;
   setSignedInUiState({
     gamertag: signedInGt,
     avatarUrl: null,
     qualityLabel: "Connected",
+    loadingDisplayEditor: true,
   });
 
   // Fetch profile/quality for signed-in gamertag ONLY
@@ -676,6 +681,7 @@ async function renderUserAreaFromSignedIn() {
       gamertag: signedInGt,
       avatarUrl: profile?.displayPicRaw || null,
       qualityLabel: quality,
+      loadingDisplayEditor: false,
     });
     renderProfileArea(recap, signedInGt, linked);
   } catch {
@@ -684,7 +690,10 @@ async function renderUserAreaFromSignedIn() {
       gamertag: signedInGt,
       avatarUrl: null,
       qualityLabel: "Connected",
+      loadingDisplayEditor: false,
     });
+  } finally {
+    isProfileAreaLoading = false;
   }
 }
 
@@ -1314,6 +1323,11 @@ if (badgeActionBtn) {
   badgeActionBtn.addEventListener("click", (e) => {
     if (!getSignedInGamertag()) return;
     e.preventDefault();
+    if (isProfileAreaLoading) {
+      setStatus("Loading your display editor…");
+      setTimeout(clearStatus, 1200);
+      return;
+    }
     openDisplayModal();
   });
 }
