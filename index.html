@@ -3,8 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Xbox Recap</title>
+  <title>chatterbox</title>
   <link rel="stylesheet" href="./style.css?v=2026.7" />
+  <script>
+    window.__XR_CONFIG__ = {
+      workerBase: "https://falling-cake-f670.kirkjlemon.workers.dev",
+      publicKey: "47df8f32-55fd-44ae-80c3-b87c1d42ef80"
+    };
+  </script>
 </head>
 <body>
   <div class="bg" aria-hidden="true">
@@ -15,7 +21,7 @@
     <div class="brand">
       <div class="logo" aria-hidden="true">X</div>
       <div>
-        <h1>Xbox Recap <span class="year">2025</span></h1>
+        <h1>chatterbox</h1>
         <p class="tagline">Play. Track. Flex.</p>
       </div>
     </div>
@@ -85,7 +91,7 @@
           <div class="ctaIcon">🔐</div>
           <div class="ctaCopy">
             <p class="ctaTitle">Want the best version?</p>
-            <p class="ctaText">Connect Xbox to unlock richer stats, achievements & images.</p>
+            <p class="ctaText">Connect your Xbox account to unlock richer stats, achievements & images.</p>
           </div>
         </div>
 
@@ -100,7 +106,21 @@
             <p class="badgeTitle">Badges & Milestones</p>
             <p class="badgeText">Coming soon — earn site achievements and pin your favourites here.</p>
           </div>
-          <a class="badgeLink" href="#badges">Customize</a>
+          <a id="badgeActionBtn" class="badgeLink" href="#">Connect Xbox</a>
+        </div>
+
+        <div id="badgeStrip" class="badgeStrip" aria-label="Unlocked badges">
+          <span class="badgeTile"><span class="badgeTileFallback">ðŸ§ª</span></span>
+          <span class="badgeTile"><span class="badgeTileFallback">ðŸ”¥</span></span>
+          <span class="badgeTile"><span class="badgeTileFallback">ðŸŽ®</span></span>
+          <span class="badgeTile"><span class="badgeTileFallback">ðŸ†</span></span>
+          <span class="badgeTile"><span class="badgeTileFallback">ðŸ›¡ï¸</span></span>
+          <span class="badgeTile"><span class="badgeTileFallback">âœ…</span></span>
+          <span class="badgeTile"><span class="badgeTileFallback">ðŸŽ¯</span></span>
+        </div>
+
+        <div id="badgeRailFoot" class="badgeFoot muted">
+          Link Xbox and keep generating to unlock image badges here.
         </div>
 
         <div class="badgeGrid">
@@ -162,6 +182,14 @@
                 </div>
               </div>
             </div>
+          </div>
+
+          <div id="staleDataNotice" class="staleDataNotice hidden">
+            <div class="staleDataCopy">
+              <div class="staleDataTitle">This chatterbox card is not receiving fresh Xbox activity.</div>
+              <div id="staleDataText" class="staleDataText">Reconnect Xbox to restore richer account updates.</div>
+            </div>
+            <a id="staleReconnectBtn" class="btn primary staleReconnectBtn" href="#">Reconnect Xbox</a>
           </div>
         </div>
 
@@ -285,7 +313,7 @@
 
         <div class="journal">
           <div class="journalHead">
-            <div class="journalTitle">Xbox Journal</div>
+            <div class="journalTitle">chatterbox Journal</div>
             <div class="journalHint muted">A daily entry from your console. Roast-friendly.</div>
           </div>
 
@@ -293,16 +321,62 @@
         </div>
       </div>
     </section>
-    <section id="badges" class="hidden"></section>
+    <section id="badges" class="profileArea hidden" aria-label="Your display badges">
+      <div class="profileGrid">
+        <section class="profileCard">
+          <div class="profileCardHead">
+            <div>
+              <h2 class="profileTitle">Your display</h2>
+              <p class="profileSub">Pick up to 7 unlocked badges or milestones to keep on your profile rail.</p>
+            </div>
+            <button id="saveDisplayBtn" class="btn primary" type="button">Save display</button>
+          </div>
+
+          <div id="displaySlots" class="displaySlots" aria-label="Pinned display badges"></div>
+          <p id="displayEditorHint" class="muted tiny">Select from your unlocked catalog below, then save.</p>
+        </section>
+
+        <section class="profileCard">
+          <div class="profileCardHead">
+            <div>
+              <h2 class="profileTitle">Refer friends</h2>
+              <p class="profileSub">Share your invite link. Referrals level up your Friendship Badge.</p>
+            </div>
+            <button id="copyReferralBtn" class="btn ghost" type="button">Copy invite</button>
+          </div>
+
+          <div class="referralBox">
+            <label class="shareFieldLabel" for="referralLink">Invite link</label>
+            <div class="shareFieldRow">
+              <input id="referralLink" type="text" readonly />
+            </div>
+          </div>
+
+          <div id="referralStats" class="referralStats muted">Invite friends to unlock the Friendship Badge.</div>
+        </section>
+      </div>
+
+      <section class="profileCard">
+        <div class="profileCardHead">
+          <div>
+            <h2 class="profileTitle">Unlocked catalog</h2>
+            <p class="profileSub">Click any unlocked item to add or remove it from your display.</p>
+          </div>
+        </div>
+
+        <div id="badgeCatalog" class="badgeCatalog"></div>
+      </section>
+    </section>
 
     <footer class="siteFooter" id="siteFooter">
       <p class="muted">
-        Xbox Recap tracks activity from the moment you use it. Some Xbox data depends on account privacy and sign-in.
+        chatterbox tracks activity from the moment you use it. Some Xbox data depends on account privacy and sign-in.
       </p>
     </footer>
   </main>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
+  <script src="./components.js"></script>
   <script src="./script.js?v=2026.7"></script>
 </body>
 </html>
