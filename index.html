@@ -321,51 +321,63 @@
         </div>
       </div>
     </section>
-    <section id="badges" class="profileArea hidden" aria-label="Your display badges">
-      <div class="profileGrid">
-        <section class="profileCard">
-          <div class="profileCardHead">
-            <div>
-              <h2 class="profileTitle">Your display</h2>
-              <p class="profileSub">Pick up to 7 unlocked badges or milestones to keep on your profile rail.</p>
-            </div>
-            <button id="saveDisplayBtn" class="btn primary" type="button">Save display</button>
-          </div>
-
-          <div id="displaySlots" class="displaySlots" aria-label="Pinned display badges"></div>
-          <p id="displayEditorHint" class="muted tiny">Select from your unlocked catalog below, then save.</p>
-        </section>
-
-        <section class="profileCard">
-          <div class="profileCardHead">
-            <div>
-              <h2 class="profileTitle">Refer friends</h2>
-              <p class="profileSub">Share your invite link. Referrals level up your Friendship Badge.</p>
-            </div>
-            <button id="copyReferralBtn" class="btn ghost" type="button">Copy invite</button>
-          </div>
-
-          <div class="referralBox">
-            <label class="shareFieldLabel" for="referralLink">Invite link</label>
-            <div class="shareFieldRow">
-              <input id="referralLink" type="text" readonly />
-            </div>
-          </div>
-
-          <div id="referralStats" class="referralStats muted">Invite friends to unlock the Friendship Badge.</div>
-        </section>
-      </div>
-
-      <section class="profileCard">
-        <div class="profileCardHead">
+    <section id="badges" class="profileModal hidden" aria-label="Your display badges" aria-hidden="true">
+      <div class="profileModalDialog">
+        <div class="profileModalHead">
           <div>
-            <h2 class="profileTitle">Unlocked catalog</h2>
-            <p class="profileSub">Click any unlocked item to add or remove it from your display.</p>
+            <h2 class="profileModalTitle">Edit display</h2>
+            <p class="profileSub">Pick up to 7 unlocked badges or milestones to keep on your profile rail.</p>
           </div>
+          <button id="closeDisplayModalBtn" class="btn ghost" type="button">Close</button>
         </div>
 
-        <div id="badgeCatalog" class="badgeCatalog"></div>
-      </section>
+        <div class="profileArea">
+          <div class="profileGrid">
+            <section class="profileCard">
+              <div class="profileCardHead">
+                <div>
+                  <h2 class="profileTitle">Your display</h2>
+                  <p class="profileSub">Pick up to 7 unlocked badges or milestones to keep on your profile rail.</p>
+                </div>
+                <button id="saveDisplayBtn" class="btn primary" type="button">Save display</button>
+              </div>
+
+              <div id="displaySlots" class="displaySlots" aria-label="Pinned display badges"></div>
+              <p id="displayEditorHint" class="muted tiny">Select from your unlocked catalog below, then save.</p>
+            </section>
+
+            <section class="profileCard">
+              <div class="profileCardHead">
+                <div>
+                  <h2 class="profileTitle">Refer friends</h2>
+                  <p class="profileSub">Share your invite link. Referrals level up your Friendship Badge.</p>
+                </div>
+                <button id="copyReferralBtn" class="btn ghost" type="button">Copy invite</button>
+              </div>
+
+              <div class="referralBox">
+                <label class="shareFieldLabel" for="referralLink">Invite link</label>
+                <div class="shareFieldRow">
+                  <input id="referralLink" type="text" readonly />
+                </div>
+              </div>
+
+              <div id="referralStats" class="referralStats muted">Invite friends to unlock the Friendship Badge.</div>
+            </section>
+          </div>
+
+          <section class="profileCard">
+            <div class="profileCardHead">
+              <div>
+                <h2 class="profileTitle">Unlocked catalog</h2>
+                <p class="profileSub">Click any unlocked item to add or remove it from your display.</p>
+              </div>
+            </div>
+
+            <div id="badgeCatalog" class="badgeCatalog"></div>
+          </section>
+        </div>
+      </div>
     </section>
 
     <footer class="siteFooter" id="siteFooter">
