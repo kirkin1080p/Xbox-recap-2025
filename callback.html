@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Linking Xbox…</title>
+  <title>Linking chatterbox…</title>
   <style>
     body { margin:0; font-family: Arial, Helvetica, sans-serif; background:#0e0e10; color:#fff; }
     .wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
@@ -15,22 +15,79 @@
     p { margin:0 0 10px; color:rgba(255,255,255,0.75); }
     .status { margin-top:12px; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,0.06); }
     code { color: rgba(255,255,255,0.85); }
+    .actions { margin-top:12px; display:flex; gap:10px; }
+    .hidden { display:none; }
+    .btn {
+      display:inline-flex; align-items:center; justify-content:center;
+      min-height:40px; padding:0 14px; border-radius:12px; text-decoration:none;
+      border:1px solid rgba(255,255,255,0.12); color:#fff; background:rgba(255,255,255,0.08);
+      font-weight:700;
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
-      <h1>Linking your Xbox profile…</h1>
+      <h1>Linking your chatterbox profile…</h1>
       <p>Please don’t close this tab.</p>
       <div id="status" class="status">Waiting for code…</div>
+      <div id="actions" class="actions hidden">
+        <a id="retryLink" class="btn" href="#">Try linking again</a>
+      </div>
     </div>
   </div>
 <script>
-  const WORKER_URL = "https://falling-cake-f670.kirkjlemon.workers.dev";
   const SIGNED_IN_KEY = "xr_signedInGamertag";
+  const API_BASE_OVERRIDE_KEY = "xr_api_base_override";
+  const CLAIMED_CODE_KEY = "xr_last_claim_code";
+  const REFERRAL_CODE_KEY = "cb_referrer_code";
+  const DEFAULT_WORKER_URL = "https://falling-cake-f670.kirkjlemon.workers.dev";
+  const DEFAULT_PUBLIC_KEY = "47df8f32-55fd-44ae-80c3-b87c1d42ef80";
 
   const statusEl = document.getElementById("status");
+  const actionsEl = document.getElementById("actions");
+  const retryLink = document.getElementById("retryLink");
   function setStatus(msg) { statusEl.textContent = msg; }
+  function showRetry() { if (actionsEl) actionsEl.classList.remove("hidden"); }
+  function hideRetry() { if (actionsEl) actionsEl.classList.add("hidden"); }
+
+  function trimTrailingSlash(value) {
+    return String(value || "").trim().replace(/\/+$/, "");
+  }
+
+  function getWorkerUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const fromQuery = params.get("apiBase");
+    if (fromQuery) {
+      const normalized = trimTrailingSlash(fromQuery);
+      try { localStorage.setItem(API_BASE_OVERRIDE_KEY, normalized); } catch {}
+      return normalized;
+    }
+
+    try {
+      const stored = localStorage.getItem(API_BASE_OVERRIDE_KEY);
+      if (stored) return trimTrailingSlash(stored);
+    } catch {}
+
+    const fromGlobal = trimTrailingSlash(window.__XR_CONFIG__?.workerBase);
+    return fromGlobal || DEFAULT_WORKER_URL;
+  }
+
+  function getSigninUrl() {
+    const publicKey = String(window.__XR_CONFIG__?.publicKey || DEFAULT_PUBLIC_KEY).trim();
+    return `https://api.xbl.io/app/auth/${publicKey}`;
+  }
+
+  function stripCodeFromUrl() {
+    try {
+      const clean = new URL(window.location.href);
+      clean.searchParams.delete("code");
+      clean.searchParams.delete("error");
+      clean.searchParams.delete("error_description");
+      clean.hash = "";
+      window.history.replaceState({}, "", clean.toString());
+    } catch {}
+  }
 
   function getHomeUrl() {
     const u = new URL(window.location.href);
@@ -60,7 +117,10 @@
     const error = getParamFromSearchOrHash("error");
     const errorDesc = getParamFromSearchOrHash("error_description");
 
+    if (retryLink) retryLink.href = getSigninUrl();
+
     if (!code) {
+      showRetry();
       if (error) {
         setStatus(`Auth error: ${error}${errorDesc ? " — " + errorDesc : ""}`);
       } else {
@@ -75,18 +135,47 @@
       return;
     }
 
+    hideRetry();
+    stripCodeFromUrl();
+
+    try {
+      const lastCode = sessionStorage.getItem(CLAIMED_CODE_KEY);
+      if (lastCode && lastCode === code) {
+        setStatus("This login code was already used. Start the linking flow again.");
+        showRetry();
+        return;
+      }
+    } catch {}
+
     setStatus("Got code. Claiming…");
 
     try {
-      const res = await fetch(`${WORKER_URL}/claim`, {
+      try { sessionStorage.setItem(CLAIMED_CODE_KEY, code); } catch {}
+      const workerUrl = getWorkerUrl();
+      const referrerCode = (() => {
+        try {
+          const raw = localStorage.getItem(REFERRAL_CODE_KEY);
+          return raw ? String(raw).trim().toUpperCase() : null;
+        } catch {
+          return null;
+        }
+      })();
+      const res = await fetch(`${workerUrl}/claim`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code })
+        body: JSON.stringify({ code, referrerCode })
       });
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setStatus(`Claim failed: ${data.error || ("HTTP " + res.status)}`);
+        const msg = String(data.error || ("HTTP " + res.status));
+        if (/timed? ?out|timeout/i.test(msg)) {
+          setStatus("Login timed out before the code could be claimed. Start the Xbox linking flow again and complete it in one go.");
+        } else {
+          setStatus(`Claim failed: ${msg}`);
+        }
+        showRetry();
+        try { sessionStorage.removeItem(CLAIMED_CODE_KEY); } catch {}
         return;
       }
 
@@ -97,6 +186,7 @@
       }
 
       try { localStorage.setItem(SIGNED_IN_KEY, gamertag); } catch {}
+      try { localStorage.removeItem(REFERRAL_CODE_KEY); } catch {}
 
       setStatus(`Linked as ${gamertag}. Redirecting…`);
 
@@ -106,7 +196,9 @@
       window.location.replace(url.toString());
     } catch (e) {
       console.error(e);
-      setStatus("Network error while claiming. Check WORKER_URL and that the Worker is deployed.");
+      setStatus("Network error while claiming. Check that the Worker is deployed and try again.");
+      showRetry();
+      try { sessionStorage.removeItem(CLAIMED_CODE_KEY); } catch {}
     }
   }
 
