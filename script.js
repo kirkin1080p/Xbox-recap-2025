@@ -821,7 +821,7 @@ async function saveDisplaySelection(gamertag, badgeIds) {
 // === TWEET BUILDER (per-entry) ===
 function buildTweet({ gamertag, entry, shareUrl }) {
   const date = entry?.date ? entry.date : "";
-  const rawText = entry?.text ? entry.text : "My console refused to write today. Suspicious.";
+  const rawText = (typeof entry?.text === "string" ? entry.text.trim() : "") || "My console refused to write today. Suspicious.";
 
   const base =
 `chatterbox Journal ${date ? "• " + date : ""}
@@ -988,7 +988,8 @@ function renderBlog(blog, recap, gamertag, shareUrl) {
   // Render latest entries with per-entry Tweet button
   for (const e of entries.slice(0, 4)) {
     const date = e?.date ? esc(e.date) : "—";
-    const text = e?.text ? formatJournalText(e.text) : "—";
+    const entryText = typeof e?.text === "string" ? e.text.trim() : "";
+    const text = entryText ? formatJournalText(entryText) : "My console refused to write today. Suspicious.";
     const chip = e?.type ? esc(e.type) : "Journal";
 
     const tweetText = buildTweet({ gamertag, entry: e, shareUrl });
