@@ -1549,3 +1549,61 @@ body.embed .cardShell{ margin-top: 0; }
   display: grid;
   place-items: center;
                                            }
+
+/* =========================
+   Mobile Overflow Guards
+   ========================= */
+
+.gtName,
+#gtName{
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.badgeStrip{
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+@media (max-width: 760px){
+  .gamerHeader,
+  .who,
+  .whoLeft,
+  .whoTop{
+    min-width: 0;
+  }
+
+  .gtName,
+  #gtName{
+    font-size: clamp(18px, 7vw, 22px);
+    line-height: 1.1;
+  }
+
+  .badgeTop{
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .badgeCopy{
+    min-width: 0;
+    flex: 1 1 180px;
+  }
+
+  .badgeLink{
+    flex: 1 1 100%;
+    text-align: center;
+    white-space: normal;
+  }
+
+  .badgeStrip{
+    padding-bottom: 4px;
+  }
+
+  .badgeTile{
+    width: 40px;
+    height: 40px;
+  }
+}
