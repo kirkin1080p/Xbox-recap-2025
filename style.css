@@ -203,7 +203,7 @@ body{
   grid-template-columns: 1.35fr .85fr;
   gap:14px;
   margin-top: 16px;
-  align-items:start;
+  align-items:stretch;
 }
 
 #signinPrompt,
@@ -245,9 +245,17 @@ body{
    ========================= */
 /* TEMP: keep badges card visually aligned with search box */
 .badgePanel{
-  max-height: 198px; /* adjust if needed */
+  max-height: none;
+  height: 100%;
   overflow: hidden;
   padding: 14px !important;
+}
+
+@media (min-width: 901px){
+  #signinPrompt,
+  #badgeBox{
+    height: 100%;
+  }
 }
 
 .badgePanelHead{
