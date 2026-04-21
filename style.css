@@ -97,7 +97,7 @@ body{
   border: 1px solid rgba(255,255,255,.14);
   background: rgba(0,0,0,.25);
 }
-.userMeta{ display:flex; flex-direction:column; gap:6px; min-width: 0; }
+.userMeta{ display:flex; flex-direction:row; align-items:center; gap:8px; min-width: 0; flex-wrap:wrap; }
 .userNameRow{ display:flex; align-items:center; gap:8px; min-width: 0; }
 .userName{
   font-size: 12px;
