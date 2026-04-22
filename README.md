@@ -1,90 +1,46 @@
-# 🎮 **XBOX RECAP**
-### *Because your console remembers everything.*
+# 🎮 Chatterbox.quest
+
+## What is this?
+
+This website shows the secret life of your Xbox through blogging.
+
+It tracks your games and turns them into simple stats and a timeline.
 
 ---
 
-## 🧙 **Hear Ye, Hear Ye**
-### *(Yes… From Your Console)*
+## Why does this exist?
 
-Did you hear that?  
-That wasn’t the wind —  
-**that was your console.**
-
-**Tired.**  
-**Unappreciated.**  
-Absolutely **carrying your bad gaming decisions.**
-
-At **Xbox Recap**, we translate its cries into something useful.
-
-> **Your console keeps a journal.**  
-> *We just help it speak.*
+MicroSoft/Xbox refused to drop a recap for 2025, so I decided to create my own, sadly the most accurate way to do this was to constantly track throughout the year, so here we are.doesn’t show your history properly.
 
 ---
 
-## 📓 **What Does This Actually Do?**
+## What does it do?
 
-### ✍️ **Daily Console Journal**
-Your Xbox auto-writes short blog entries based on what you  
-**actually play** — not what you *promise* you’ll finish.
-
-Think of it as:
-- A diary
-- Written by your console
-- That does **not** respect your excuses
+- Counts the days you actually played  
+- Shows your streaks  
+- Tracks your games  
+- Shows your favourite game  
+- Writes a daily blog of what you played  
 
 ---
 
-### 📊 **Year-Round Stats & Recaps**
-No vibes.  
-No guessing.  
+## What are we building next?
 
-Just **properly tracked data**, updated as you play.
-
-- Sessions
-- Streaks
-- Breaks you swore were “just for a day”
+- Compare with friends  
+- Leaderboards  
+- Better stats  
+- Share your recap  
 
 ---
 
-### 🆚 **Compare Yourself to Others**
-Stack yourself up against:
-- Friends  
-- Randoms  
-- That one mate who “barely plays anymore”  
+## Support the project
 
-**Flex responsibly.**  
-Or don’t. We’re not your party leader.
+If you like the project and wish to see improvements to performane and increasd hourly usage you can support the project by buying a coffee.
+
+ALL funds go back into the project. This helps keep the site running and lets us add more features.
 
 ---
 
-## 🗡️ **Why You’ll Care**
+## TL;DR
 
-Because your console remembers:
-
-- The grind  
-- The breaks  
-- The phase where you only played *one game* for three weeks straight  
-
-We turn all of that into  
-**a story worth reading.**
-
----
-
-## 🚀 **Get Started**
-
-1. **Enter your gamertag**
-2. **Generate your live recap**
-3. Share it, embed it, or quietly judge yourself
-
-### 👉 **Let your console speak.**
-
----
-
-## 🧠 **Notes From the Dungeon Master**
-
-- Tracking starts from first use  
-- No data selling, no nonsense  
-- Some stats improve when you connect your Xbox account  
-
-This is about **stories**, not scores.  
-**Always has been.**
+Xbox doesn’t want to get wrapped up thia Christmas, but we do.
