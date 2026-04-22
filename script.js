@@ -6,6 +6,7 @@
 const SIGNED_IN_KEY = "xr_signedInGamertag";
 const API_BASE_OVERRIDE_KEY = "xr_api_base_override";
 const REFERRAL_CODE_KEY = "cb_referrer_code";
+const LAST_SEEN_GAMERSCORE_KEY = "xr_last_seen_gamerscore_map";
 const MAX_DISPLAY_BADGES = 7;
 const PROFILE_EDITOR_LOAD_TIMEOUT_MS = 7000;
 
@@ -92,7 +93,8 @@ function formatJournalText(raw) {
   // Support **bold** spanning across words/newlines (lazy match).
   return safe
     .replace(/\*\*([\s\S]+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\*(\d{4}-\d{2}-\d{2})\*/g, "<strong>$1</strong>");
+    .replace(/\*(\d{4}-\d{2}-\d{2})\*/g, "<strong>$1</strong>")
+    .replace(/\n/g, "<br>");
 }
 
 // === DOM ===
@@ -277,6 +279,32 @@ function fmtSignedWholeNumber(value) {
   if (!Number.isFinite(n)) return String(value ?? "—");
   const abs = Math.abs(Math.trunc(n)).toLocaleString();
   return `${n >= 0 ? "+" : "-"}${abs}`;
+}
+
+function getLastSeenGamerscore(gamertag) {
+  if (!gamertag) return null;
+  try {
+    const raw = localStorage.getItem(LAST_SEEN_GAMERSCORE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const val = parsed && typeof parsed === "object" ? parsed[gamertag.toLowerCase()] : null;
+    return Number.isFinite(Number(val)) ? Number(val) : null;
+  } catch {
+    return null;
+  }
+}
+
+function setLastSeenGamerscore(gamertag, gamerscoreValue) {
+  if (!gamertag || !Number.isFinite(Number(gamerscoreValue))) return;
+  try {
+    const raw = localStorage.getItem(LAST_SEEN_GAMERSCORE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    const map = parsed && typeof parsed === "object" ? parsed : {};
+    map[gamertag.toLowerCase()] = Number(gamerscoreValue);
+    localStorage.setItem(LAST_SEEN_GAMERSCORE_KEY, JSON.stringify(map));
+  } catch {
+    // Ignore localStorage failures (private mode / quota / disabled storage)
+  }
 }
 
 // UTC day helpers (match worker's day keys)
@@ -1086,11 +1114,25 @@ function renderRecap(data) {
   }
 
   if (gamerscoreDelta) {
-    const lastUpdateGain = recap?.gamerscoreDeltaSinceLastRecap;
-    gamerscoreDelta.textContent =
-      lastUpdateGain != null
-        ? `${fmtSignedWholeNumber(lastUpdateGain)} in last update`
-        : (linked ? "Awaiting next update" : "Connect Xbox for update deltas");
+    const serverLastUpdateGain = recap?.gamerscoreDeltaSinceLastRecap;
+    const previousSeenGamerscore = getLastSeenGamerscore(gamertag);
+    const clientLastUpdateGain =
+      (serverLastUpdateGain == null && gamerscoreCurrent != null && previousSeenGamerscore != null)
+        ? (gamerscoreCurrent - previousSeenGamerscore)
+        : null;
+    const lastUpdateGain = serverLastUpdateGain ?? clientLastUpdateGain;
+
+    if (lastUpdateGain != null) {
+      gamerscoreDelta.textContent = `${fmtSignedWholeNumber(lastUpdateGain)} in last update`;
+    } else if (gamerscoreSinceTracking != null) {
+      gamerscoreDelta.textContent = `${fmtSignedWholeNumber(gamerscoreSinceTracking)} since tracking started`;
+    } else {
+      gamerscoreDelta.textContent = linked ? "Awaiting first tracked change" : "Connect Xbox for update deltas";
+    }
+  }
+
+  if (gamerscoreCurrent != null) {
+    setLastSeenGamerscore(gamertag, gamerscoreCurrent);
   }
 
   setText(daysPlayed, recap?.daysPlayedCount ?? "—");
