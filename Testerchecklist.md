@@ -11,7 +11,7 @@
 
 # ✅ Day Setup (Do This First)
 
-- [ ] Enter your gamertag
+- [ ] Connect your gamertag
 - [ ] Confirm recap loads without errors
 - [ ] Confirm profile image loads
 - [ ] Confirm site does NOT crash or hang
@@ -96,7 +96,7 @@
 
 ---
 
-# 🔐 Account / Linking (If Used)
+# 🔐 Account / Linking (Mandatory for tracking)
 
 - [ ] Linking Xbox account works
 - [ ] No errors during login
