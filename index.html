@@ -279,37 +279,40 @@
           </div>
         </div>
 
-        <div class="share">
-          <!-- Share / export controls: keep ONE LINE on desktop, wrap on mobile (order matters) -->
-          <div class="shareActions">
-            <!-- 1) Embed link -->
-            <div class="shareField">
-              <label class="shareFieldLabel" for="liveLink">Embed link</label>
-              <div class="shareFieldRow">
-                <input id="liveLink" type="text" readonly />
-                <button id="copyLiveLinkBtn" class="btn ghost" type="button">Copy</button>
+        <details class="shareCollapse">
+          <summary class="shareToggle">Share and export</summary>
+          <div class="share">
+            <!-- Share / export controls: keep ONE LINE on desktop, wrap on mobile (order matters) -->
+            <div class="shareActions">
+              <!-- 1) Embed link -->
+              <div class="shareField">
+                <label class="shareFieldLabel" for="liveLink">Embed link</label>
+                <div class="shareFieldRow">
+                  <input id="liveLink" type="text" readonly />
+                  <button id="copyLiveLinkBtn" class="btn ghost" type="button">Copy</button>
+                </div>
               </div>
-            </div>
 
-            <!-- 2) BBCode -->
-            <div class="shareField">
-              <label class="shareFieldLabel" for="bbcode">BBCode</label>
-              <div class="shareFieldRow">
-                <input id="bbcode" type="text" readonly />
-                <button id="copyBbBtn" class="btn ghost" type="button">Copy</button>
+              <!-- 2) BBCode -->
+              <div class="shareField">
+                <label class="shareFieldLabel" for="bbcode">BBCode</label>
+                <div class="shareFieldRow">
+                  <input id="bbcode" type="text" readonly />
+                  <button id="copyBbBtn" class="btn ghost" type="button">Copy</button>
+                </div>
               </div>
+
+              <!-- 3) Export PNG -->
+              <button id="exportBtn" class="btn" type="button">Export PNG</button>
+
+              <!-- 4) Copy link -->
+              <button id="copyLinkBtn" class="btn ghost" type="button">Copy link</button>
+
+              <!-- 5) Open embedded -->
+              <a id="openEmbedLink" class="btn ghost" href="#" target="_blank" rel="noopener noreferrer">Open embedded</a>
             </div>
-
-            <!-- 3) Export PNG -->
-            <button id="exportBtn" class="btn" type="button">Export PNG</button>
-
-            <!-- 4) Copy link -->
-            <button id="copyLinkBtn" class="btn ghost" type="button">Copy link</button>
-
-            <!-- 5) Open embedded -->
-            <a id="openEmbedLink" class="btn ghost" href="#" target="_blank" rel="noopener noreferrer">Open embedded</a>
           </div>
-        </div>
+        </details>
 
         <div class="journal">
           <div class="journalHead">
