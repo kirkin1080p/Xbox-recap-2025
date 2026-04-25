@@ -97,6 +97,108 @@ function formatJournalText(raw) {
     .replace(/\n/g, "<br>");
 }
 
+function hashJournalSeed(s) {
+  const text = String(s ?? "");
+  let h = 2166136261;
+  for (let i = 0; i < text.length; i += 1) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0);
+}
+
+function pickByJournalSeed(arr, seed, offset = 0) {
+  if (!Array.isArray(arr) || !arr.length) return "";
+  return arr[(seed + offset) % arr.length];
+}
+
+function extractJournalField(raw, names) {
+  for (const name of names) {
+    const pattern = new RegExp(`\\*\\*${name}:\\*\\*\\s*([^\\n]+)`, "i");
+    const match = String(raw || "").match(pattern);
+    if (match && match[1]) return match[1].trim();
+  }
+  return "";
+}
+
+function renderJournalBody(raw, date, index) {
+  const entry = String(raw || "").trim();
+  const seed = hashJournalSeed(`${date || ""}|${entry}|${index}`);
+  const baseVariant = (seed % 2 === 0) ? "journalEntryStory" : "journalEntryLog";
+
+  if (!entry) {
+    return {
+      html: "My console refused to write today. Suspicious.",
+      variantClass: baseVariant,
+    };
+  }
+
+  const mainTitle = extractJournalField(entry, ["Played", "Main title", "Primary game"]);
+  const streak = extractJournalField(entry, ["Streak", "Current streak", "Run"]);
+  const score = extractJournalField(entry, ["Gamerscore change", "Score movement", "Last update gain"]);
+  const oneHit = extractJournalField(entry, ["One-hit wonders", "Sampled once", "Single-session games"]);
+  const rarest = extractJournalField(entry, ["Rarest unlock", "Low-pop flex", "Rarest trophy so far"]);
+  const achievements = extractJournalField(entry, ["Achievements unlocked", "Achievement pings", "Unlock count today"]);
+
+  const parsedFieldCount = [mainTitle, streak, score, oneHit, rarest, achievements].filter(Boolean).length;
+  if (parsedFieldCount < 3) {
+    return {
+      html: formatJournalText(entry),
+      variantClass: baseVariant,
+    };
+  }
+
+  const openers = [
+    (title) => `Deployed into **${title}**.`,
+    (title) => `Dropped into **${title}** for today\'s run.`,
+    (title) => `Booted up **${title}** and got to work.`,
+  ];
+  const streakLines = [
+    (value) => `Streak watch: ${value}.`,
+    (value) => `Current streak report: ${value}.`,
+    (value) => `Streak status holds at ${value}.`,
+  ];
+  const scoreLines = [
+    (value) => `Gamerscore swing this update: ${value}.`,
+    (value) => `Score movement landed at ${value}.`,
+    (value) => `Gamerscore change came through as ${value}.`,
+  ];
+  const oneHitLines = [
+    (value) => `One-hit wonders count: ${value}.`,
+    (value) => `Single-session games sampled: ${value}.`,
+    (value) => `Quick-dip titles totalled ${value}.`,
+  ];
+  const rarestLines = [
+    (value) => `Rarest flex so far: **${value}**.`,
+    (value) => `Low-pop highlight: **${value}**.`,
+    (value) => `Rarest unlock on record: **${value}**.`,
+  ];
+  const achievementLines = [
+    (value) => `Achievements popped today: ${value}.`,
+    (value) => `Unlock tally for the day: ${value}.`,
+    (value) => `Achievement pings registered: ${value}.`,
+  ];
+  const closers = [
+    "That\'s today\'s report. Same time tomorrow?",
+    "Session filed. Queueing up the next run.",
+    "Log saved. Controller rests until next drop.",
+  ];
+
+  const parts = [];
+  if (mainTitle) parts.push(pickByJournalSeed(openers, seed, 1)(mainTitle));
+  if (streak) parts.push(pickByJournalSeed(streakLines, seed, 2)(streak));
+  if (score) parts.push(pickByJournalSeed(scoreLines, seed, 3)(score));
+  if (oneHit) parts.push(pickByJournalSeed(oneHitLines, seed, 4)(oneHit));
+  if (achievements) parts.push(pickByJournalSeed(achievementLines, seed, 5)(achievements));
+  if (rarest) parts.push(pickByJournalSeed(rarestLines, seed, 6)(rarest));
+  parts.push(pickByJournalSeed(closers, seed, 7));
+
+  return {
+    html: formatJournalText(parts.join(" ")),
+    variantClass: "journalEntryStory",
+  };
+}
+
 // === DOM ===
 const gamertagInput = el("gamertagInput");
 const generateBtn = el("generateBtn");
@@ -1014,17 +1116,19 @@ function renderBlog(blog, recap, gamertag, shareUrl) {
   }
 
   // Render latest entries with per-entry Tweet button
-  for (const e of entries.slice(0, 4)) {
+  for (const [index, e] of entries.slice(0, 4).entries()) {
     const date = e?.date ? esc(e.date) : "—";
     const entryText = typeof e?.text === "string" ? e.text.trim() : "";
-    const text = entryText ? formatJournalText(entryText) : "My console refused to write today. Suspicious.";
+    const rendered = renderJournalBody(entryText, e?.date || "", index);
+    const text = rendered.html;
+    const variantClass = rendered.variantClass || "";
     const chip = e?.type ? esc(e.type) : "Journal";
 
     const tweetText = buildTweet({ gamertag, entry: e, shareUrl });
     const encoded = encodeURIComponent(tweetText);
 
     const html = `
-      <div class="journalEntry">
+      <div class="journalEntry ${variantClass}">
         <div class="journalMeta">
           <span class="journalDate">${date}</span>
           <span class="journalChip">${chip}</span>
