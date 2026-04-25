@@ -1677,6 +1677,16 @@ body.embed .cardShell{ margin-top: 0; }
 .journalBody strong{
   color: #ffffff;
 }
+
+.journalBanter{
+  display: inline;
+  margin-top: 0;
+  margin-left: 6px;
+  font-size: 13px;
+  font-style: italic;
+  color: rgba(245,246,247,.78);
+}
+
 .journalActions{
   margin-top: 10px;
 }
