@@ -862,14 +862,45 @@ input:focus{ border-color: rgba(14,205,17,.45); box-shadow: 0 0 0 4px rgba(14,20
 /* Visual-only casing (does not change stored data) */
 #gtName{ text-transform: uppercase; }
 
-/* Mobile: keep order, stack neatly */
+/* Mobile: keep the same visual structure (left identity, right meta) */
 @media (max-width: 760px){
-  .whoTop{ flex-direction:column; }
-  .whoRight{
-    align-items:flex-start;
-    padding-left:0;
+  .gamerHeader{
+    gap: 10px;
   }
-  .whoMeta{ text-align:left; }
+
+  .pfpWrap,
+  .pfp{
+    width: 64px;
+    height: 64px;
+  }
+
+  .whoTop{
+    flex-direction: row;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:8px;
+  }
+
+  .whoRight{
+    align-items:flex-end;
+    padding-left:0;
+    gap:4px;
+  }
+
+  .whoRight .metaRow{
+    gap:6px;
+  }
+
+  .whoMeta{
+    text-align:right;
+    font-size: 11px;
+    line-height: 1.25;
+  }
+
+  .presence{
+    margin-top: 4px;
+    font-size: 12px;
+  }
 }
 
 .gtName{ margin: 2px 0 0; font-size: 22px; letter-spacing: .2px; font-weight: 800; }
@@ -1253,7 +1284,7 @@ input:focus{ border-color: rgba(14,205,17,.45); box-shadow: 0 0 0 4px rgba(14,20
 
 /* Donate section shell */
 .donate{
-  margin-top: 0;
+  margin-top: 20px;
   border-radius: 20px;
   border: 1px solid rgba(255,255,255,.10);
   background: rgba(255,255,255,.04);
@@ -1553,6 +1584,18 @@ body.embed .cardShell{ margin-top: 0; }
   background: rgba(0,0,0,.18);
   padding: 12px;
 }
+
+.journalEntryStory{
+  background:
+    linear-gradient(110deg, rgba(13, 20, 14, .62), rgba(8, 17, 27, .46)),
+    rgba(0,0,0,.20);
+  border-color: rgba(255,255,255,.14);
+}
+
+.journalEntryLog{
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.20));
+}
 .journalMeta{
   display:flex;
   gap:8px;
@@ -1699,5 +1742,99 @@ body.embed .cardShell{ margin-top: 0; }
   .badgeTile{
     width: 40px;
     height: 40px;
+  }
+}
+
+/* =========================
+   Mobile polish pass
+   ========================= */
+
+:root{
+  --gutter: 16px;
+}
+
+.siteHeader,
+.wrap{
+  width: 100%;
+}
+
+input,
+img,
+.btn,
+.chip,
+.badgeLink{
+  max-width: 100%;
+}
+
+@media (max-width: 760px){
+  .siteHeader,
+  .wrap{
+    padding-left: var(--gutter);
+    padding-right: var(--gutter);
+  }
+
+  .userArea{
+    justify-content: flex-start;
+    margin-top: 0;
+    overflow: hidden;
+  }
+
+  .userMeta{
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  #signoutBtn{
+    margin-left: auto;
+    flex: 0 0 auto;
+  }
+
+  .searchInputRow,
+  .shareFieldRow{
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .searchInputRow input,
+  .shareFieldRow input{
+    min-width: 0;
+    width: 100%;
+  }
+
+  #generateBtn,
+  .shareFieldRow .btn,
+  .shareFieldRow button,
+  .shareFieldRow a.btn,
+  .shareActions > .btn,
+  .shareActions > a.btn{
+    width: 100%;
+  }
+
+  .donateRight{
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 10px;
+  }
+
+  .donateStats{
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 420px){
+  :root{
+    --gutter: 12px;
+  }
+
+  .gamerCard,
+  .searchBox,
+  .ctaBox,
+  .badgeBox,
+  .donate,
+  .share,
+  .achievementShowcase{
+    border-radius: 16px;
   }
 }
