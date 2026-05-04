@@ -163,6 +163,55 @@ body{
   font-size: 12px;
 }
 
+@media (max-width: 760px){
+  .siteHeader{
+    gap: 8px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .brand{
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .brand > div{ min-width: 0; }
+
+  .headerActions{
+    min-width: 0;
+    flex: 0 1 auto;
+  }
+
+  .userArea{
+    max-width: 100%;
+    gap: 6px;
+    padding: 6px 8px;
+    border-radius: 16px;
+  }
+
+  .userMeta{
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+
+  .userName{ display: none; }
+
+  .userBadge{
+    font-size: 10px;
+    padding: 3px 7px;
+  }
+
+  .avatarWrap.sm{ width: 32px; height: 32px; }
+  .userAvatar{ width: 30px; height: 30px; }
+
+  .userArea .btn.small{
+    min-height: 30px;
+    padding: 7px 9px;
+    font-size: 11px;
+    border-radius: 10px;
+  }
+}
+
 .chip{
   text-decoration:none;
   color: var(--text);
@@ -473,6 +522,7 @@ body{
   margin: 0;
   font-size: 18px;
   font-weight: 800;
+  color: #fff;
 }
 
 .profileModal .profileArea{
@@ -509,6 +559,7 @@ body.modalOpen{
   margin:0;
   font-size: 20px;
   font-weight: 800;
+  color: #fff;
 }
 
 .profileSub{
@@ -557,6 +608,7 @@ body.modalOpen{
   font-size: 12px;
   font-weight: 700;
   line-height: 1.2;
+  color: #fff;
 }
 
 .displaySlotSub{
@@ -635,6 +687,7 @@ body.modalOpen{
 .catalogName{
   font-size: 13px;
   font-weight: 800;
+  color: #fff;
 }
 
 .catalogSub{
@@ -874,25 +927,56 @@ input:focus{ border-color: rgba(14,205,17,.45); box-shadow: 0 0 0 4px rgba(14,20
     height: 64px;
   }
 
+  .pfpWrap{
+    overflow: visible;
+    border-radius: 999px;
+  }
+
+  .pfp,
+  #profilePic{
+    border-radius: 999px;
+    box-shadow: none;
+  }
+
+  .pfpRing{
+    box-shadow:
+      0 0 0 1px rgba(14,205,17,.18),
+      0 0 14px rgba(14,205,17,.26),
+      0 0 26px rgba(14,205,17,.18);
+  }
+
+  #profilePicFallback{
+    border-radius: 999px;
+    z-index: 1;
+  }
+
+  #profilePic{
+    position: relative;
+    z-index: 2;
+  }
+
   .whoTop{
     flex-direction: row;
+    flex-wrap: wrap;
     align-items:flex-start;
-    justify-content:space-between;
+    justify-content:flex-start;
     gap:8px;
   }
 
   .whoRight{
-    align-items:flex-end;
+    align-items:flex-start;
+    flex: 1 1 100%;
     padding-left:0;
     gap:4px;
   }
 
   .whoRight .metaRow{
+    justify-content: flex-start;
     gap:6px;
   }
 
   .whoMeta{
-    text-align:right;
+    text-align:left;
     font-size: 11px;
     line-height: 1.25;
   }
@@ -900,6 +984,24 @@ input:focus{ border-color: rgba(14,205,17,.45); box-shadow: 0 0 0 4px rgba(14,20
   .presence{
     margin-top: 4px;
     font-size: 12px;
+  }
+
+  .whoLeft{
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .gtName,
+  #gtName{
+    margin-top: 0;
+    font-size: 18px;
+    line-height: 1.05;
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+    max-width: 100%;
+    overflow-wrap: normal;
+    word-break: normal;
   }
 }
 
@@ -1565,6 +1667,10 @@ body.embed .cardShell{ margin-top: 0; }
   inset:-2px;
   border-radius: 999px;
   border: 2px solid rgba(14,205,17,.55);
+  box-shadow:
+    0 0 0 1px rgba(14,205,17,.18),
+    0 0 14px rgba(14,205,17,.26),
+    0 0 26px rgba(14,205,17,.18);
   opacity:.45;
   pointer-events:none;
 }
@@ -1594,10 +1700,7 @@ body.embed .cardShell{ margin-top: 0; }
   border: 1px solid rgba(255,255,255,.18);
   background: rgba(0,0,0,.25);
   display:block;
-  box-shadow:
-    0 0 0 1px rgba(14,205,17,.28),
-    0 0 18px rgba(14,205,17,.32),
-    0 0 34px rgba(14,205,17,.20);
+  box-shadow: none;
 }
 .userAvatar{
   width:36px;
@@ -1755,8 +1858,46 @@ body.embed .cardShell{ margin-top: 0; }
 .gtName,
 #gtName{
   max-width: 100%;
-  overflow-wrap: anywhere;
-  word-break: break-word;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+@media (max-width: 760px){
+  .pfpWrap{
+    width: 64px;
+    height: 64px;
+    border-radius: 999px;
+    overflow: visible;
+    flex: 0 0 64px;
+  }
+
+  .pfp,
+  #profilePic{
+    width: 64px !important;
+    height: 64px !important;
+    min-width: 64px;
+    min-height: 64px;
+    aspect-ratio: 1 / 1;
+    border-radius: 999px !important;
+    object-fit: cover;
+    object-position: center;
+    box-shadow: none !important;
+    display: block;
+  }
+
+  #profilePicFallback{
+    inset: 0;
+    border-radius: 999px;
+  }
+
+  .pfpRing{
+    inset: -2px;
+    border-radius: 999px;
+    box-shadow:
+      0 0 0 1px rgba(14,205,17,.18),
+      0 0 14px rgba(14,205,17,.26),
+      0 0 26px rgba(14,205,17,.18);
+  }
 }
 
 .badgeStrip{
