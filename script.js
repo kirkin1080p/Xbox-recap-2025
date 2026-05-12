@@ -656,6 +656,7 @@ function renderBadgeCatalog(items, selectedIds) {
   badgeCatalog.innerHTML = items.map((item) => {
     const selected = selectedIds.includes(item.id);
     const desc = item?.desc || "Unlocked";
+    const unlockedDate = item?.unlockedAt ? `Unlocked ${fmtDateTime(item.unlockedAt)}` : "Unlocked date unavailable";
     return `
       <button class="catalogItem${selected ? " selected" : ""}" type="button" data-badge-id="${esc(item.id)}">
         <span class="catalogTileWrap">
