@@ -39,7 +39,14 @@
     const level = String(item?.level || "").trim().toLowerCase();
     const levelText = esc(item?.levelLabel || "");
     const rankText = item?.rank ? ` • rank #${esc(item.rank)}` : "";
-    const tooltip = `${title}${levelText ? ` • ${levelText}` : ""}${rankText}${desc ? ` — ${desc}` : ""}`;
+    let unlockedAtText = "";
+    if (item?.unlockedAt) {
+      const dt = new Date(item.unlockedAt);
+      if (!Number.isNaN(dt.getTime())) {
+        unlockedAtText = ` • unlocked ${esc(dt.toLocaleDateString())}`;
+      }
+    }
+    const tooltip = `${title}${levelText ? ` • ${levelText}` : ""}${rankText}${unlockedAtText}${desc ? ` — ${desc}` : ""}`;
     const imageUrl = pickBadgeImage(item);
     const cls = `badgeTile${level ? ` is-${level}` : ""}`;
 
