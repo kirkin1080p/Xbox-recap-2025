@@ -138,6 +138,15 @@ function renderJournalBody(raw, date, index) {
     };
   }
 
+  const activityHeader = /^📓\s+\*\*\d{4}-\d{2}-\d{2} — (Session Logged|Activity Recorded|Play Detected)\*\*[ \t]*\r?\n/;
+  if (activityHeader.test(entry)) {
+    const paragraph = entry.replace(activityHeader, "**$1.** ").replace(/\s*\r?\n\s*/g, " ");
+    return {
+      html: formatJournalText(paragraph),
+      variantClass: "journalEntryStory",
+    };
+  }
+
   const mainTitle = extractJournalField(entry, ["Played", "Main title", "Primary game"]);
   const streak = extractJournalField(entry, ["Streak", "Current streak", "Run"]);
   const score = extractJournalField(entry, ["Gamerscore change", "Score movement", "Last update gain"]);
