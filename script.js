@@ -306,13 +306,15 @@ let selectedDisplayIds = [];
 let isProfileAreaLoading = false;
 
 // === STATUS ===
-function setStatus(msg) {
+function setStatus(msg, loading = false) {
   if (!statusEl) return;
+  statusEl.classList.toggle("is-loading", loading);
   show(statusEl);
   statusEl.textContent = msg;
 }
 function clearStatus() {
   if (!statusEl) return;
+  statusEl.classList.remove("is-loading");
   hide(statusEl);
   statusEl.textContent = "";
 }
@@ -916,7 +918,17 @@ function withNoCache(url) {
   return `${url}${join}_=${Date.now()}`;
 }
 
-async function fetchRecap(gamertag) {
+const pendingRecaps = new Map();
+
+function fetchRecap(gamertag) {
+  const key = JSON.stringify([getApiBase(), gamertag.trim().toLowerCase()]);
+  if (!pendingRecaps.has(key)) {
+    pendingRecaps.set(key, requestRecap(gamertag).finally(() => pendingRecaps.delete(key)));
+  }
+  return pendingRecaps.get(key);
+}
+
+async function requestRecap(gamertag) {
   const { res, text, data, invalidData } = await fetchFromApi(
     `/?gamertag=${encodeURIComponent(gamertag)}`,
     undefined,
@@ -1445,7 +1457,10 @@ async function exportCardAsPng() {
 }
 
 // === MAIN FLOW ===
+let latestRun = 0;
+
 async function run(gamertag) {
+  const runId = ++latestRun;
   try {
     clearStatus();
     hideCard();
@@ -1462,31 +1477,27 @@ async function run(gamertag) {
       window.history.replaceState({}, "", u);
     } catch {}
 
-    setStatus("Loading recap…");
-
-    const [recapResult, blogResult, donateResult] = await Promise.allSettled([
-      fetchRecap(gt),
-      fetchBlog(gt),
-      fetchDonateStats(),
-    ]);
-
-    if (recapResult.status !== "fulfilled") {
-      throw recapResult.reason;
-    }
-
-    const recapData = recapResult.value;
-    const blogData = blogResult.status === "fulfilled" ? blogResult.value : null;
-    const donateData = donateResult.status === "fulfilled" ? donateResult.value : null;
+    setStatus(`Loading recap for ${gt}…`, true);
+    const blog = fetchBlog(gt).catch(() => null);
+    const donations = fetchDonateStats().catch(() => null);
+    const recapData = await fetchRecap(gt);
+    if (runId !== latestRun) return;
 
     const recap = renderRecap(recapData);
 
     const urls = buildShareUrls(gt);
-    renderBlog(blogData, recap, gt, urls.normal);
-
-    renderDonate(donateData);
-
     clearStatus();
+    if (blogEntries) blogEntries.textContent = "Loading journal…";
+    await Promise.all([
+      blog.then((data) => {
+        if (runId === latestRun) renderBlog(data, recap, gt, urls.normal);
+      }),
+      donations.then((data) => {
+        if (runId === latestRun) renderDonate(data);
+      }),
+    ]);
   } catch (err) {
+    if (runId !== latestRun) return;
     console.error(err);
     setStatus(`Could not load the recap. ${String(err?.message || err)}`);
   }
