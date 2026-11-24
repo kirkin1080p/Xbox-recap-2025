@@ -1285,8 +1285,8 @@ function renderRecap(data) {
 
   const displayStreak = (typeof gapDays === "number" && (gapDays === 0 || gapDays === 1)) ? (recap?.currentStreak ?? 0) : 0;
 
-  setText(currentStreak, displayStreak);
-  setText(longestStreak, recap?.longestStreak ? `Best: ${recap.longestStreak} days` : "—");
+  setText(currentStreak, `${displayStreak} ${Number(displayStreak) === 1 ? "day" : "days"}`);
+  setText(longestStreak, recap?.longestStreak ? `Best: ${recap.longestStreak} ${Number(recap.longestStreak) === 1 ? "day" : "days"}` : "—");
 
   // ✅ Breaks: show "current break" + "longest break" stacked
   const currentBreakDays =
