@@ -40,9 +40,14 @@ function getApiBase() {
   return readConfiguredApiBase();
 }
 
-function getApiBaseCandidates() {
+function getApiBaseCandidates(useConfiguredWorker) {
   const configured = getApiBase();
-  const candidates = [configured, DEFAULT_WORKER_BASE]
+  const workerBase = useConfiguredWorker
+    ? trimTrailingSlash(window.__XR_CONFIG__?.workerBase)
+    : "";
+  // The Pages origin serves HTML. Don't retry these reads there when a Worker is configured.
+  const preferred = workerBase && configured === DEFAULT_WORKER_BASE ? workerBase : configured;
+  const candidates = [preferred, workerBase || DEFAULT_WORKER_BASE]
     .map(trimTrailingSlash)
     .filter(Boolean);
 
@@ -862,7 +867,8 @@ async function fetchJsonOrText(url, init) {
 }
 
 async function fetchFromApi(path, init, options = {}) {
-  const candidates = getApiBaseCandidates();
+  const { isValidData } = options;
+  const candidates = getApiBaseCandidates(Boolean(isValidData));
   const errors = [];
   const allowFallbackOnHttpError = options.allowFallbackOnHttpError !== false;
 
@@ -872,19 +878,21 @@ async function fetchFromApi(path, init, options = {}) {
 
     try {
       const result = await fetchJsonOrText(url, init);
+      const invalidData = result.res.ok && isValidData && !isValidData(result.data);
       const shouldFallback =
         i < candidates.length - 1 &&
         apiBase !== DEFAULT_WORKER_BASE &&
-        allowFallbackOnHttpError &&
-        !result.res.ok;
+        (invalidData || (allowFallbackOnHttpError && !result.res.ok));
 
       if (shouldFallback) {
-        errors.push(`HTTP ${result.res.status} from ${apiBase}`);
+        errors.push(invalidData ? `Invalid API response from ${apiBase}` : `HTTP ${result.res.status} from ${apiBase}`);
         continue;
       }
 
-      if (result.res.ok) rememberWorkingApiBase(apiBase);
-      return { apiBase, ...result };
+      if (result.res.ok && !invalidData && (!isValidData || i === 0)) {
+        rememberWorkingApiBase(apiBase);
+      }
+      return { apiBase, ...result, invalidData };
     } catch (err) {
       errors.push(`${apiBase}: ${String(err?.message || err)}`);
       if (i === candidates.length - 1) throw err;
@@ -900,24 +908,35 @@ function withNoCache(url) {
 }
 
 async function fetchRecap(gamertag) {
-  const { apiBase, res, text, data } = await fetchFromApi(`/?gamertag=${encodeURIComponent(gamertag)}`);
+  const { res, text, data, invalidData } = await fetchFromApi(
+    `/?gamertag=${encodeURIComponent(gamertag)}`,
+    undefined,
+    { isValidData: (value) => typeof value?.gamertag === "string" && Boolean(value.gamertag.trim()) }
+  );
 
   if (!res.ok) {
     const msg = (data && data.error) ? data.error : (text || `HTTP ${res.status}`);
     throw new Error(`Recap request failed (${res.status}): ${msg}`);
   }
+  if (invalidData) throw new Error("The recap API returned an invalid response.");
   return data;
 }
 
 async function fetchBlog(gamertag) {
-  const { res, data } = await fetchFromApi(`/blog?gamertag=${encodeURIComponent(gamertag)}&limit=7`);
-  if (!res.ok) return null;
+  const { res, data, invalidData } = await fetchFromApi(
+    `/blog?gamertag=${encodeURIComponent(gamertag)}&limit=7`,
+    undefined,
+    { isValidData: (value) => Array.isArray(value?.entries) }
+  );
+  if (!res.ok || invalidData) return null;
   return data;
 }
 
 async function fetchDonateStats() {
-  const { res, data } = await fetchFromApi(`/donate-stats`);
-  if (!res.ok) return null;
+  const { res, data, invalidData } = await fetchFromApi("/donate-stats", undefined, {
+    isValidData: (value) => value?.totalRaised != null && value.supporters != null,
+  });
+  if (!res.ok || invalidData) return null;
   return data;
 }
 
@@ -1460,7 +1479,7 @@ async function run(gamertag) {
     clearStatus();
   } catch (err) {
     console.error(err);
-    setStatus(`JS crashed: ${String(err?.message || err)}\nOpen DevTools Console for the stack trace.`);
+    setStatus(`Could not load the recap. ${String(err?.message || err)}`);
   }
 }
 
